@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+			android:versionCode="1" android:versionName="1.0"
+			package="com.rk_itvui.allapp">
+
+    <supports-screens android:smallScreens="false"
+        		android:normalScreens="true" android:largeScreens="true" 
+        		android:xlargeScreens="true" android:anyDensity="true" />
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application android:icon="@drawable/icon" android:label="@string/app_name">     
+        <activity android:name=".AllApp"
+                  android:label="@string/appActivity"
+                  android:screenOrientation="landscape"
+            	    android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+       <!-- Broadcast Receiver Action -->
+	<receiver android:name=".StbBootReceiver">
+		<intent-filter>
+			<action android:name="android.intent.action.BOOT_COMPLETED"></action>
+		</intent-filter>
+	</receiver>
+
+    </application>
+</manifest>

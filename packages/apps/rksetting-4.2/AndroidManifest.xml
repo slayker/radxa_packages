@@ -1,0 +1,359 @@
+<!--$_FOR_ROCKCHIP_RBOX_$-->		
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="com.rockchip.settings"
+        android:sharedUserId="android.uid.system"
+        android:versionCode="2"
+        android:versionName="android4.2_RKSetting">
+<!--
+    <original-package android:name="com.android.settings" />
+-->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.DEVICE_POWER" />
+    <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.HARDWARE_TEST" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.MASTER_CLEAR" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="com.google.android.googleapps.permission.GOOGLE_AUTH" />
+    <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIMAX_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIMAX_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CLEAR_APP_USER_DATA" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.WRITE_APN_SETTINGS"/>
+    <uses-permission android:name="android.permission.ACCESS_CHECKIN_PROPERTIES"/>
+    <uses-permission android:name="android.permission.READ_USER_DICTIONARY"/>
+    <uses-permission android:name="android.permission.WRITE_USER_DICTIONARY"/>
+    <uses-permission android:name="android.permission.FORCE_STOP_PACKAGES"/>
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
+    <uses-permission android:name="android.permission.BATTERY_STATS"/>
+    <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.android.launcher.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.MOVE_PACKAGE" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.BACKUP" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_SYNC_STATS" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.STATUS_BAR" />
+    <uses-permission android:name="android.permission.MANAGE_USB" />
+    <uses-permission android:name="android.permission.SET_POINTER_SPEED" />
+
+    <application android:label="@string/settings_label"
+            android:icon="@drawable/setting"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Holo.NoActionBar"
+            android:uiOptions="splitActionBarWhenNarrow"
+            android:hardwareAccelerated="true">
+
+        <activity android:name="RKSettings"
+                android:label="@string/settings_label_launcher"
+                android:taskAffinity="com.rockchip.settings"
+                android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.settings.SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="LanguageSettings"
+                android:label="@string/language_keyboard_settings_title"
+                android:clearTaskOnLaunch="true"
+                >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.settings.INPUT_METHOD_SETTINGS" />
+                <category android:name="android.intent.category.VOICE_LAUNCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.android.settings.SHORTCUT" />
+            </intent-filter>
+        </activity>
+         <activity android:name="com.rockchip.settings.dialog.LanguageSettingAlterDialogActivity"
+        		android:theme="@*android:style/Theme.Dialog.Alert">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+         <activity android:name="com.rockchip.settings.dialog.KeyBoardSettingAlterDialogActivity"
+        		android:theme="@*android:style/Theme.Dialog.Alert">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.settings.INPUT_METHOD_SETTINGS" />
+                <category android:name="android.intent.category.VOICE_LAUNCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.android.settings.SHORTCUT" />
+            </intent-filter>
+        </activity>
+
+          <activity android:name="com.rockchip.settings.dialog.TimeZoneAlterDialogActivity"
+        		android:theme="@*android:style/Theme.Dialog.Alert">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="com.rockchip.settings.dialog.StorageShowAlterDialogActivity"
+			android:theme="@*android:style/Theme.Dialog.Alert">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name="com.rockchip.settings.dialog.StorageFormatAlterDialogActivity"
+			android:theme="@*android:style/Theme.Dialog.Alert">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="com.rockchip.settings.dialog.ManageApplications"
+			android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+          <activity android:name="com.rockchip.settings.dialog.RunningServiceDetails"
+			android:theme="@*android:style/Theme.Dialog.Alert">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+         <activity android:name="com.rockchip.settings.dialog.MediaFormat"
+			android:theme="@*android:style/Theme.Dialog.Alert">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+    	<activity 
+		android:name="com.rockchip.settings.pppoe.PppoeAccountsSetting"        		
+		android:theme="@*android:style/Theme.Dialog.Alert">           
+		<intent-filter>                
+		<action android:name="android.intent.action.MAIN" />                
+		<category android:name="android.intent.category.DEFAULT" />            
+		</intent-filter>        
+    	</activity>
+	
+		<activity 
+        		android:name="com.rockchip.settings.wifi.ice_cream.Wifi_setting"
+        		android:theme="@*android:style/Theme.Dialog.Alert">           
+    		<intent-filter>                
+    			<action android:name="android.intent.action.MAIN" />
+    			<action android:name="com.rockchip.settings.wifi.ice_cream.Wifi_setting" />                
+    			<category android:name="android.intent.category.DEFAULT" />            
+    		</intent-filter>        
+    	</activity>
+    	
+    	<activity 
+        		android:name="com.rockchip.settings.wifi.jelly_bean.Wifi_setting"        		
+    			android:theme="@*android:style/Theme.Dialog.Alert">           
+    		<intent-filter>                
+    			<action android:name="android.intent.action.MAIN" />  
+    			<action android:name="com.rockchip.settings.wifi.jelly_bean.Wifi_setting" />               
+    			<category android:name="android.intent.category.DEFAULT" />            
+    		</intent-filter>        
+    	</activity>
+
+    	<activity 
+        		android:name="com.rockchip.settings.wifi.jelly_bean_mr1.Wifi_setting"        		
+    			android:theme="@android:style/Theme.Holo.NoActionBar">           
+    		<intent-filter>                
+    			<action android:name="android.intent.action.MAIN" />  
+    			<action android:name="com.rockchip.settings.wifi.jelly_bean_mr1.Wifi_setting" />               
+    			<category android:name="android.intent.category.DEFAULT" />            
+    		</intent-filter>        
+    	</activity>
+    	
+    	 <activity
+            android:name="com.rockchip.settings.accounts.ManageAccountsAlterDialogActivity"
+            android:theme="@*android:style/Theme.Dialog.Alert" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            
+        </activity>
+                <activity android:name="com.rockchip.settings.accounts.AddAccountSettings"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/header_add_an_account">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.rockchip.settings.ADD_ACCOUNT_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name="com.rockchip.settings.accounts.ChooseAccountActivity"
+            android:label="@string/header_add_an_account"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+                 android:theme="@style/perference_set_activity" 
+        />
+                
+        <activity android:name="com.rockchip.settings.accounts.AccountSyncSettings"
+            android:label="@string/account_sync_settings_title"
+            android:theme="@style/perference_set_activity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.rockchip.settings.ACCOUNT_SYNC_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+         <activity
+            android:name="com.rockchip.settings.privacy.PrivacySettingAlterDialogActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+                <activity
+            android:name="com.rockchip.settings.security.TrustedCredentialsActivity"
+            android:theme="@style/perference_set_activity"  >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+                <activity
+            android:name="com.rockchip.settings.security.DeviceAdminActivity"
+            android:theme="@style/perference_set_activity"  >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.rockchip.settings.security.DeviceAdminAdd"
+            android:theme="@style/perference_set_activity"  >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name="com.rockchip.settings.security.CredentialStorage"
+                android:theme="@style/Transparent"
+                android:launchMode="singleTop"
+                android:configChanges="orientation|keyboardHidden|screenSize">
+            <intent-filter>
+                <action android:name="com.rockchip.credentials.RESET" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name="com.rockchip.settings.sound.SoundDevicesManager"
+                  android:label="@string/sound_devices_manager"
+                  android:theme="@android:style/Theme.Holo.DialogWhenLarge">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>	
+       
+        <activity android:name=".deviceinfo.UsbSettings"
+                  android:label="@string/storage_title_usb"
+                  android:theme="@android:style/Theme.Holo.DialogWhenLarge">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name=".screen.ScreenSettingActivity"
+        		android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>	
+         <activity
+            android:name="com.rockchip.settings.inputmethod.ice_cream.PointerSpeedDialogActivity" 
+             android:theme="@style/perference_set_activity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.rockchip.settings.inputmethod.ice_cream.PointerSpeedDialogActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity
+            android:name="com.rockchip.settings.inputmethod.jelly_bean.PointerSpeedDialogActivity" 
+             android:theme="@style/perference_set_activity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.rockchip.settings.inputmethod.jelly_bean.PointerSpeedDialogActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity
+            android:name="com.rockchip.settings.inputmethod.TextToSpeechActivity"
+            android:theme="@style/perference_set_activity"  >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.rockchip.settings.privacy.jelly_bean.Status"
+                android:label="@string/device_status_activity_title"
+                android:theme="@style/perference_set_activity"
+                android:process="com.android.phone">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.rockchip.settings.privacy.jelly_bean.Status"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.VOICE_LAUNCH" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name="com.rockchip.settings.privacy.ice_cream.Status"
+                android:label="@string/device_status_activity_title"
+                android:theme="@style/perference_set_activity"
+                android:process="com.android.phone">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.rockchip.settings.privacy.ice_cream.Status"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.VOICE_LAUNCH" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name="com.rockchip.settings.privacy.SettingsLicenseActivity"
+                android:label="@string/settings_license_activity_title"
+                android:theme="@android:style/Theme.Holo.Panel"
+                android:configChanges="orientation|screenSize">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+         </activity>
+    </application>
+</manifest>

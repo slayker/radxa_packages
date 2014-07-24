@@ -1,0 +1,13 @@
+-keep class com.android.launcherNew.Launcher {
+  public void previousScreen(android.view.View);
+  public void nextScreen(android.view.View);
+  public void launchHotSeat(android.view.View);
+}
+
+-keep class com.android.launcherNew.AllApps3D$Defines {
+  *;
+}
+
+-keep class com.android.launcherNew.ClippedImageView {
+  *;
+}

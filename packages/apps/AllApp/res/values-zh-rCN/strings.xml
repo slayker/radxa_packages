@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <!-- Manifest configuration. -->
+    <string name="app_name">XbmcRK</string>
+    <string name="corp_name">RockChip</string>
+    <!--menu items-->
+    <string name="item_lvideo">视频</string>
+    <string name="item_laudio">音乐</string>
+    <string name="item_picture">图片</string>
+    <string name="item_browser">浏览器</string>
+    <string name="item_tudou">土豆</string>
+    <string name="item_youtube">Youtube</string>
+    <string name="item_setting">设置</string>
+    <string name="item_app">应用程序</string>
+    
+    <!--app activity strings-->
+    <string name="appActivity">应用程序 </string>
+    <string name="activity_not_found">该应用程序未安装</string>
+    <string name="application_scan">扫描应用程序信息</string>
+    <string name="application_num">应用总数: </string>
+    <string name="apprecent">最近应用: </string>
+    
+</resources>

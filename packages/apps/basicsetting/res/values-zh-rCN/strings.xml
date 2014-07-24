@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="settings">设置</string>
+    <string name="wifi_setting">无线设置</string>
+    <string name="bluetooth_setting">蓝牙设置</string>
+    <string name="display_setting">显示设置</string>
+    <string name="system_setting">系统信息</string>
+    <string name="advance_setting">高级设置</string>
+    <string name="device_switch">开关</string>
+    <string name="wifi_wps_overlap_error">"检测到另一个 Wi-Fi 保护会话。请过几分钟后重试。"</string>
+    <string name="disabled">"已停用"</string>
+    <string name="wifi_remembered">"已保存"</string>
+    
+    
+    <string name="wifi_security_none">"无"</string>
+    <string name="wifi_fail_to_scan">"扫描不到网络"</string>
+    <string name="wifi_not_in_range">"不在范围内"</string>
+    <string name="wifi_disabled_password_failure">"身份验证出现问题"</string>
+    <string name="wifi_wps_available_first_item">"受保护的网络可用"</string>
+    <string name="wifi_wps_available_second_item">" （受保护的网络可用）"</string>
+    <string name="wifi_secured_first_item">"通过<xliff:g id="WIFI_SECURITY_SHORT">%1$s</xliff:g>进行保护"</string>
+    <string name="wifi_secured_second_item">"，通过<xliff:g id="WIFI_SECURITY_SHORT">%1$s</xliff:g>进行保护"</string>
+    
+		<string name="wifi_ssid">"网络 SSID"</string>
+		<string name="wifi_security">"安全性"</string>
+		<string name="wifi_eap_method">"EAP 方法"</string>
+		<string name="please_select_phase2">"阶段2身份验证"</string>
+		<string name="wifi_eap_ca_cert">"CA 证书"</string>
+		<string name="wifi_eap_user_cert">"用户证书"</string>
+		<string name="wifi_eap_identity">"身份"</string>
+		<string name="wifi_eap_anonymous">"匿名身份"</string>
+		<string name="wifi_password">"密码"</string>
+		<string name="wifi_show_password">"显示密码"</string>
+		<string name="wifi_ip_settings">"IP 设置"</string>
+		<string name="wifi_unchanged">"（未更改）"</string>
+		<string name="wifi_unspecified">"（未指定）"</string>
+		<string name="wifi_disabled_generic">"已停用"</string>
+		<string name="wifi_disabled_network_failure">"已停用状况不佳的互联网连接"</string>
+		<string name="wifi_disabled_heading"></string>
+		<string name="wifi_show_advanced">"显示高级选项"</string>
+		<string name="wifi_network_setup">"WPS"</string>
+		<string name="wifi_wps_pin">"键入从接入点获取的 PIN"</string>
+		<string name="wifi_wps_setup_title">"WPS 设置"</string>
+		<string name="wifi_wps_pin_output">"键入接入点上的 PIN <xliff:g id="WPS_PIN">%1$s</xliff:g>"</string>
+		<string name="wifi_wps_in_progress">"正在进行 WPS，这一过程可能需要数十秒的时间"</string>
+		<string name="wifi_wps_failed">"无法启动 WPS，请重试。"</string>
+		<string name="wifi_signal">"信号强度"</string>
+		<string name="wifi_status">"状态消息"</string>
+		<string name="wifi_speed">"连接速度"</string>
+		<string name="proxy_settings_title">"代理设置"</string>
+		<string name="proxy_clear_text">"清除"</string>
+		<string name="proxy_port_label">"代理服务器端口"</string>
+		<string name="proxy_warning_limited_support">"该浏览器使用 HTTP 代理，但其他应用程序可能不会使用。"</string>
+		<string name="proxy_hostname_label">"代理服务器主机名"</string>
+		<string name="proxy_hostname_hint">"proxy.example.com"</string>
+		<string name="proxy_error">"注意"</string>
+		<string name="proxy_exclusionlist_label">"对以下对象绕过代理："</string>
+		<string name="proxy_exclusionlist_hint">"example.com,mycomp.test.com,localhost"</string>
+		<string name="wifi_ip_address">"IP 地址"</string>
+		<string name="wifi_gateway">"网关"</string>
+		<string name="wifi_network_prefix_length">"网络前缀长度"</string>
+		<string name="wifi_dns1">"域名 1"</string>
+    <string name="wifi_dns2">"域名 2"</string>
+		<string name="wifi_add_network">"添加网络"</string>
+		<string name="wifi_connect">"连接"</string>
+		<string name="wifi_forget">"不保存"</string>
+    <string name="wifi_save">"保存"</string>
+    <string name="wifi_cancel">"取消"</string>
+		<string name="wifi_disabled_help">"系统因连接状况不佳而停用了该网络。您可以通过“设置”&gt;“Wi-Fi”屏幕中的“高级”菜单项关闭此功能。"</string>
+		<string name="proxy_error_invalid_port">"您键入的端口无效。"</string>
+		<string name="wifi_ip_settings_invalid_ip_address">"请键入有效的 IP 地址。"</string>
+		<string name="wifi_ip_settings_invalid_network_prefix_length">"键入长度在 0 到 32 之间的网络前缀。"</string>
+		<string name="wifi_ip_settings_invalid_gateway">"请键入有效的网关地址。"</string>
+		<string name="wifi_ip_settings_invalid_dns">"请键入有效的 DNS 地址。"</string>
+		<string name="wifi_setup_eap_not_supported">"您无法在设置过程中配置 EAP Wi-Fi 连接。设置完毕后，您可以在“设置”&gt;“无线和网络”中进行配置。"</string>
+		<string name="wifi_setup_title">"Wi-Fi 设置"</string>
+		<string name="wifi_setup_add_network">"添加网络"</string>
+		<string name="wifi_setup_back">"上一步"</string>
+		<string name="wifi_setup_connect">"连接"</string>
+		<string name="wifi_setup_refresh_list">"刷新列表"</string>
+		<string name="wifi_setup_skip">"跳过"</string>
+		
+    <string name="space">空格</string>
+    <string name="delete">删除</string>
+		<string name="clear">清除</string>
+		
+		<string name="password">密码</string>
+		<string name="submit">提交</string>
+		
+		<string name="version">版本信息</string>
+		<string name="storage">存储信息</string>
+		<string name="network">网络信息</string>
+		
+		<string name="mode_number">"型号"</string>
+		<string name="android_version">"Android 版本"</string>
+		<string name="kernel_version">"内核版本"</string>
+		<string name="build_number">"版本号"</string>
+		
+		<string name="wifi">Wifi</string>
+		<string name="ethernet">以太网</string>
+		<string name="mac_address">MAC地址</string>
+		<string name="ip_address">IP地址</string>
+		<string name="gateway">网关</string>
+		<string name="netmask">子网掩码</string>
+		<string name="dns1">域名1</string>
+		<string name="dns2">域名2</string>
+		
+		<string name="connected">已连接</string>
+    <string name="disconnected">失去连接</string>
+    <string name="connecting">连接中...</string>
+    
+    <string name="sdcard">SD Card</string>
+		<string name="nand_flash">Nand Flash</string>
+		<string name="internal_storage">Internal Storage</string>
+		<string name="total_space">总空间</string>
+		<string name="available_space">可用空间</string>
+    
+    <string name="bluetooth_quick_toggle_title">"蓝牙"</string>
+    <string name="bluetooth_quick_toggle_summary">"打开蓝牙"</string>
+    <string name="bluetooth_settings">"蓝牙"</string>
+    <string name="bluetooth_settings_title">"蓝牙"</string>
+    <string name="bluetooth_settings_summary">"管理连接、设置设备名称和可检测性"</string>
+    <string name="bluetooth_pairing_request">"蓝牙配对请求"</string>
+    <string name="bluetooth_enter_pin_msg">"要与 <xliff:g id="BOLD_0">&lt;br&gt;&lt;b&gt;</xliff:g><xliff:g id="DEVICE_NAME">%1$s</xliff:g><xliff:g id="END_BOLD">&lt;/b&gt;&lt;br&gt;&lt;br&gt;</xliff:g> 设备配对，请键入该设备所需的 PIN："</string>
+		<string name="bluetooth_enter_passkey_msg">"要与 <xliff:g id="BOLD_0">&lt;br&gt;&lt;b&gt;</xliff:g><xliff:g id="DEVICE_NAME">%1$s</xliff:g><xliff:g id="END_BOLD">&lt;/b&gt;&lt;br&gt;&lt;br&gt;</xliff:g> 设备配对，请键入该设备所需的配对密钥："</string>
+		<string name="bluetooth_enable_alphanumeric_pin">"PIN 由字母或符号组成"</string>
+		<string name="bluetooth_pin_values_hint">"通常为 0000 或 1234"</string>
+		<string name="bluetooth_enter_pin_other_device">"您可能还需要在另一台设备上输入此 PIN。"</string>
+		<string name="bluetooth_enter_passkey_other_device">"您可能还需要在另一台设备上输入此匹配密钥。"</string>
+		<string name="bluetooth_confirm_passkey_msg">"要与以下设备配对：&lt;br&gt;&lt;b&gt;<xliff:g id="DEVICE_NAME">%1$s</xliff:g>&lt;/b&gt;&lt;br&gt;&lt;br&gt;请确保其显示的配对密钥为：&lt;br&gt;&lt;b&gt;<xliff:g id="PASSKEY">%2$s</xliff:g>&lt;/b&gt;"</string>
+		<string name="bluetooth_incoming_pairing_msg">"来自：&lt;br&gt;&lt;b&gt;<xliff:g id="DEVICE_NAME">%1$s</xliff:g>&lt;/b&gt;&lt;br&gt;&lt;br&gt;要与此设备配对吗？"</string>
+		<string name="bluetooth_pairing_accept">"配对"</string>
+    <string name="bluetooth_pairing_decline">"取消"</string>
+		<string name="bluetooth_error_title"></string>
+    <string name="bluetooth_pairing_error_message">"无法与“<xliff:g id="DEVICE_NAME">%1$s</xliff:g>”进行配对。"</string>
+    <string name="bluetooth_pairing_pin_error_message">"PIN 或配对密钥不正确，无法与“<xliff:g id="DEVICE_NAME">%1$s</xliff:g>”配对。"</string>
+    <string name="bluetooth_pairing_device_down_error_message">"无法与“<xliff:g id="DEVICE_NAME">%1$s</xliff:g>”进行通信。"</string>
+    <string name="bluetooth_pairing_rejected_error_message">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> 已拒绝配对。"</string>
+    <string name="bluetooth_connecting_error_message">"连接到<xliff:g id="DEVICE_NAME">%1$s</xliff:g>时出现问题。"</string>
+    <string name="bluetooth_preference_scan_title">"扫描查找设备"</string>
+		 <string name="bluetooth_search_for_devices">"搜索设备"</string>
+    <string name="bluetooth_searching_for_devices">正在搜索..."</string>
+    <string name="bluetooth_preference_device_settings">"设备设置"</string>
+    <string name="bluetooth_preference_paired_devices">"已配对的设备"</string>
+    <string name="bluetooth_preference_found_devices">"可用设备"</string>
+    <string name="bluetooth_device_context_connect">"连接"</string>
+		<string name="bluetooth_device_context_disconnect">"断开网络共享"</string>
+    <string name="bluetooth_device_context_pair_connect">"配对和连接"</string>
+    <string name="bluetooth_device_context_unpair">"取消配对"</string>
+    <string name="bluetooth_device_context_disconnect_unpair">"断开连接和取消配对"</string>
+    <string name="bluetooth_device_context_connect_advanced">"选项…"</string>
+    <string name="bluetooth_menu_advanced">"高级"</string>
+    <string name="bluetooth_advanced_titlebar">"高级蓝牙设置"</string>
+    <string name="bluetooth_empty_list_bluetooth_off">"要监测设备，请打开蓝牙功能。"</string>
+    <string name="bluetooth_connect_specific_profiles_title">"连接到..."</string>
+		
+		<string name="bluetooth_profile_a2dp">"媒体音频"</string>
+    <string name="bluetooth_profile_headset">"手机音频"</string>
+    <string name="bluetooth_profile_opp">"文件传输"</string>
+    <string name="bluetooth_profile_hid">"输入设备"</string>
+    <string name="bluetooth_profile_pan">"互联网访问"</string>
+    <string name="bluetooth_profile_pan_nap">"互联网连接共享"</string>
+		
+		 <string name="bluetooth_disconnect_a2dp_profile">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g>将与媒体音频断开连接。"</string>
+    <string name="bluetooth_disconnect_headset_profile">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g>将与免提音频断开连接。"</string>
+    <string name="bluetooth_disconnect_hid_profile">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g>将与输入设备断开连接。"</string>
+    <string name="bluetooth_disconnect_pan_user_profile">"将断开 <xliff:g id="DEVICE_NAME">%1$s</xliff:g> 的互联网访问。"</string>
+    <string name="bluetooth_disconnect_pan_nap_profile" product="tablet">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> 将断开而不再共享该平板电脑的互联网连接。"</string>
+    <string name="bluetooth_disconnect_pan_nap_profile" product="default" >"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> 将断开而不再共享该手机的互联网连接。"</string>
+   
+    <string name="bluetooth_device_advanced_title" >"已配对的蓝牙设备"</string>
+    <string name="bluetooth_device_advanced_online_mode_title">"连接"</string>
+    <string name="bluetooth_device_advanced_online_mode_summary">"连接到蓝牙设备"</string>
+    <string name="bluetooth_device_advanced_profile_header_title">"个人资料"</string>
+    <string name="bluetooth_device_advanced_rename_device">"重命名"</string>
+    
+    <string name="bluetooth_device_advanced_enable_opp_title">"允许传输传入的文件"</string>
+    <string name="bluetooth_a2dp_profile_summary_connected">"已连接到媒体音频"</string>
+    <string name="bluetooth_headset_profile_summary_connected">"已连接到手机音频"</string>
+    <string name="bluetooth_opp_profile_summary_connected">"已连接到文件传输服务器"</string>
+    <string name="bluetooth_opp_profile_summary_not_connected">"未连接到文件传输服务器"</string>
+    <string name="bluetooth_hid_profile_summary_connected">"已连接到输入设备"</string>
+    <string name="bluetooth_pan_user_profile_summary_connected">"连接到设备以访问互联网"</string>
+    <string name="bluetooth_pan_nap_profile_summary_connected">"与设备共享本地互联网连接"</string>
+    <string name="bluetooth_a2dp_profile_summary_use_for">"用于媒体音频"</string>
+    <string name="bluetooth_headset_profile_summary_use_for">"用于手机音频"</string>
+    <string name="bluetooth_opp_profile_summary_use_for">"用于文件传输"</string>
+    <string name="bluetooth_hid_profile_summary_use_for">"用于输入"</string>
+    <string name="bluetooth_pan_profile_summary_use_for">"用于访问互联网"</string>
+		<string name="bluetooth_dock_settings">"底座设置"</string>
+    <string name="bluetooth_dock_settings_title">"底座用于音频"</string>
+    <string name="bluetooth_dock_settings_headset">"将底座用作免提电话"</string>
+    <string name="bluetooth_dock_settings_a2dp">"用于音乐和媒体"</string>
+    <string name="bluetooth_dock_settings_remember">"记住设置"</string>
+    
+    <string name="bluetooth_connected">"已连接"</string>
+    <string name="bluetooth_connected_no_headset">"已连接（无手机）"</string>
+    <string name="bluetooth_connected_no_a2dp">"已连接（无媒体）"</string>
+    <string name="bluetooth_connected_no_headset_no_a2dp">"已连接（没有手机或媒体信号）"</string>
+    <string name="bluetooth_disconnected">"已断开连接"</string>
+    <string name="bluetooth_disconnecting">"正在断开连接..."</string>
+    <string name="bluetooth_connecting">"正在连接..."</string>
+		<string name="bluetooth_unknown"></string>
+		
+		<string name="bluetooth_pairing">"正在配对..."</string>
+    <string name="bluetooth_device">"未命名的蓝牙设备"</string>
+    <string name="bluetooth_disconnect_title">"断开连接？"</string>
+		<string name="bluetooth_is_discoverable_always">"让附近所有的蓝牙设备均可检测到"</string>
+		<string name="bluetooth_is_discoverable">"让附近所有的蓝牙设备均可检测到（<xliff:g id="DISCOVERABLE_TIME_PERIOD">%1$s</xliff:g>）"</string>
+		<string name="bluetooth_only_visible_to_paired_devices">"仅让已配对的设备检测到"</string>
+		<string name="bluetooth_not_visible_to_other_devices">"不让其他蓝牙设备检测到"</string>
+		<string name="progress_scanning">"正在搜索"</string>
+		<string name="bluetooth_no_devices_found">"未在附近找到蓝牙设备。"</string>
+		<string name="bluetooth_disconnect_all_profiles">"此操作将会断开您与以下设备的连接：&lt;br&gt;&lt;b&gt;<xliff:g id="DEVICE_NAME">%1$s</xliff:g>&lt;/b&gt;"</string>
+		
+		<string name="turn_on">已打开</string>
+		<string name="turning_on">正在打开...</string>
+		<string name="turn_off">已关闭</string>
+		<string name="turning_off">正在关闭中</string>
+
+		<string name="dlg_cancel">取消</string>
+		<string name="open_fail">设备打开失败!</string>
+		<string name="no_device">没有扫描到设备</string>
+		
+		<string name="using_static_ip">(使用静态IP)</string>
+</resources>

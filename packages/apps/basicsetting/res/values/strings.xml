@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="settings">Setting</string>
+    <string name="wifi_setting">Wifi Setting</string>
+    <string name="bluetooth_setting">Bluetooth Setting</string>
+    <string name="display_setting">Display Setting</string>
+    <string name="system_setting">System Information</string>
+    <string name="advance_setting">Advance Setting</string>
+    <string name="device_switch">Switch</string>
+    <string name="wifi_wps_overlap_error">Another Wi-Fi protected session was detected. Try again in a few minutes.</string>
+	<string name="disabled">Disabled</string>
+
+	<string name="wifi_remembered">Saved</string>
+	
+	<!-- Do not translate.  Concise terminology for wifi with WEP security -->
+    <string name="wifi_security_short_wep">WEP</string>
+    <!-- Do not translate.  Concise terminology for wifi with WPA security -->
+    <string name="wifi_security_short_wpa">WPA</string>
+    <!-- Do not translate.  Concise terminology for wifi with WPA2 security -->
+    <string name="wifi_security_short_wpa2">WPA2</string>
+    <!-- Do not translate.  Concise terminology for wifi with both WPA/WPA2 security -->
+    <string name="wifi_security_short_wpa_wpa2">WPA/WPA2</string>
+    <!-- Do not translate.  Concise terminology for wifi with unknown PSK type -->
+    <string name="wifi_security_short_psk_generic">@string/wifi_security_short_wpa_wpa2</string>
+    <!-- Do not translate.  Concise terminology for wifi with 802.1x EAP security -->
+    <string name="wifi_security_short_eap">802.1x</string>
+	
+	<!-- Used in Wi-Fi settings dialogs when Wi-Fi does not have any security. -->
+    <string name="wifi_security_none">None</string>
+
+    <!-- Do not translate.  Terminology for wifi with WEP security -->
+    <string name="wifi_security_wep">WEP</string>
+    <!-- Do not translate.  Terminology for wifi with WPA security -->
+    <string name="wifi_security_wpa">WPA PSK</string>
+    <!-- Do not translate.  Terminology for wifi with WPA2 security -->
+    <string name="wifi_security_wpa2">WPA2 PSK</string>
+    <!-- Do not translate.  Terminology for wifi with both WPA/WPA2 security, or unknown -->
+    <string name="wifi_security_wpa_wpa2">WPA/WPA2 PSK</string>
+    <!-- Do not translate.  Terminology for wifi with unknown PSK type -->
+    <string name="wifi_security_psk_generic">@string/wifi_security_wpa_wpa2</string>
+    <!-- Do not translate.  Concise terminology for wifi with 802.1x EAP security -->
+    <string name="wifi_security_eap">802.1x EAP</string>
+   
+    <string name="wifi_fail_to_scan">Can\'t scan for networks</string>
+    <string name="wifi_not_in_range">Not in range</string>
+    <string name="wifi_disabled_password_failure">Authentication problem</string>
+    <!-- Substring of status line when Wi-Fi Protected Setup (WPS) is available and
+         string is listed first -->
+    <string name="wifi_wps_available_first_item">Protected network available</string>
+    <!-- Substring of wifi status when Wi-Fi Protected Setup (WPS) is available and
+         string is listed after a wifi_secured_* string-->
+    <string name="wifi_wps_available_second_item">\u0020(protected network available)</string>
+    <string name="wifi_secured_first_item">Secured with <xliff:g id="wifi_security_short">%1$s</xliff:g></string>
+    <!-- Substring of wifi status for wifi with authentication.  This version is for when the
+         string is not first in the list (lowercase in english) -->
+    <string name="wifi_secured_second_item">, secured with <xliff:g id="wifi_security_short">%1$s</xliff:g></string>
+
+
+    <!-- Label for the SSID of the network -->
+    <string name="wifi_ssid">Network SSID</string>
+    <!-- Label for the security of the connection -->
+    <string name="wifi_security">Security</string>
+
+	<!-- Label for the EAP method of the network -->
+    <string name="wifi_eap_method">EAP method</string>
+
+    <string name="please_select_phase2">Phase 2 authentication</string>
+
+    <string name="wifi_eap_ca_cert">CA certificate</string>
+    <!-- Label for the EAP user certificate of the network -->
+    <string name="wifi_eap_user_cert">User certificate</string>
+
+    <string name="wifi_eap_identity">Identity</string>
+    <!-- Label for the EAP anonymous identity of the network -->
+    <string name="wifi_eap_anonymous">Anonymous identity</string>
+    <!-- Label for the password of the secured network -->
+    <string name="wifi_password">Password</string>
+    <!-- Label for the check box to show password -->
+    <string name="wifi_show_password">Show password</string>
+    <!-- Label for the spinner to show ip settings [CHAR LIMIT=25] -->
+    <string name="wifi_ip_settings">IP settings</string>
+    <!-- Hint for unchanged fields -->
+    <string name="wifi_unchanged">(unchanged)</string>
+    <!-- Hint for unspecified fields -->
+    <string name="wifi_unspecified">(unspecified)</string>
+    <!-- Status for networks disabled for unknown reason -->
+    <string name="wifi_disabled_generic">Disabled</string>
+    <!-- Status for networked disabled from a DNS or DHCP failure -->
+    <string name="wifi_disabled_network_failure">Avoided poor Internet connection</string>
+    <!-- Heading in the Wi-Fi dialog box when we display a reason for disabling a connection -->
+    <string name="wifi_disabled_heading"></string>
+	<string name="wifi_show_advanced">Show advanced options</string>
+    <!-- Label for network setup [CHAR LIMIT=50] -->
+    <string name="wifi_network_setup">WPS</string>
+    <!-- Label for the text view for WPS pin input [CHAR LIMIT=50] -->
+    <string name="wifi_wps_pin">Type PIN from access point</string>
+    <!-- Title for the WPS setup dialog [CHAR LIMIT=50] -->
+    <string name="wifi_wps_setup_title">WPS setup</string>
+    <!-- Text displayed in the WPS pin display dialog [CHAR LIMIT=75] -->
+    <string name="wifi_wps_pin_output">Type the PIN <xliff:g id="wps_pin">%1$s</xliff:g> on the access point</string>
+    <!-- Text displayed when WPS setup is in progress [CHAR LIMIT=75] -->
+    <string name="wifi_wps_in_progress">WPS is already in progress and can take tens of seconds to complete</string>
+    <!-- Text displayed when WPS fails to start [CHAR LIMIT=75] -->
+    <string name="wifi_wps_failed">Couldn\'t start WPS, try again.</string>
+    <!-- Label for the signal strength of the connection -->
+    <string name="wifi_signal">Signal strength</string>
+    <!-- Label for the status of the connection -->
+    <string name="wifi_status">Status</string>
+    <!-- Label for the link speed of the connection -->
+    <string name="wifi_speed">Link speed</string>
+    <!-- HTTP proxy settings title -->
+    <string name="proxy_settings_title">Proxy settings</string>
+    <!-- HTTP proxy settings. Button to clear the proxy box. -->
+    <string name="proxy_clear_text">Clear</string>
+    <!-- HTTP proxy settings. The port number label. -->
+    <string name="proxy_port_label">Proxy port</string>
+    <!-- HTTP proxy settings. The hint text field for port. -->
+    <string name="proxy_port_hint" translatable="false">8080</string>
+    <string name="proxy_warning_limited_support">The HTTP proxy is used by the browser but may not be used by the other apps.</string>
+    <!-- HTTP proxy settings. The text field for the hostname -->
+    <string name="proxy_hostname_label">Proxy hostname</string>
+    <!-- HTTP proxy settings. The hint text field for the hostname. [CHAR LIMIT=50] -->
+    <string name="proxy_hostname_hint">proxy.example.com</string>
+    <!-- HTTP proxy settings. Title if there is an error-->
+    <string name="proxy_error">Attention</string>
+    <string name="proxy_exclusionlist_label">Bypass proxy for</string>
+    <!-- HTTP proxy settings. The hint text for proxy exclusion list. [CHAR LIMIT=50]-->
+    <string name="proxy_exclusionlist_hint">example.com,mycomp.test.com,localhost</string>
+     <string name="wifi_ip_address">IP address</string>
+    <!-- Hint text for the IP address -->
+    <string name="wifi_ip_address_hint" translatable="false">192.168.1.128</string>
+    <string name="wifi_gateway">Gateway</string>
+    <!-- Hint text for the gateway -->
+    <string name="wifi_gateway_hint" translatable="false">192.168.1.1</string>
+    <!-- Label for the network prefix of the network [CHAR LIMIT=25]-->
+    <string name="wifi_network_prefix_length">Network prefix length</string>
+    <!-- Hint text for network prefix length -->
+    <string name="wifi_network_prefix_length_hint" translatable="false">24</string>
+    <string name="wifi_dns1">DNS 1</string>
+    <!-- Hint text for DNS -->
+    <string name="wifi_dns1_hint" translatable="false">8.8.8.8</string>
+    <!-- Label for the DNS (second one)-->
+    <string name="wifi_dns2">DNS 2</string>
+    <!-- Hint text for DNS -->
+    <string name="wifi_dns2_hint" translatable="false">4.4.4.4</string>
+    <string name="wifi_add_network">Add network</string>
+
+    <!-- Button label to connect to a Wi-Fi network -->
+    <string name="wifi_connect">Connect</string>
+    <!-- Button label to delete a Wi-Fi network -->
+    <string name="wifi_forget">Forget</string>
+    <!-- Button label to save a Wi-Fi network configuration -->
+    <string name="wifi_save">Save</string>
+    <!-- Button label to dismiss the dialog -->
+    <string name="wifi_cancel">Cancel</string>
+
+    <string name="wifi_disabled_help">The network was avoided due to poor connection. Turn off this behavior from the Settings &gt; Wi-Fi screen, Advanced menu item.</string>
+
+	<!-- HTTP proxy settings. Error msg -->
+    <string name="proxy_error_invalid_port">The port you typed isn\'t valid.</string>
+    <string name="wifi_ip_settings_invalid_ip_address">Type a valid IP address.</string>
+    <!-- Error message if the network prefix length is not valid [CHAR LIMIT=50]-->
+    <string name="wifi_ip_settings_invalid_network_prefix_length">Type a network prefix length between 0 and 32.</string>
+    <!-- Error message if the gateway is not valid [CHAR LIMIT=50]-->
+    <string name="wifi_ip_settings_invalid_gateway">Type a valid gateway address.</string>
+    <!-- Error message if the dns is not valid [CHAR LIMIT=50]-->
+    <string name="wifi_ip_settings_invalid_dns">Type a valid DNS address.</string>
+
+    <string name="wifi_setup_eap_not_supported">You can\'t configure an EAP Wi-Fi connection during setup. After setup, you can do that in Settings &gt; Wireless &amp; networks.</string>
+	<string name="wifi_setup_title">Wi-Fi setup</string>
+	<string name="wifi_setup_add_network">Add network</string>
+	<string name="wifi_setup_back">Back</string>
+	<string name="wifi_setup_connect">Connect</string>
+	<string name="wifi_setup_refresh_list">Refresh list</string>
+	<string name="wifi_setup_skip">Skip</string>
+	
+	
+    <string name="abc">abc</string>
+	<string name="ABC">ABC</string>
+	<string name="toke">+=#</string>
+
+	<string name="space">Space</string>
+	<string name="delete">Delete</string>
+	<string name="clear">Clear</string>
+
+	<string name="password">Password</string>
+	<string name="submit">Submit</string>
+
+	<string name="version">Version Information</string>
+	<string name="storage">Storage Information</string>
+	<string name="network">Network Information</string>
+
+	<string name="mode_number">Mode Number</string>
+	<string name="android_version">Android Version</string>
+	<string name="kernel_version">Kernel Version</string>
+	<string name="build_number">Build Number</string>
+
+	<string name="wifi">Wifi</string>
+	<string name="ethernet">Ethernet</string>
+	<string name="mac_address">MAC Address</string>
+	<string name="ip_address">IP Address</string>
+	<string name="gateway">GateWay</string>
+	<string name="netmask">NetMask</string>
+	<string name="dns1">DNS1</string>
+	<string name="dns2">DNS2</string>
+
+	<string name="connected">Connected</string>
+	<string name="connecting">Connecting</string>
+	<string name="disconnected">Disconnected</string>
+	<string name="status_unavailable">Unavailable</string>
+	<string name="read_only">\u0020(Read-only)</string>
+
+	<string name="sdcard">SD Card</string>
+	<string name="nand_flash">Nand Flash</string>
+	<string name="internal_storage">Internal Storage</string>
+	<string name="total_space">Total Space</string>
+	<string name="available_space">Available</string>
+
+	    <!-- Bluetooth settings -->
+    <!-- Bluetooth settings check box title on Main Settings screen -->
+    <string name="bluetooth_quick_toggle_title">Bluetooth</string>
+    <!-- Bluetooth settings check box summary for turning on bluetooth -->
+    <string name="bluetooth_quick_toggle_summary">Turn on Bluetooth</string>
+    <!--Used as title on second screen after selecting Bluetooth settings -->
+    <string name="bluetooth_settings">Bluetooth</string>
+    <!--Wireless controls screen, settings title for the item to take you to the bluetooth settings screen -->
+    <string name="bluetooth_settings_title">Bluetooth</string>
+    <!--Wireless controls screen, settings summary for the item tot ake you to the bluetooth settings screen -->
+    <string name="bluetooth_settings_summary">Manage connections, set device name &amp; discoverability</string>
+
+    <!-- ======================================================================================= -->
+    <!-- Note: The opening brackets of HTML style tags are escaped (e.g. "<b>" is "&lt;b>") in   -->
+    <!--   the following resources to enable formatting followed by HTML styling, as described   -->
+    <!--   here:  http://developer.android.com/guide/topics/resources/string-resource.html       -->
+    <!-- ======================================================================================= -->
+
+    <!-- Title for the dialog to enter PIN. [CHAR LIMIT=40] -->
+    <string name="bluetooth_pairing_request">Bluetooth pairing request</string>
+
+    <!-- Message when bluetooth dialog for pin entry is showing. [CHAR LIMIT=NONE] -->
+    <string name="bluetooth_enter_pin_msg">To pair with:<xliff:g id="bold">&lt;br>&lt;b></xliff:g><xliff:g id="device_name">%1$s</xliff:g><xliff:g id="end_bold">&lt;/b>&lt;br>&lt;br></xliff:g>Type the device\'s required PIN:</string>
+
+    <!-- Message when bluetooth dialog for passkey entry is showing. [CHAR LIMIT=NONE] -->
+    <string name="bluetooth_enter_passkey_msg">To pair with:<xliff:g id="bold">&lt;br>&lt;b></xliff:g><xliff:g id="device_name">%1$s</xliff:g><xliff:g id="end_bold">&lt;/b>&lt;br>&lt;br></xliff:g>Type the device\'s required passkey:</string>
+
+    <!-- Checkbox label for alphanumeric PIN entry (default is numeric PIN). [CHAR LIMIT=50] -->
+    <string name="bluetooth_enable_alphanumeric_pin">PIN contains letters or symbols</string>
+
+    <!-- Bluetooth PIN hint text (below the text entry box). [CHAR LIMIT=30] -->
+    <string name="bluetooth_pin_values_hint">Usually 0000 or 1234</string>
+
+    <!-- Pairing dialog text to remind user to enter the PIN on the other device. [CHAR LIMIT=NONE] -->
+    <string name="bluetooth_enter_pin_other_device">You may also need to enter this PIN on the other device.</string>
+    <!-- Pairing dialog text to remind user to enter the passkey on the other device. [CHAR LIMIT=NONE] -->
+    <string name="bluetooth_enter_passkey_other_device">You may also need to enter this passkey on the other device.</string>
+
+    <!-- Message for confirmation of passkey to complete pairing. [CHAR LIMIT=NONE] -->
+    <string name="bluetooth_confirm_passkey_msg">To pair with:&lt;br>&lt;b><xliff:g id="device_name">%1$s</xliff:g>&lt;/b>&lt;br>&lt;br>Make sure it is showing this passkey:&lt;br>&lt;b><xliff:g id="passkey">%2$s</xliff:g>&lt;/b></string>
+
+    <!-- Message when bluetooth incoming pairing request for (2.1 devices) dialog is showing -->
+    <string name="bluetooth_incoming_pairing_msg">From:&lt;br>&lt;b><xliff:g id="device_name">%1$s</xliff:g>&lt;/b>&lt;br>&lt;br>Pair with this device?</string>
+
+    <!-- Message when bluetooth dialog when passkey or pin needs to be displayed. -->
+    <string name="bluetooth_display_passkey_pin_msg">To pair with:<xliff:g id="bold1">&lt;br>&lt;b></xliff:g><xliff:g id="device_name">%1$s</xliff:g><xliff:g id="end_bold1">&lt;/b>&lt;br>&lt;br></xliff:g>Type on it:<xliff:g id="bold2">&lt;br>&lt;b></xliff:g><xliff:g id="passkey">%2$s</xliff:g><xliff:g id="end_bold2">&lt;/b></xliff:g>, then press Return or Enter.</string>
+
+    <!-- Button text for accepting an incoming pairing request. [CHAR LIMIT=20] -->
+    <string name="bluetooth_pairing_accept">Pair</string>
+    <!-- Button text for declining an incoming pairing request. [CHAR LIMIT=20] -->
+    <string name="bluetooth_pairing_decline">Cancel</string>
+
+    <!-- Title for BT error dialogs. -->
+    <string name="bluetooth_error_title"></string>
+    <!-- Message for the error dialog when BT pairing fails generically. -->
+    <string name="bluetooth_pairing_error_message">Couldn\'t pair with <xliff:g id="device_name">%1$s</xliff:g>.</string>
+    <!-- Message for the error dialog when BT pairing fails because the PIN /
+    Passkey entered is incorrect. -->
+    <string name="bluetooth_pairing_pin_error_message">Couldn\'t pair with <xliff:g id="device_name">%1$s</xliff:g> because of an incorrect PIN or passkey.</string>
+    <!-- Message for the error dialog when BT pairing fails because the other device is down. -->
+    <string name="bluetooth_pairing_device_down_error_message">Can\'t communicate with <xliff:g id="device_name">%1$s</xliff:g>.</string>
+    <!-- Message for the error dialog when BT pairing fails because the other device rejected the pairing. -->
+    <string name="bluetooth_pairing_rejected_error_message">Pairing rejected by <xliff:g id="device_name">%1$s</xliff:g>.</string>
+
+    <!-- Message for the error dialog when BT connecting operation fails generically. -->
+    <string name="bluetooth_connecting_error_message">There was a problem connecting to <xliff:g id="device_name">%1$s</xliff:g>.</string>
+
+    <!-- Bluetooth settings: The title of the preference (list item) that initiates a scan for devices -->
+    <string name="bluetooth_preference_scan_title">Scan for devices</string>
+    <!-- Bluetooth settings: The title of the action button that initiates a search for nearby devices [CHAR LIMIT=20] -->
+    <string name="bluetooth_search_for_devices">Search for devices</string>
+    <!-- Bluetooth settings: The title of the action button while a search for nearby devices is in progress [CHAR LIMIT=20] -->
+    <string name="bluetooth_searching_for_devices">Searching\u2026</string>
+    <!-- Bluetooth settings: The sub heading for device settings. [CHAR LIMIT=30] -->
+    <string name="bluetooth_preference_device_settings">Device settings</string>
+    <!-- Bluetooth settings: The sub heading for devices which have already been paired with this device. [CHAR LIMIT=40] -->
+    <string name="bluetooth_preference_paired_devices">Paired devices</string>
+    <!-- Bluetooth settings: The sub heading for available devices during and after scanning. [CHAR LIMIT=40] -->
+    <string name="bluetooth_preference_found_devices">Available devices</string>
+    <!-- Bluetooth settings.  Context menu item for a device.  Action will connect to all profiles on the device. -->
+    <string name="bluetooth_device_context_connect">Connect</string>
+    <!-- Bluetooth settings.  Context menu item for a device.  Action will disconnect from all profiles on the device. -->
+    <string name="bluetooth_device_context_disconnect">Disconnect</string>
+    <!-- Bluetooth settings.  Context menu item for a device.  Action will first pair, and then connect to all profiles on the device. -->
+    <string name="bluetooth_device_context_pair_connect">Pair &amp; connect</string>
+    <!-- Bluetooth settings.  Context menu item for a device.  Action will remove pairing with the device. -->
+    <string name="bluetooth_device_context_unpair">Unpair</string>
+    <!-- Bluetooth settings.  Context menu item for a device.  Action will disconnect and remove pairing with the device. -->
+    <string name="bluetooth_device_context_disconnect_unpair">Disconnect &amp; unpair</string>
+    <!-- Bluetooth settings.  Context menu item for a device.  Action will take the user to another screen where they can choose exactly which profiles to connect to. -->
+    <string name="bluetooth_device_context_connect_advanced">Options\u2026</string>
+    <!-- Bluetooth settings.  Menu option to Bluetooth advanced settings [CHAR LIMIT=20]-->
+    <string name="bluetooth_menu_advanced">Advanced</string>
+    <!-- Bluetooth settings. Title of the advanced bluetooth settings screen [CHAR LIMIT=30]-->
+    <string name="bluetooth_advanced_titlebar">Advanced Bluetooth</string>
+    <!-- Bluetooth settings. Text displayed when Bluetooth is off and device list is empty [CHAR LIMIT=50]-->
+    <string name="bluetooth_empty_list_bluetooth_off">To see devices, turn Bluetooth on.</string>
+
+
+    <!-- Bluetooth settings.  The title of the screen to pick which profiles to connect to on the device.  For example, headphones may have both A2DP and headset, this allows the user to choose which one he wants to connect to. -->
+    <string name="bluetooth_connect_specific_profiles_title">Connect to\u2026</string>
+
+    <!-- Bluetooth settings.  The user-visible string that is used whenever referring to the A2DP profile. -->
+    <string name="bluetooth_profile_a2dp">Media audio</string>
+    <!-- Bluetooth settings.  The user-visible string that is used whenever referring to the headset or handsfree profile. -->
+    <string name="bluetooth_profile_headset">Phone audio</string>
+    <!-- Bluetooth settings.  The user-visible string that is used whenever referring to the OPP profile. -->
+    <string name="bluetooth_profile_opp">File transfer</string>
+    <!-- Bluetooth settings. The user-visible string that is used whenever referring to the HID profile. -->
+    <string name="bluetooth_profile_hid">Input device</string>
+    <!-- Bluetooth settings. The user-visible string that is used whenever referring to the PAN profile (accessing Internet through remote device). [CHAR LIMIT=40]-->
+    <string name="bluetooth_profile_pan">Internet access</string>
+    <!-- Bluetooth settings. The user-visible string that is used whenever referring to the PAN profile (sharing this device's Internet connection). [CHAR LIMIT=40]-->
+    <string name="bluetooth_profile_pan_nap">Internet connection sharing</string>
+
+    <!-- Bluetooth settings.  Message for disconnecting from the A2DP profile. [CHAR LIMIT=80] -->
+    <string name="bluetooth_disconnect_a2dp_profile"><xliff:g id="device_name">%1$s</xliff:g> will be disconnected from media audio.</string>
+    <!-- Bluetooth settings.  Message for disconnecting from the headset profile. [CHAR LIMIT=80] -->
+    <string name="bluetooth_disconnect_headset_profile"><xliff:g id="device_name">%1$s</xliff:g> will be disconnected from handsfree audio.</string>
+    <!-- Bluetooth settings.  Message for disconnecting from the HID profile. [CHAR LIMIT=80] -->
+    <string name="bluetooth_disconnect_hid_profile"><xliff:g id="device_name">%1$s</xliff:g> will be disconnected from input device.</string>
+    <!-- Bluetooth settings.  Message for disconnecting from the PAN profile (user role). [CHAR LIMIT=80] -->
+    <string name="bluetooth_disconnect_pan_user_profile">Internet access via <xliff:g id="device_name">%1$s</xliff:g> will be disconnected.</string>
+    <!-- Bluetooth settings.  Message for disconnecting from the PAN profile (NAP role). [CHAR LIMIT=80] -->
+    <string name="bluetooth_disconnect_pan_nap_profile" product="tablet"><xliff:g id="device_name">%1$s</xliff:g> will be disconnected from sharing this tablet\'s Internet connection.</string>
+    <!-- Bluetooth settings.  Message for disconnecting from the PAN profile (NAP role). [CHAR LIMIT=80] -->
+    <string name="bluetooth_disconnect_pan_nap_profile" product="default"><xliff:g id="device_name">%1$s</xliff:g> will be disconnected from sharing this phone\'s Internet connection.</string>
+
+    <!-- Bluetooth settings.  Connection options screen.  The title of the screen. [CHAR LIMIT=40] -->
+    <string name="bluetooth_device_advanced_title">Paired Bluetooth device</string>
+    <!-- Bluetooth settings.  Connection options screen.  The title of the checkbox that controls whether the device is in "online" mode or "offline" mode.  This essentially is the checkbox that controls whether any checks / unchecks on a profile should be applied immediately, or next time the device is connected. -->
+    <string name="bluetooth_device_advanced_online_mode_title">Connect</string>
+    <!-- Bluetooth settings.  Connection options screen.  The summary of the online mode checkbox.  This describes what the setting does in the context of the screen. -->
+    <string name="bluetooth_device_advanced_online_mode_summary">Connect to Bluetooth device</string>
+    <!-- Bluetooth settings.  Connection options screen.  The title of the header that is above all of the profiles. -->
+    <string name="bluetooth_device_advanced_profile_header_title">Profiles</string>
+    <!-- Bluetooth settings. Connection options screen. Title for option to rename the device. [CHAR LIMIT=30] -->
+    <string name="bluetooth_device_advanced_rename_device">Rename</string>
+    <!-- Bluetooth settings. Connection options screen. Title for checkbox to enable incoming file transfers [CHAR LIMIT=30] -->
+    <string name="bluetooth_device_advanced_enable_opp_title">Allow incoming file transfers</string>
+    <!-- Bluetooth settings.  Connection options screen.  The summary for the A2DP checkbox preference when A2DP is connected. -->
+    <string name="bluetooth_a2dp_profile_summary_connected">Connected to media audio</string>
+    <!-- Bluetooth settings.  Connection options screen.  The summary for the headset checkbox preference when headset is connected. -->
+    <string name="bluetooth_headset_profile_summary_connected">Connected to phone audio</string>
+    <!-- Bluetooth settings.  Connection options screen.  The summary for the OPP checkbox preference when OPP is connected. -->
+    <string name="bluetooth_opp_profile_summary_connected">Connected to file transfer server</string>
+    <!-- Bluetooth settings.  Connection options screen.  The summary for the OPP checkbox preference when OPP is not connected. -->
+    <string name="bluetooth_opp_profile_summary_not_connected">Not connected to file transfer server</string>
+    <!-- Bluetooth settings. Connection options screen. The summary for the HID checkbox preference when HID is connected. -->
+    <string name="bluetooth_hid_profile_summary_connected">Connected to input device</string>
+    <!-- Bluetooth settings. Connection options screen. The summary for the checkbox preference when PAN is connected (user role). [CHAR LIMIT=25]-->
+    <string name="bluetooth_pan_user_profile_summary_connected">Connected to device for Internet access</string>
+    <!-- Bluetooth settings. Connection options screen. The summary for the checkbox preference when PAN is connected (NAP role). [CHAR LIMIT=25]-->
+    <string name="bluetooth_pan_nap_profile_summary_connected">Sharing local Internet connection with device</string>
+	   <!-- Bluetooth settings.  Connection options screen.  The summary for the A2DP checkbox preference that describes how checking it will set the A2DP profile as preferred. -->
+    <string name="bluetooth_a2dp_profile_summary_use_for">Use for media audio</string>
+    <!-- Bluetooth settings.  Connection options screen.  The summary for the headset checkbox preference that describes how checking it will set the headset profile as preferred. -->
+    <string name="bluetooth_headset_profile_summary_use_for">Use for phone audio</string>
+    <!-- Bluetooth settings.  Connection options screen.  The summary for the OPP checkbox preference that describes how checking it will set the OPP profile as preferred. -->
+    <string name="bluetooth_opp_profile_summary_use_for">Use for file transfer</string>
+    <!-- Bluetooth settings. Connection options screen. The summary
+         for the HID checkbox preference that describes how checking it
+         will set the HID profile as preferred. -->
+    <string name="bluetooth_hid_profile_summary_use_for">Use for input</string>
+    <!-- Bluetooth settings. Connection options screen. The summary
+         for the PAN checkbox preference that describes how checking it
+         will set the PAN profile as preferred. -->
+    <string name="bluetooth_pan_profile_summary_use_for">Use for Internet access</string>
+
+    <!-- Bluetooth settings.  Dock Setting Title -->
+    <string name="bluetooth_dock_settings">Dock Settings</string>
+    <!-- Bluetooth settings.  Dock Setting Dialog Title -->
+    <string name="bluetooth_dock_settings_title">Use dock for audio</string>
+    <!-- Bluetooth settings.  Dock Setting Dialog - Checkbox selection 1: Use dock as speaker phone -->
+    <string name="bluetooth_dock_settings_headset">As speaker phone</string>
+    <!-- Bluetooth settings.  Dock Setting Dialog - Checkbox selection 2: Use dock for media audio -->
+    <string name="bluetooth_dock_settings_a2dp">For music and media</string>
+    <!-- Bluetooth settings.  Dock Setting Dialog - Remember setting and don't ask user again -->
+    <string name="bluetooth_dock_settings_remember">Remember settings</string>
+
+    <!-- Bluetooth settings.  Message when connected to a device. [CHAR LIMIT=40] -->
+    <string name="bluetooth_connected">Connected</string>
+    <!-- Bluetooth settings.  Message when connected to a device, except for phone audio. [CHAR LIMIT=40] -->
+    <string name="bluetooth_connected_no_headset">Connected (no phone)</string>
+    <!-- Bluetooth settings.  Message when connected to a device, except for media audio. [CHAR LIMIT=40] -->
+    <string name="bluetooth_connected_no_a2dp">Connected (no media)</string>
+    <!-- Bluetooth settings.  Message when connected to a device, except for phone/media audio. [CHAR LIMIT=40] -->
+    <string name="bluetooth_connected_no_headset_no_a2dp">Connected (no phone or media)</string>
+    <string name="bluetooth_disconnected">Disconnected</string>
+    <!-- Bluetooth settings.  Message when disconnecting from a device -->
+    <string name="bluetooth_disconnecting">Disconnecting\u2026</string>
+    <!-- Bluetooth settings.  Message when connecting to a device -->
+    <string name="bluetooth_connecting">Connecting\u2026</string>
+
+    <string name="bluetooth_unknown" />
+    <!--Bluetooth settings screen, summary text under individual Bluetooth devices when pairing -->
+    <string name="bluetooth_pairing">Pairing\u2026</string>
+    <!--Bluetooth settings screen, summary text for Bluetooth device with no name -->
+    <string name="bluetooth_device">Unnamed Bluetooth device</string>
+    <string name="bluetooth_disconnect_title">Disconnect?</string>
+    <string name="bluetooth_is_discoverable_always">Visible to all nearby Bluetooth devices</string>
+    <string name="bluetooth_is_discoverable">Visible to all nearby Bluetooth devices (<xliff:g id="discoverable_time_period">%1$s</xliff:g>)</string>
+	<string name="bluetooth_only_visible_to_paired_devices">Only visible to paired devices</string>
+	<string name="bluetooth_not_visible_to_other_devices">Not visible to other Bluetooth devices</string>
+	<string name="progress_scanning">Searching</string>
+	<string name="bluetooth_no_devices_found">No nearby Bluetooth devices were found.</string>
+	<string name="bluetooth_disconnect_all_profiles">This will end your connection with:&lt;br>&lt;b><xliff:g id="device_name">%1$s</xliff:g>&lt;/b></string>
+
+	<string name="turn_on">turn on</string>
+	<string name="turning_on">turning on</string>
+	<string name="turn_off">turn off</string>
+	<string name="turning_off">turning off</string>
+
+	<string name="dlg_cancel">Cancel</string>
+	<string name="open_fail">Device open failed!</string>
+	<string name="no_device">No device is found</string>
+
+	<string name="using_static_ip">(using static IP)</string>
+
+	<string name="wifi_failed_connect_message">Failed to connect to network</string>
+	<string name="wifi_failed_save_message">Failed to save network</string>
+	<string name="wifi_failed_forget_message">Failed to forget network</string>
+
+
+	<string name="help_label">Help</string>
+
+	<string name="proxy_action_text">Done</string>
+	<string name="proxy_defaultView_text">Restore defaults</string>
+	<string name="proxy_error_dismiss">OK</string>
+	<string name="proxy_error_invalid_host">The hostname you typed isn\'t valid.</string>
+	<string name="proxy_error_invalid_exclusion_list">The exclusion list you typed isn\'t properly formatted. Type a comma-separated list of excluded domains.</string>
+	<string name="proxy_error_empty_port">You must complete the port field.</string>
+	<string name="proxy_error_empty_host_set_port">The port field must be empty if the host field is empty.</string>
+	<string name="lock_settings_picker_title">Select screen lock</string>
+	<string name="version_error">SDK version is not support</string>
+</resources>

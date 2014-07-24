@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--$_FOR_ROCKCHIP_RBOX_$-->
+<!--$_rbox_$_modify_$_chenzhi_20120309: add for ethernet-->
+<!-- Copyright (C) 2008 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+  
+          http://www.apache.org/licenses/LICENSE-2.0
+  
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+        android:title="@string/ethernet_settings">
+<!--$_rbox_$_modify_$_lijiehong: change to support bluetooth checkbox-->
+	<CheckBoxPreference
+            android:key="ethernet"
+            android:title="@string/ethernet_quick_toggle_title"
+            android:summaryOn="@string/ethernet_quick_toggle_summary_on"
+            android:summaryOff="@string/ethernet_quick_toggle_summary_off"/>
+<!--$_rbox_$_modify_$ end-->
+        <!-- ethernet mac -->
+        <Preference android:key="ethernet_hw_addr" 
+                style="?android:preferenceInformationStyle"
+                android:title="@string/ethernet_hw_addr"
+                android:summary="@string/device_info_default"/>
+ 
+        <!-- ethernet ip address -->
+        <Preference android:key="ethernet_ip_addr" 
+                style="?android:preferenceInformationStyle"
+                android:title="@string/ethernet_ip_addr"
+                android:summary="@string/device_info_default"/>
+                
+        <!-- ethernet netmask -->
+        <Preference android:key="ethernet_netmask" 
+                style="?android:preferenceInformationStyle"
+                android:title="@string/ethernet_netmask"
+                android:summary="@string/device_info_default"/>
+                
+        <!-- ethernet gateway -->
+        <Preference android:key="ethernet_gateway" 
+                style="?android:preferenceInformationStyle"
+                android:title="@string/ethernet_gateway"
+                android:summary="@string/device_info_default"/>
+        
+        <!-- ethernet dns1 -->
+        <Preference android:key="ethernet_dns1" 
+                style="?android:preferenceInformationStyle"
+                android:title="@string/ethernet_dns1"
+                android:summary="@string/device_info_default"/>
+
+        <!-- ethernet dns2 -->
+        <Preference android:key="ethernet_dns2" 
+                style="?android:preferenceInformationStyle"
+                android:title="@string/ethernet_dns2"
+                android:summary="@string/device_info_default"/>
+<!--$_rbox_$_modify_$_huhaoqiang_20120616-->
+<!--$_rbox_$_modify_$_begin-->
+        <PreferenceScreen
+        android:key="ethernet_static_ip_settings"
+        android:title="@string/category_ethernet" >
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetPackage="com.android.settings"
+            android:targetClass="com.android.settings.ethernet.EthernetStaticIP" />
+    </PreferenceScreen>
+     <!--$_rbox_$_modify_$_end-->
+</PreferenceScreen>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/bk"
+    android:gravity="center">
+
+    <LinearLayout android:layout_width="fill_parent"
+			android:layout_height="0dp"
+			android:layout_weight="1"
+			android:orientation="horizontal"
+			android:gravity="center_vertical"
+			android:layout_marginLeft="20dip" 
+			android:focusable="false">
+
+	    <ImageView	
+	    	android:id="@+id/title_image"
+	    	android:layout_width="wrap_content"    		
+	    	android:layout_height="wrap_content"    		
+	    	android:src="@drawable/system"/>
+	    	
+	    <TextView android:id="@+id/title_text"    		
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="fill_parent"
+	    	android:textSize="50dp" 
+	    	android:gravity="center"
+	    	android:text="@string/system_setting"
+	    	android:textStyle="bold"
+	    	android:textColor="#FFFFFFFF"/>
+	</LinearLayout>
+
+	<ImageView	
+	    	android:layout_width="fill_parent"    		
+	    	android:layout_height="wrap_content" 
+	    	android:scaleType="fitXY"
+	    	android:layout_marginLeft="20dip" 
+	    	android:layout_marginRight="20dip" 
+	    	android:src="@drawable/line"/>
+
+	<TextView android:layout_width="fill_parent"
+		android:layout_height="0dp"
+		android:layout_weight="0.7"/>
+
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="0dp"
+		android:layout_weight="4"
+		android:layout_marginTop="30dip"
+		android:orientation="horizontal"
+		android:gravity="center"
+		>
+		
+		<TextView android:layout_width="0dp"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"/>
+
+		<Button android:id="@+id/version"
+			android:layout_width="0dp"
+			android:layout_height="fill_parent"
+			android:layout_weight="2"
+			android:text="@string/version"
+			android:textSize="30dp"
+			android:textColor="#ffffffff"
+			android:onClick="onClick"
+			android:focusable="true"
+			android:background="@drawable/button"
+			android:drawableTop="@drawable/version"
+			android:gravity="center"
+			android:paddingTop="40dip"
+			android:paddingBottom="10dip"
+			android:paddingLeft="10dip"
+			android:paddingRight="10dip"
+		/>
+		
+		<TextView android:layout_width="0dp"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"/>
+
+		<Button android:id="@+id/storage"
+			android:layout_width="0dp"
+			android:layout_height="fill_parent"
+			android:layout_weight="2"
+			android:text="@string/storage"
+			android:textSize="30dp"
+			android:textColor="#ffffffff"
+			android:onClick="onClick"
+			android:focusable="true"
+			android:background="@drawable/button"
+			android:drawableTop="@drawable/storage"
+			android:gravity="center"
+			android:paddingTop="40dip"
+			android:paddingBottom="10dip"
+			android:paddingLeft="10dip"
+			android:paddingRight="10dip"
+		/>
+
+		<TextView android:layout_width="0dp"
+			android:layout_height="fill_parent"
+			android:layout_weight="1.0"/>
+		
+	</LinearLayout>
+
+	
+	<TextView android:layout_width="fill_parent"
+		android:layout_height="0dp"
+		android:layout_weight="0.7"/>
+</LinearLayout>
+

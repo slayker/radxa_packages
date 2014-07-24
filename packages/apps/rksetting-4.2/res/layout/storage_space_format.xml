@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>  
+<RelativeLayout   
+        android:layout_width="fill_parent"   
+        xmlns:android="http://schemas.android.com/apk/res/android"   
+        android:orientation="vertical"  
+        android:layout_height="wrap_content"   
+        > 
+        <TextView   
+                android:layout_height="wrap_content"   
+                android:layout_width="fill_parent"   
+                android:id="@+id/storage_sort"   
+                android:textSize="30dip"
+                android:textColor="#00BFFF"
+                >  
+        </TextView>
+        
+		<TextView   
+                android:layout_height="wrap_content"   
+                android:layout_width="fill_parent"   
+                android:id="@+id/mount"   
+                android:textSize="25dip"
+                >  
+        </TextView>
+        <TextView   
+                android:layout_height="wrap_content"   
+                android:layout_width="fill_parent"   
+                android:id="@+id/format"
+				android:textSize="18dip"
+				android:gravity="right"
+				>  
+        </TextView>
+</RelativeLayout> 
+

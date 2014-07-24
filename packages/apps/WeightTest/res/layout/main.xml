@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        style="@style/layout_full"
+        android:orientation="vertical">
+        <LinearLayout 
+                style="@style/layout_vertical"
+                android:layout_weight="2"
+                android:orientation="horizontal">
+                 <View
+                         style="@style/layout_horizontal"
+                         android:background="#a4faf1"
+                         android:layout_weight="2"/>
+                 <View
+                         style="@style/layout_horizontal"
+                         android:background="#3a6554"
+                         android:layout_weight="2"/>
+                 <View
+                         style="@style/layout_horizontal"
+                         android:background="#f93946"
+                         android:layout_weight="2"/>
+                 <View
+                         style="@style/layout_horizontal"
+                         android:background="#7d031c"
+                         android:layout_weight="2"/>
+                 <View
+                         style="@style/layout_horizontal"
+                         android:background="#35000a"
+                         android:layout_weight="2"/> 
+        </LinearLayout> 
+        <LinearLayout 
+                style="@style/layout_vertical"
+                android:layout_weight="2"
+                android:orientation="vertical">
+                <TextView
+                         android:text="@string/hello"
+                         android:textSize = "18px"
+                         android:gravity="center|left"
+                         android:background="#a4faf1"
+                         android:layout_marginTop="5px"
+                         style="@style/layout_vertical"
+                         android:layout_weight="4"/>   
+                <TextView
+                         android:text="@string/hello"
+                         android:textSize = "20px"
+                         android:gravity="center|left"
+                	    android:layout_marginTop="5px"
+                         style="@style/layout_vertical"
+                         android:background="#f93946"
+                         android:layout_weight="4"/>  
+                 <TextView
+                         android:text="@string/hello"
+                         android:textSize = "20px"
+                         android:gravity="center|left"
+                         android:layout_marginTop="5px"
+                         style="@style/layout_vertical"
+                         android:background="#3a6554"
+                         android:layout_weight="4"/>
+                 <TextView
+                         android:text="@string/hello"
+                         android:textSize = "20px"
+                         android:gravity="center|left"
+                         android:layout_marginTop="5px"
+                         style="@style/layout_vertical"
+                         android:background="#7d031c"
+                         android:layout_weight="4"/>
+                 <TextView
+                         android:text="@string/hello"
+                         android:textSize = "20px"
+                         android:gravity="center|left"
+                         android:layout_marginTop="5px"
+                         style="@style/layout_vertical"
+                         android:background="#35000a"
+                         android:layout_weight="4"/>
+ 
+        </LinearLayout>
+	<GridView
+		android:id="@+id/GridView"
+
+	       android:layout_width ="fill_parent"  
+		android:layout_height ="0px" 
+              android:layout_weight="2"
+              android:orientation="horizontal"
+
+		android:numColumns="6" 
+		android:horizontalSpacing="10dp"
+		android:verticalSpacing="10dp"
+		android:stretchMode="columnWidth"
+		android:gravity="center"/>
+</LinearLayout>

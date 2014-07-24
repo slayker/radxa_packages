@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="40dp">
+
+	<LinearLayout android:id="@+id/wifi"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		android:layout_alignParentLeft="true"
+    	android:paddingLeft="40dp">
+		<TextView android:id="@+id/wifi_name"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="20dp"/>
+		<TextView android:id="@+id/wifi_summary"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="15dp"/>
+	</LinearLayout>
+
+	<LinearLayout 
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentRight="true"
+    	android:paddingRight="40dp"
+    	android:layout_toLeftOf="@id/wifi">
+   <!--
+		<ImageView android:id="@+id/wps_enabled"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"/>
+			
+		<ImageView android:id="@+id/signal"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			/>
+	-->
+		<ImageView
+		     android:id="@+id/wps_enabled"
+		     android:layout_width="wrap_content"
+			 android:layout_height="wrap_content"
+			 android:layout_marginRight="4sp"
+			 android:layout_gravity="center_vertical"
+			 android:src="@drawable/wps_enabled" >
+		</ImageView>
+
+		<ImageView
+		     android:id="@+id/signal"     
+			 android:layout_width="wrap_content"    
+			 android:layout_height="wrap_content"    
+			 android:layout_marginRight="4sp"    
+			 android:layout_gravity="center_vertical"    
+			 android:src="@drawable/wifi_signal" >
+		</ImageView>
+	</LinearLayout>
+</RelativeLayout>

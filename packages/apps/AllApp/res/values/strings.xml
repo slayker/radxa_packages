@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <!-- Manifest configuration. -->
+    <string name="app_name">AllApp</string>
+    <string name="corp_name">RockChip</string>
+    <!--menu items-->
+    <string name="item_lvideo">Videos</string>
+    <string name="item_laudio">Music</string>
+    <string name="item_picture">Pictures</string>
+    <string name="item_browser">Browser</string>
+    <string name="item_tudou">Tudou</string>
+    <string name="item_youtube">Youtube</string>
+    <string name="item_setting">Settings</string>
+    <string name="item_app">Apps</string>
+    
+    <!--app activity strings-->
+    <string name="widgetoperate">Please Select Widget Operation</string>
+    <string name="appActivity">Apps </string>
+    <string name="activity_not_found">Application is not installed on your device.</string>
+    <string name="application_scan">Scanning Application Informations</string>
+    <string name="application_num">Total Applications: </string>
+    <string name="apprecent">Recent Apps</string>
+    <string name="deleteWidget">Delete Widget,Please Select </string>
+    
+</resources>

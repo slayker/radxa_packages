@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/bk"
+    >
+
+    <LinearLayout android:layout_width="fill_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1"
+		android:orientation="horizontal"
+		android:gravity="center_vertical"
+		android:layout_marginLeft="20dip" 
+		android:focusable="false">
+
+	    <ImageView	android:id="@+id/title_image"
+	    	android:layout_width="wrap_content"    		
+	    	android:layout_height="wrap_content"    		
+	    	android:src="@drawable/storage"/>
+	    	
+	    <TextView android:id="@+id/title_text"    		
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="fill_parent"
+	    	android:textSize="50dp" 
+	    	android:gravity="center"
+	    	android:text="@string/storage"
+	    	android:textStyle="bold"
+	    	android:textColor="#FFFFFFFF"/>
+	</LinearLayout>
+
+	<ImageView	
+	    	android:layout_width="fill_parent"    		
+	    	android:layout_height="wrap_content"
+	    	android:scaleType="fitXY"
+	    	android:layout_marginLeft="20dip" 
+	    	android:layout_marginRight="20dip" 
+	    	android:src="@drawable/line"/>
+	    	
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="0dp"
+		android:layout_weight="6"
+		android:orientation="vertical"
+		android:gravity="center">
+	
+	<TextView android:id="@+id/sdcard"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="20dip"
+			android:layout_marginLeft="100dp"
+			android:layout_marginRight="100dp"
+			android:textColor="#ffffffff"
+			android:textSize="40dp"
+			android:text="@string/sdcard"/>
+	
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:layout_marginLeft="150dp"
+		android:layout_marginRight="150dp"
+		android:gravity="center">
+		<TextView android:id="@+id/sdcard_total_title"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:text="@string/total_space"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+		<TextView android:id="@+id/sdcard_total"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:gravity="right"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+	</LinearLayout>
+
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginLeft="150dp"
+		android:layout_marginRight="150dp"
+		android:orientation="horizontal"
+		android:gravity="center">
+		<TextView android:id="@+id/sdcard_available_title"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:text="@string/available_space"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+		<TextView android:id="@+id/sdcard_available"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:gravity="right"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+	</LinearLayout>
+
+	<TextView android:id="@+id/nandflash"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="20dip"
+			android:layout_marginLeft="100dp"
+			android:layout_marginRight="100dp"
+			android:textColor="#ffffffff"
+			android:textSize="40dp"
+			android:text="@string/nand_flash"/>
+	
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginLeft="150dp"
+		android:layout_marginRight="150dp"
+		android:orientation="horizontal"
+		android:gravity="center">
+		<TextView android:id="@+id/nand_total_title" 
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:text="@string/total_space"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+		<TextView android:id="@+id/nand_total"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:gravity="right"
+			android:text="@string/total_space"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+	</LinearLayout>
+
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginLeft="150dp"
+		android:layout_marginRight="150dp"
+		android:orientation="horizontal"
+		android:gravity="center">
+		<TextView android:id="@+id/nand_available_title"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:text="@string/available_space"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+		<TextView android:id="@+id/nand_available"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:gravity="right"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+	</LinearLayout>
+
+	<TextView android:id="@+id/internal_flash"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="20dip"
+			android:layout_marginLeft="100dp"
+			android:layout_marginRight="100dp"
+			android:textColor="#ffffffff"
+			android:textSize="40dp"
+			android:text="@string/internal_storage"/>
+	
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginLeft="150dp"
+		android:layout_marginRight="150dp"
+		android:orientation="horizontal"
+		android:gravity="center">
+		<TextView android:id="@+id/internal_available_title"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:text="@string/available_space"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+		<TextView android:id="@+id/internal_available"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"   
+			android:layout_weight="1"
+			android:gravity="right"
+			android:textColor="#FFFFFFFF"
+			android:textSize="30dp"/>
+	</LinearLayout>
+
+	</LinearLayout>
+
+</LinearLayout>

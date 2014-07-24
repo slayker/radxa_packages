@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<resources>
+	<string-array name="appwidget" translatable="false">
+		<item>appwidget;packageName=com.mobilityflow.animatedweather;className=com.mobilityflow.animatedweather.WidgetProvider_4_2;position=1</item>
+		<item>appwidget;packageName=cn.etouch.ecalendar.widget;className=cn.etouch.ecalendar.widget.myWidget_Month;position=1</item>
+		<item>appwidget;packageName=com.baidu.news.widget;className=LargeAppWidgetProvider;position=3</item>	
+	</string-array>
+</resources>

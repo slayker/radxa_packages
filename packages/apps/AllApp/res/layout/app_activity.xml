@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/app_layout" 
+    android:layout_width="wrap_content" 
+    android:layout_height="match_parent"
+    android:background="@drawable/background">
+    <TextView android:id="@+id/app_text"
+    					android:gravity="center_vertical"
+    					android:layout_width="fill_parent"
+    					android:layout_height="42dp"
+    					android:textSize = "20dp"
+    					android:focusable="false">
+    					
+    </TextView>
+    <LinearLayout android:layout_alignParentTop="true" 
+					    android:layout_height="wrap_content" 
+					    android:id="@+id/linearLayout1" 
+					    android:layout_width="wrap_content"
+					    android:layout_alignParentRight="true">
+        <Button android:id="@+id/btnRecent"
+    					android:layout_width = "wrap_content"
+    					android:layout_height="45dp" 
+    					android:textSize = "20sp"
+    					android:background="@drawable/buttonbg"
+    					android:textColor="#FFFFFF"
+    					android:text="@string/apprecent" 
+    					android:layout_alignParentRight="true">
+        </Button>
+    </LinearLayout>
+</RelativeLayout>
