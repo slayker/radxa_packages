@@ -9,12 +9,4 @@ LOCAL_PATH := $(call my-dir)
  LOCAL_MODULE_SUFFIX := $(COMMON_ANDROID_PACKAGE_SUFFIX) 
  include $(BUILD_PREBUILT)
 
-#########################################
-include $(CLEAR_VARS)
-
-LOCAL_MODULE_STEM := $(LOCAL_MODULE)
-LOCAL_MODULE_SUFFIX := $(suffix $(LOCAL_SRC_FILES))
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-LOCAL_MODULE_TAGS := optional
-include $(BUILD_PREBUILT)
 
