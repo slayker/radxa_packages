@@ -12,10 +12,8 @@ LOCAL_PATH := $(call my-dir)
 
 #########################################
 include $(CLEAR_VARS)
-
 LOCAL_MODULE := liblatency
 LOCAL_SRC_FILES := libs/$(LOCAL_MODULE).so
-
 LOCAL_MODULE_STEM := $(LOCAL_MODULE)
 LOCAL_MODULE_SUFFIX := $(suffix $(LOCAL_SRC_FILES))
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
