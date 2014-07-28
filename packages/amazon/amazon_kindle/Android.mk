@@ -9,3 +9,6 @@ LOCAL_PATH := $(call my-dir)
  LOCAL_MODULE_SUFFIX := $(COMMON_ANDROID_PACKAGE_SUFFIX)
  include $(BUILD_PREBUILT)
 
+PRODUCT_COPY_FILES += \
+	$(call my-dir)/libs/libAAX_SDK.so:system/lib/libAAX_SDK.so
+	$(call my-dir)/libs/libNativeLibraryWrapper.so:system/lib/libNativeLibraryWrapper.so
