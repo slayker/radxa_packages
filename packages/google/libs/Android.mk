@@ -17,16 +17,6 @@
 LOCAL_PATH := $(call my-dir)
 
 ###############################################################################
-# GalleryGoogle
-include $(CLEAR_VARS)
-LOCAL_PREBUILT_LIBS := libjni_eglfence.so \
-                       libjni_filtershow_filters.so \
-                       libjni_mosaic.so \
-                       liblightcycle.so
-LOCAL_MODULE_TAGS := optional
-include $(BUILD_MULTI_PREBUILT)
-
-###############################################################################
 # Facelock
 include $(CLEAR_VARS)
 LOCAL_PREBUILT_LIBS := libfacelock_jni.so

@@ -455,21 +455,6 @@ include $(BUILD_PREBUILT)
 
 ###############################################################################
 include $(CLEAR_VARS)
-LOCAL_MODULE := GalleryGoogle
-LOCAL_MODULE_TAGS := optional
-LOCAL_OVERRIDES_PACKAGES := Gallery2 Camera
-LOCAL_SRC_FILES := $(LOCAL_MODULE).apk
-LOCAL_MODULE_CLASS := APPS
-LOCAL_MODULE_SUFFIX := $(COMMON_ANDROID_PACKAGE_SUFFIX)
-LOCAL_REQUIRED_MODULES := libjni_eglfence \
-                          libjni_filtershow_filters \
-                          libjni_mosaic \
-                          liblightcycle
-LOCAL_CERTIFICATE := PRESIGNED
-include $(BUILD_PREBUILT)
-
-###############################################################################
-include $(CLEAR_VARS)
 LOCAL_MODULE := MediaUploader
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := $(LOCAL_MODULE).apk
