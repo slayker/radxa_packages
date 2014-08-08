@@ -12,10 +12,10 @@
 -keep class com.android.settings.accounts.*
 -keep class com.android.settings.fuelgauge.*
 -keep class com.android.settings.users.*
-# $_rbox_$_modify_$_zhangxueguang_$_begin_$_20130114_$
-# fix crash ethernet crash in user-mode
--keep class com.android.settings.ethernet.*
-# $_rbox_$_modify_$_zhangxueguang_$_end_$_20130114_$
+-keep class com.android.settings.NotificationStation
+-keep class com.koushikdutta.**
+-keep class com.android.settings.cyanogenmod.superuser.**
+-keep class com.android.settings.cyanogenmod.privacyguard.**
 
 # Keep click responders
 -keepclassmembers class com.android.settings.inputmethod.UserDictionaryAddWordActivity {

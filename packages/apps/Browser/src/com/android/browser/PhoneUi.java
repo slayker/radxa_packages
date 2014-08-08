@@ -191,6 +191,10 @@ public class PhoneUi extends BaseUi {
         if (incognito != null) {
             incognito.setVisible(showingNavScreen() || mUseQuickControls);
         }
+        MenuItem fullscreen = menu.findItem(R.id.fullscreen_menu_id);
+        if (fullscreen != null) {
+            fullscreen.setVisible(!showingNavScreen());
+        }
         MenuItem closeOthers = menu.findItem(R.id.close_other_tabs_id);
         if (closeOthers != null) {
             boolean isLastTab = true;
@@ -250,15 +254,7 @@ public class PhoneUi extends BaseUi {
             showTitleBar();
         }
     }
-    @Override
-    protected void updateNavigationState(Tab tab) {
-    	mNavigationBar.updateNavigationState(tab);
-    }
-    @Override
-	public void updatePlayWindowVisible(Tab tab) {
-		// TODO Auto-generated method stub
-    	mNavigationBar.updatePlayWindowVisible(tab);
-	}
+
     @Override
     public boolean isWebShowing() {
         return super.isWebShowing() && !showingNavScreen();

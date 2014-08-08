@@ -56,8 +56,6 @@ public interface WebViewController {
     void onProgressChanged(Tab tab);
 
     void onReceivedTitle(Tab tab, final String title);
-    
-    void onUpdatePlayWindowVisible(Tab tab);
 
     void onFavicon(Tab tab, WebView view, Bitmap icon);
 

@@ -24,7 +24,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.PowerManager;
+
 /**
  * This {@link BroadcastReceiver} handles clicks to notifications that
  * downloads from the browser are in progress/complete.  Clicking on an
@@ -90,9 +90,5 @@ public class OpenDownloadReceiver extends BroadcastReceiver {
         Intent pageView = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
         pageView.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(pageView);
-	PowerManager.WakeLock mWakeLock;
-        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        mWakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP,"BrowserDownload" );
-        mWakeLock.acquire(5000);
     }
 }

@@ -20,7 +20,6 @@ public interface PreferenceKeys {
 
     static final String PREF_AUTOFILL_ACTIVE_PROFILE_ID = "autofill_active_profile_id";
     static final String PREF_DEBUG_MENU = "debug_menu";
-    static final String PREF_NEVER_SLEEP_WHEN_BROWSING = "never_sleep_when_browsing";
 
     // ----------------------
     // Keys for accessibility_preferences.xml
@@ -48,9 +47,7 @@ public interface PreferenceKeys {
     static final String PREF_SEARCH_ENGINE = "search_engine";
     static final String PREF_WEBSITE_SETTINGS = "website_settings";
     static final String PREF_ALLOW_APP_TABS = "allow_apptabs";
-    static final String PREF_ADBLOCK_POLICY = "adblock_policy";
-    static final String PREF_POPUP_VIDEO = "popup_video";
-    static final String PREF_USER_AGENT_REL = "user_agent_rel";
+
     // ----------------------
     // Keys for debug_preferences.xml
     // ----------------------
@@ -86,8 +83,7 @@ public interface PreferenceKeys {
     // ----------------------
     static final String PREF_ENABLE_QUICK_CONTROLS = "enable_quick_controls";
     static final String PREF_FULLSCREEN = "fullscreen";
-    static final String PREF_ENABLE_WEBGL = "enable_webgl";
-    static final String PREF_ENABLE_WEBSOCKETS = "enable_websocket";
+    static final String PREF_ENABLE_WEBSOCKETS = "enable_websockets";
 
     // ----------------------
     // Keys for privacy_security_preferences.xml

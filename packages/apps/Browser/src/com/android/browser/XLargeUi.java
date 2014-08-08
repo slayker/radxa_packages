@@ -117,7 +117,7 @@ public class XLargeUi extends BaseUi {
 
     void stopWebViewScrolling() {
         BrowserWebView web = (BrowserWebView) mUiController.getCurrentWebView();
-        if (web != null) {
+        if (web != null && BrowserWebView.isClassic()) {
             WebViewClassic.fromWebView(web).stopScroll();
         }
     }
@@ -221,12 +221,6 @@ public class XLargeUi extends BaseUi {
     protected void updateNavigationState(Tab tab) {
         mNavBar.updateNavigationState(tab);
     }
-
-    @Override
-	public void updatePlayWindowVisible(Tab tab) {
-		// TODO Auto-generated method stub
-		mNavBar.updatePlayWindowVisible(tab);
-	}
 
     @Override
     public void setUrlTitle(Tab tab) {

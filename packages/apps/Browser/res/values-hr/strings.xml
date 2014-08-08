@@ -31,6 +31,7 @@
     <string name="username" msgid="5057566336518215922">"Ime"</string>
     <string name="password" msgid="1177138552305184404">"Zaporka"</string>
     <string name="action" msgid="183105774472071343">"Prijava"</string>
+    <string name="bookmarks_add_page" msgid="3093456701072617702">"Spremanje oznake"</string>
     <string name="bookmarks_search" msgid="5229596268214362873">"Preglednik"</string>
     <string name="cancel" msgid="3017274947407233702">"Odustani"</string>
     <string name="ok" msgid="1509280796718850364">"U redu"</string>
@@ -398,4 +399,8 @@
     <string name="accessibility_state_frozen" msgid="8041539250447035570">"Spremljena stranica"</string>
     <string name="accessibility_transition_navscreen" msgid="2734915619351519547">"Upravljanje karticama"</string>
     <string name="accessibility_button_bookmarks_folder_up" msgid="9179389954714270505">"Prethodna mapa"</string>
+
+<!-- Additional CM strings -->
+    <string name="pref_content_ua">Korisnički posrednik</string>
+    <string name="pref_content_ua_summary">Odaberite korisnički posrednik. Web-stranice će se prikazivati u formatu prilagođenom za odabranog posrednika.</string>
 </resources>

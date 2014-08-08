@@ -24,7 +24,15 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import com.android.contacts.R;
-import com.android.contacts.list.ShortcutIntentBuilder.OnShortcutIntentCreatedListener;
+import com.android.contacts.common.list.ContactEntryListAdapter;
+import com.android.contacts.common.list.ContactEntryListFragment;
+import com.android.contacts.common.list.ContactListAdapter;
+import com.android.contacts.common.list.ContactListFilter;
+import com.android.contacts.common.list.DefaultContactListAdapter;
+import com.android.contacts.common.list.DirectoryListLoader;
+import com.android.contacts.common.list.DirectoryPartition;
+import com.android.contacts.common.list.ShortcutIntentBuilder;
+import com.android.contacts.common.list.ShortcutIntentBuilder.OnShortcutIntentCreatedListener;
 
 /**
  * Fragment for the contact list used for browsing contacts (as compared to
@@ -36,6 +44,7 @@ public class ContactPickerFragment extends ContactEntryListFragment<ContactEntry
     private static final String KEY_EDIT_MODE = "editMode";
     private static final String KEY_CREATE_CONTACT_ENABLED = "createContactEnabled";
     private static final String KEY_SHORTCUT_REQUESTED = "shortcutRequested";
+    private static final String DIRECTORY_ID_ARG_KEY = "directoryId";
 
     private OnContactPickerActionListener mListener;
     private boolean mCreateContactEnabled;
@@ -68,10 +77,6 @@ public class ContactPickerFragment extends ContactEntryListFragment<ContactEntry
 
     public void setEditMode(boolean flag) {
         mEditMode = flag;
-    }
-
-    public boolean isShortcutRequested() {
-        return mShortcutRequested;
     }
 
     public void setShortcutRequested(boolean flag) {
@@ -180,31 +185,6 @@ public class ContactPickerFragment extends ContactEntryListFragment<ContactEntry
     }
 
     @Override
-    protected void prepareEmptyView() {
-        if (isSearchMode()) {
-            return;
-        } else if (isSyncActive()) {
-            if (mShortcutRequested) {
-                // Help text is the same no matter whether there is SIM or not.
-                setEmptyText(R.string.noContactsHelpTextWithSyncForCreateShortcut);
-            } else if (hasIccCard()) {
-                setEmptyText(R.string.noContactsHelpTextWithSync);
-            } else {
-                setEmptyText(R.string.noContactsNoSimHelpTextWithSync);
-            }
-        } else {
-            if (mShortcutRequested) {
-                // Help text is the same no matter whether there is SIM or not.
-                setEmptyText(R.string.noContactsHelpTextWithSyncForCreateShortcut);
-            } else if (hasIccCard()) {
-                setEmptyText(R.string.noContactsHelpText);
-            } else {
-                setEmptyText(R.string.noContactsNoSimHelpText);
-            }
-        }
-    }
-
-    @Override
     public void onShortcutIntentCreated(Uri uri, Intent shortcutIntent) {
         mListener.onShortcutIntentCreated(shortcutIntent);
     }
@@ -212,5 +192,17 @@ public class ContactPickerFragment extends ContactEntryListFragment<ContactEntry
     @Override
     public void onPickerResult(Intent data) {
         mListener.onPickContactAction(data.getData());
+    }
+
+    /**
+     * Loads the directory partition.
+     */
+    protected void loadDirectoryPartition(int partitionIndex, DirectoryPartition partition) {
+        Bundle args = new Bundle();
+        args.putLong(DIRECTORY_ID_ARG_KEY, partition.getDirectoryId());
+        if (getLoaderManager().getLoader(partitionIndex) != null) {
+            getLoaderManager().destroyLoader(partitionIndex);
+        }
+        getLoaderManager().restartLoader(partitionIndex, args, this);
     }
 }

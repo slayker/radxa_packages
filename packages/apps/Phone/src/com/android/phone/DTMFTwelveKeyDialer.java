@@ -39,6 +39,7 @@ import android.widget.EditText;
 
 import com.android.internal.telephony.CallManager;
 import com.android.internal.telephony.Phone;
+import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.telephony.TelephonyCapabilities;
 
 import java.util.HashMap;
@@ -56,14 +57,14 @@ public class DTMFTwelveKeyDialer implements View.OnTouchListener, View.OnKeyList
     private static final boolean DBG = (PhoneGlobals.DBG_LEVEL >= 2);
 
     // events
-    private static final int PHONE_DISCONNECT = 100;
-    private static final int DTMF_SEND_CNF = 101;
-    private static final int DTMF_STOP = 102;
+    protected static final int PHONE_DISCONNECT = 100;
+    protected static final int DTMF_SEND_CNF = 101;
+    protected static final int DTMF_STOP = 102;
 
     /** Accessibility manager instance used to check touch exploration state. */
     private final AccessibilityManager mAccessibilityManager;
 
-    private CallManager mCM;
+    protected CallManager mCM;
     private ToneGenerator mToneGenerator;
     private final Object mToneGeneratorLock = new Object();
 
@@ -126,7 +127,7 @@ public class DTMFTwelveKeyDialer implements View.OnTouchListener, View.OnKeyList
     private EditText mDialpadDigits;
 
     // InCallScreen reference.
-    private InCallScreen mInCallScreen;
+    protected InCallScreen mInCallScreen;
 
     /**
      * The DTMFTwelveKeyDialerView we use to display the dialpad.
@@ -163,9 +164,9 @@ public class DTMFTwelveKeyDialer implements View.OnTouchListener, View.OnKeyList
      * This code is purely here to handle events from the hardware keyboard
      * while the DTMF dialpad is up.
      */
-    private class DTMFKeyListener extends DialerKeyListener {
+    protected class DTMFKeyListener extends DialerKeyListener {
 
-        private DTMFKeyListener() {
+        protected DTMFKeyListener() {
             super();
         }
 
@@ -480,7 +481,7 @@ public class DTMFTwelveKeyDialer implements View.OnTouchListener, View.OnKeyList
      * Dialer code that runs when the dialer is brought up.
      * This includes layout changes, etc, and just prepares the dialer model for use.
      */
-    private void onDialerOpen(boolean animate) {
+    protected void onDialerOpen(boolean animate) {
         if (DBG) log("onDialerOpen()...");
 
         // Any time the dialer is open, listen for "disconnect" events (so
@@ -952,7 +953,7 @@ public class DTMFTwelveKeyDialer implements View.OnTouchListener, View.OnKeyList
 
         // Read the settings as it may be changed by the user during the call
         Phone phone = mCM.getFgPhone();
-        mShortTone = PhoneUtils.useShortDtmfTones(phone, phone.getContext());
+        mShortTone = useShortDtmfTones(phone, phone.getContext());
 
         // Before we go ahead and start a tone, we need to make sure that any pending
         // stop-tone message is processed.
@@ -1089,4 +1090,31 @@ public class DTMFTwelveKeyDialer implements View.OnTouchListener, View.OnKeyList
             sendShortDtmfToNetwork(dtmfChar);
         }
     }
+
+    /**
+     * On GSM devices, we never use short tones.
+     * On CDMA devices, it depends upon the settings.
+     */
+    private static boolean useShortDtmfTones(Phone phone, Context context) {
+        int phoneType = phone.getPhoneType();
+        if (phoneType == PhoneConstants.PHONE_TYPE_GSM) {
+            return false;
+        } else if (phoneType == PhoneConstants.PHONE_TYPE_CDMA) {
+            int toneType = android.provider.Settings.System.getInt(
+                    context.getContentResolver(),
+                    Settings.System.DTMF_TONE_TYPE_WHEN_DIALING,
+                    Constants.DTMF_TONE_TYPE_NORMAL);
+            if (toneType == Constants.DTMF_TONE_TYPE_NORMAL) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if (phoneType == PhoneConstants.PHONE_TYPE_SIP ||
+                   phoneType == PhoneConstants.PHONE_TYPE_IMS) {
+            return false;
+        } else {
+            throw new IllegalStateException("Unexpected phone type: " + phoneType);
+        }
+    }
+
 }

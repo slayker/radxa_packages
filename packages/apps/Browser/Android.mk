@@ -2,9 +2,6 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := optional
-# $_rbox_$_modify_$_chenxiao_$_begin
-LOCAL_CERTIFICATE := platform
-# $_rbox_$_modify_$_chenxiao_$_end
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
         android-common \

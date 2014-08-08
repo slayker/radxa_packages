@@ -16,6 +16,8 @@
 
 package com.android.phone;
 
+import java.util.Map;
+
 import com.android.internal.telephony.CallManager;
 import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.PhoneConstants;
@@ -23,17 +25,22 @@ import com.android.internal.telephony.TelephonyCapabilities;
 import com.android.phone.Constants.CallStatusCode;
 import com.android.phone.InCallUiState.InCallScreenMode;
 import com.android.phone.OtaUtils.CdmaOtaScreenState;
+import com.google.android.collect.Maps;
 
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemProperties;
+import android.provider.CallLog.Calls;
+import android.telephony.MSimTelephonyManager;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.ServiceState;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
+
+import static com.android.internal.telephony.MSimConstants.SUBSCRIPTION_KEY;
 
 /**
  * Phone app module in charge of "call control".
@@ -66,10 +73,11 @@ public class CallController extends Handler {
     private static final boolean VDBG = false;
 
     /** The singleton CallController instance. */
-    private static CallController sInstance;
+    protected static CallController sInstance;
 
-    private PhoneGlobals mApp;
+    protected PhoneGlobals mApp;
     private CallManager mCM;
+    private CallLogger mCallLogger;
 
     /** Helper object for emergency calls in some rare use cases.  Created lazily. */
     private EmergencyCallHelper mEmergencyCallHelper;
@@ -100,10 +108,10 @@ public class CallController extends Handler {
      * PhoneApp's public "callController" field, which is why there's no
      * getInstance() method here.
      */
-    /* package */ static CallController init(PhoneGlobals app) {
+    /* package */ static CallController init(PhoneGlobals app, CallLogger callLogger) {
         synchronized (CallController.class) {
             if (sInstance == null) {
-                sInstance = new CallController(app);
+                sInstance = new CallController(app, callLogger);
             } else {
                 Log.wtf(TAG, "init() called multiple times!  sInstance = " + sInstance);
             }
@@ -115,10 +123,11 @@ public class CallController extends Handler {
      * Private constructor (this is a singleton).
      * @see init()
      */
-    private CallController(PhoneGlobals app) {
+    protected CallController(PhoneGlobals app, CallLogger callLogger) {
         if (DBG) log("CallController constructor: app = " + app);
         mApp = app;
         mCM = app.mCM;
+        mCallLogger = callLogger;
     }
 
     @Override
@@ -306,6 +315,9 @@ public class CallController extends Handler {
         //   and if so simply call updateInCallScreen() instead.
 
         mApp.displayCallScreen();
+
+        // enable noise suppression
+        PhoneUtils.turnOnNoiseSuppression(mApp.getApplicationContext(), true);
     }
 
     /**
@@ -321,7 +333,7 @@ public class CallController extends Handler {
      *    outgoing call.  If there was some kind of failure, return one of
      *    the other CallStatusCode codes indicating what went wrong.
      */
-    private CallStatusCode placeCallInternal(Intent intent) {
+    protected CallStatusCode placeCallInternal(Intent intent) {
         if (DBG) log("placeCallInternal()...  intent = " + intent);
 
         // TODO: This method is too long.  Break it down into more
@@ -331,6 +343,9 @@ public class CallController extends Handler {
         final Uri uri = intent.getData();
         final String scheme = (uri != null) ? uri.getScheme() : null;
         String number;
+        int callType;
+        boolean isConferenceUri = false;
+        String[] extras = null;
         Phone phone = null;
 
         // Check the current ServiceState to make sure it's OK
@@ -348,7 +363,16 @@ public class CallController extends Handler {
         try {
             number = PhoneUtils.getInitialNumber(intent);
             if (VDBG) log("- actual number to dial: '" + number + "'");
-
+            callType = intent.getIntExtra(OutgoingCallBroadcaster.EXTRA_CALL_TYPE,
+                    Phone.CALL_TYPE_VOICE);
+            isConferenceUri = intent.getBooleanExtra(
+                    OutgoingCallBroadcaster.EXTRA_DIAL_CONFERENCE_URI, false);
+            if(isConferenceUri) {
+                final Map<String, String> extrasMap = Maps.newHashMap();
+                extrasMap.put(Phone.EXTRAS_IS_CONFERENCE_URI,
+                        Boolean.toString(isConferenceUri));
+                extras = PhoneUtils.getExtrasFromMap(extrasMap);
+            }
             // find the phone first
             // TODO Need a way to determine which phone to place the call
             // It could be determined by SIP setting, i.e. always,
@@ -357,7 +381,8 @@ public class CallController extends Handler {
             // or any of combinations
             String sipPhoneUri = intent.getStringExtra(
                     OutgoingCallBroadcaster.EXTRA_SIP_PHONE_URI);
-            phone = PhoneUtils.pickPhoneBasedOnNumber(mCM, scheme, number, sipPhoneUri);
+            int sub = intent.getIntExtra(SUBSCRIPTION_KEY, mApp.getVoiceSubscription());
+            phone = PhoneUtils.pickPhoneBasedOnNumber(mCM, scheme, number, sipPhoneUri, sub);
             if (VDBG) log("- got Phone instance: " + phone + ", class = " + phone.getClass());
 
             // update okToCallStatus based on new phone
@@ -417,6 +442,13 @@ public class CallController extends Handler {
             && ((okToCallStatus == CallStatusCode.EMERGENCY_ONLY)
                 || (okToCallStatus == CallStatusCode.OUT_OF_SERVICE))) {
             if (DBG) log("placeCall: Emergency number detected with status = " + okToCallStatus);
+            // Avoid updating phone in IMS case as it gets picked
+            // above by PhoneUtils.pickPhoneBasedOnNumber()
+            if ((MSimTelephonyManager.getDefault().isMultiSimEnabled()) &&
+                    (phone.getPhoneType() != PhoneConstants.PHONE_TYPE_IMS)) {
+                int sub = mApp.getVoiceSubscriptionInService();
+                phone = mApp.getPhone(sub);
+            }
             okToCallStatus = CallStatusCode.SUCCESS;
             if (DBG) log("==> UPDATING status to: " + okToCallStatus);
         }
@@ -449,6 +481,17 @@ public class CallController extends Handler {
                 // Otherwise, just return the (non-SUCCESS) status code
                 // back to our caller.
                 if (DBG) log("==> placeCallInternal(): non-success status: " + okToCallStatus);
+
+                // Log failed call.
+                // Note: Normally, many of these values we gather from the Connection object but
+                // since no such object is created for unconnected calls, we have to build them
+                // manually.
+                // TODO(santoscordon): Try to restructure code so that we can handle failure-
+                // condition call logging in a single place (placeCall()) that also has access to
+                // the number we attempted to dial (not placeCall()).
+                mCallLogger.logCall(null /* callerInfo */, number, 0 /* presentation */,
+                        Calls.OUTGOING_TYPE, System.currentTimeMillis(), 0 /* duration */);
+
                 return okToCallStatus;
             }
         }
@@ -473,7 +516,9 @@ public class CallController extends Handler {
                                               number,
                                               contactUri,
                                               (isEmergencyNumber || isEmergencyIntent),
-                                              inCallUiState.providerGatewayUri);
+                                              inCallUiState.providerGatewayUri,
+                                              callType,
+                                              extras);
 
         switch (callStatus) {
             case PhoneUtils.CALL_STATUS_DIALED:
@@ -584,6 +629,11 @@ public class CallController extends Handler {
                       + number + "'.");
                 // We couldn't successfully place the call; there was some
                 // failure in the telephony layer.
+
+                // Log failed call.
+                mCallLogger.logCall(null /* callerInfo */, number, 0 /* presentation */,
+                        Calls.OUTGOING_TYPE, System.currentTimeMillis(), 0 /* duration */);
+
                 return CallStatusCode.CALL_FAILED;
 
             default:

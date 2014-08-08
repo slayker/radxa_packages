@@ -41,11 +41,11 @@ public class KeyChainServiceTestSupport extends Service {
         }
         @Override public boolean keystorePut(String key, byte[] value) {
             Log.d(TAG, "keystorePut");
-            return mKeyStore.put(key, value);
+            return mKeyStore.put(key, value, KeyStore.UID_SELF, KeyStore.FLAG_ENCRYPTED);
         }
         @Override public boolean keystoreImportKey(String key, byte[] value) {
             Log.d(TAG, "keystoreImport");
-            return mKeyStore.importKey(key, value);
+            return mKeyStore.importKey(key, value, KeyStore.UID_SELF, KeyStore.FLAG_ENCRYPTED);
         }
 
         @Override public void revokeAppPermission(final int uid, final String alias)

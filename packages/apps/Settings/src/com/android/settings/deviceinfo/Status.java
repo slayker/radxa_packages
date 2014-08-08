@@ -1,4 +1,3 @@
-/*$_FOR_ROCKCHIP_RBOX_$*/
 /*
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -17,6 +16,7 @@
 
 package com.android.settings.deviceinfo;
 
+import android.app.ActionBar;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -43,6 +43,7 @@ import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.view.MenuItem;
 
 import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.PhoneConstants;
@@ -212,6 +213,11 @@ public class Status extends PreferenceActivity {
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
+        ActionBar mActionBar = getActionBar();
+        if (mActionBar != null) {
+            mActionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
         mHandler = new MyHandler(this);
 
         mTelephonyManager = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
@@ -303,11 +309,15 @@ public class Status extends PreferenceActivity {
         } else {
             removePreferenceFromScreen(KEY_SERIAL_NUMBER);
         }
-//$_rbox_$_modify_$_lijiehong
-        if (getPackageManager().hasSystemFeature("com.android.settings.battery")) {
-            removePreferenceFromScreen(KEY_BATTERY_STATUS);
-            removePreferenceFromScreen(KEY_BATTERY_LEVEL);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -387,8 +397,11 @@ public class Status extends PreferenceActivity {
 
     private void updateNetworkType() {
         // Whether EDGE, UMTS, etc...
-        setSummaryText(KEY_NETWORK_TYPE, mTelephonyManager.getNetworkTypeName() +
-                ":" + mTelephonyManager.getNetworkType());
+        String networktype = null;
+        if (TelephonyManager.NETWORK_TYPE_UNKNOWN != mTelephonyManager.getNetworkType()) {
+            networktype = mTelephonyManager.getNetworkTypeName();
+        }
+        setSummaryText(KEY_NETWORK_TYPE, networktype);
     }
 
     private void updateDataState() {
@@ -415,6 +428,15 @@ public class Status extends PreferenceActivity {
 
     private void updateServiceState(ServiceState serviceState) {
         int state = serviceState.getState();
+
+        // getState() returns only voiceRegState. In eHRPD only and other similar
+        // data only cases, voice state may be OOS and data state may be IN_SERVICE
+        // Hence, checking data state also in case voice state is OOS.
+        if ((state == ServiceState.STATE_OUT_OF_SERVICE)
+                && (serviceState.getDataRegState() == ServiceState.STATE_IN_SERVICE)) {
+            state = ServiceState.STATE_IN_SERVICE;
+        }
+
         String display = mRes.getString(R.string.radioInfo_unknown);
 
         switch (state) {

@@ -96,9 +96,7 @@ public interface UI {
     public boolean onPrepareOptionsMenu(Menu menu);
 
     public void updateMenuState(Tab tab, Menu menu);
-    
-    public void updatePlayWindowVisible(Tab tab);
-    
+
     public void onOptionsMenuOpened();
 
     public void onExtendedMenuOpened();
@@ -143,6 +141,8 @@ public interface UI {
     void hideAutoLogin(Tab tab);
 
     void setFullscreen(boolean enabled);
+
+    boolean isFullscreen();
 
     void setUseQuickControls(boolean enabled);
 

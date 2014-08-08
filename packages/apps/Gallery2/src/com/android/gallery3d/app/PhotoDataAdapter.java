@@ -23,21 +23,18 @@ import android.os.Message;
 
 import com.android.gallery3d.common.BitmapUtils;
 import com.android.gallery3d.common.Utils;
-import com.android.gallery3d.data.BitmapPool;
 import com.android.gallery3d.data.ContentListener;
 import com.android.gallery3d.data.LocalMediaItem;
 import com.android.gallery3d.data.MediaItem;
 import com.android.gallery3d.data.MediaObject;
 import com.android.gallery3d.data.MediaSet;
 import com.android.gallery3d.data.Path;
-import com.android.gallery3d.data.SnailItem;
-import com.android.gallery3d.ui.BitmapScreenNail;
+import com.android.gallery3d.glrenderer.TiledTexture;
 import com.android.gallery3d.ui.PhotoView;
 import com.android.gallery3d.ui.ScreenNail;
 import com.android.gallery3d.ui.SynchronizedHandler;
 import com.android.gallery3d.ui.TileImageViewAdapter;
 import com.android.gallery3d.ui.TiledScreenNail;
-import com.android.gallery3d.ui.TiledTexture;
 import com.android.gallery3d.util.Future;
 import com.android.gallery3d.util.FutureListener;
 import com.android.gallery3d.util.MediaSetUtils;
@@ -69,8 +66,6 @@ public class PhotoDataAdapter implements PhotoPage.Model {
 
     private static final int BIT_SCREEN_NAIL = 1;
     private static final int BIT_FULL_IMAGE = 2;
-    
-    private AppBridge mAppBridge;
 
     // sImageFetchSeq is the fetching sequence for images.
     // We want to fetch the current screennail first (offset = 0), the next
@@ -176,7 +171,7 @@ public class PhotoDataAdapter implements PhotoPage.Model {
     // preview. If cameraIndex < 0, there is no camera preview.
     public PhotoDataAdapter(AbstractGalleryActivity activity, PhotoView view,
             MediaSet mediaSet, Path itemPath, int indexHint, int cameraIndex,
-            boolean isPanorama, boolean isStaticCamera,AppBridge tmpAppBirdge) {
+            boolean isPanorama, boolean isStaticCamera) {
         mSource = Utils.checkNotNull(mediaSet);
         mPhotoView = Utils.checkNotNull(view);
         mItemPath = Utils.checkNotNull(itemPath);
@@ -186,7 +181,6 @@ public class PhotoDataAdapter implements PhotoPage.Model {
         mIsStaticCamera = isStaticCamera;
         mThreadPool = activity.getThreadPool();
         mNeedFullImage = true;
-        mAppBridge = tmpAppBirdge;
 
         Arrays.fill(mChanges, MediaObject.INVALID_DATA_VERSION);
 
@@ -380,6 +374,7 @@ public class PhotoDataAdapter implements PhotoPage.Model {
             if (entry.fullImageTask != null) entry.fullImageTask.cancel();
             if (entry.screenNailTask != null) entry.screenNailTask.cancel();
             if (entry.screenNail != null) entry.screenNail.recycle();
+            if (entry.fullImage != null) entry.fullImage.recycle();
         }
         mImageCache.clear();
         mTileProvider.clear();
@@ -555,9 +550,8 @@ public class PhotoDataAdapter implements PhotoPage.Model {
     }
 
     @Override
-    public Bitmap getTile(int level, int x, int y, int tileSize,
-            int borderSize, BitmapPool pool) {
-        return mTileProvider.getTile(level, x, y, tileSize, borderSize, pool);
+    public Bitmap getTile(int level, int x, int y, int tileSize) {
+        return mTileProvider.getTile(level, x, y, tileSize);
     }
 
     @Override
@@ -568,10 +562,6 @@ public class PhotoDataAdapter implements PhotoPage.Model {
     @Override
     public int getCurrentIndex() {
         return mCurrentIndex;
-    }
-    
-    public MediaItem getCurrentMediaItem() {
-        return mData[mCurrentIndex % DATA_CACHE_SIZE];
     }
 
     @Override
@@ -712,10 +702,6 @@ public class PhotoDataAdapter implements PhotoPage.Model {
             // a Bitmap and then wrap it in a BitmapScreenNail instead.
             ScreenNail s = mItem.getScreenNail();
             if (s != null) return s;
-            if(mItem instanceof SnailItem){
-                s  = mAppBridge.attachScreenNail();
-                return s;
-            }
 
             // If this is a temporary item, don't try to get its bitmap because
             // it won't be available. We will get its bitmap after a data reload.
@@ -729,7 +715,7 @@ public class PhotoDataAdapter implements PhotoPage.Model {
                 bitmap = BitmapUtils.rotateBitmap(bitmap,
                     mItem.getRotation() - mItem.getFullImageRotation(), true);
             }
-            return bitmap == null ? null : new BitmapScreenNail(bitmap);
+            return bitmap == null ? null : new TiledScreenNail(bitmap);
         }
     }
 
@@ -762,7 +748,7 @@ public class PhotoDataAdapter implements PhotoPage.Model {
         // Must be an item in camera roll.
         if (!(mediaItem instanceof LocalMediaItem)) return false;
         LocalMediaItem item = (LocalMediaItem) mediaItem;
-        if (item.getBucketId() != MediaSetUtils.CAMERA_BUCKET_ID) return false;
+        if (item.getBucketId() != MediaSetUtils.getCameraBucketId()) return false;
         // Must have no size, but must have width and height information
         if (item.getSize() != 0) return false;
         if (item.getWidth() == 0) return false;
@@ -1051,6 +1037,10 @@ public class PhotoDataAdapter implements PhotoPage.Model {
                 if (info.version != version) {
                     info.reloadContent = true;
                     info.size = mSource.getMediaItemCount();
+                    int start = Utils.clamp(info.indexHint - DATA_CACHE_SIZE / 2,
+                            0, Math.max(0, info.size - DATA_CACHE_SIZE));
+                    info.contentStart = start;
+                    info.contentEnd = Math.min(info.size, start + DATA_CACHE_SIZE);
                 }
                 if (!info.reloadContent) continue;
                 info.items = mSource.getMediaItem(
@@ -1094,8 +1084,8 @@ public class PhotoDataAdapter implements PhotoPage.Model {
                 }
 
                 // Don't change index if mSize == 0
-                if (mSize > 0) {
-                    if (index >= mSize) index = mSize - 1;
+                if (info.size > 0) {
+                    if (index >= info.size) index = info.size - 1;
                 }
 
                 info.indexHint = index;

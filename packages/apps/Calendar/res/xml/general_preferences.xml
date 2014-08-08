@@ -36,14 +36,11 @@
             android:defaultValue="false"
             android:title="@string/preferences_use_home_tz_title"
             android:summary="@string/preferences_use_home_tz_descrip" />
-        <ListPreference
+        <Preference
             android:key="preferences_home_tz"
             android:dependency="preferences_home_tz_enabled"
             android:defaultValue="@string/preferences_home_tz_default"
-            android:title="@string/preferences_home_tz_title"
-            android:entries="@array/timezone_labels"
-            android:entryValues="@array/timezone_values"
-            android:dialogTitle="@string/preferences_home_tz_title" />
+            android:title="@string/preferences_home_tz_title" />
         <PreferenceScreen
             android:key="preferences_clear_search_history"
             android:title="@string/preferences_clear_search_history_title"
@@ -75,6 +72,20 @@
             android:key="preferences_alerts_popup"
             android:defaultValue="false"
             android:title="@string/preferences_alerts_popup_title" />
+
+        <CheckBoxPreference
+            android:key="preferences_custom_snooze_delay"
+            android:defaultValue="false"
+            android:title="@string/preferences_alerts_custom_snooze_delay_title"
+            android:summaryOn="@string/preferences_alerts_custom_snooze_delay_summary_on"
+            android:summaryOff="@string/preferences_alerts_custom_snooze_delay_summary_off" />
+
+        <ListPreference
+            android:key="preferences_default_snooze_delay"
+            android:defaultValue="@string/preferences_default_snooze_delay_default"
+            android:entryValues="@array/preferences_default_snooze_delay_values"
+            android:title="@string/preferences_default_snooze_delay_title"
+            android:dialogTitle="@string/preferences_default_snooze_delay_dialog" />
 
         <ListPreference
             android:key="preferences_default_reminder"

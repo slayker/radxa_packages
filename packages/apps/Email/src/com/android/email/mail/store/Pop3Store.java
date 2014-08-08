@@ -18,6 +18,7 @@ package com.android.email.mail.store;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import com.android.email.Controller;
@@ -48,6 +49,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 
 public class Pop3Store extends Store {
     // All flags defining debug or development code settings must be FALSE
@@ -647,6 +649,7 @@ public class Pop3Store extends Store {
             for (Message message : messages) {
                 uids.add(message.getUid());
             }
+            int syncSize = messages[0].getNeedSyncSize();
             try {
                 indexUids(uids);
                 if (fp.contains(FetchProfile.Item.ENVELOPE)) {
@@ -676,8 +679,19 @@ public class Pop3Store extends Store {
                          * To convert the suggested download size we take the size
                          * divided by the maximum line size (76).
                          */
-                        fetchBody(pop3Message,
-                                FETCH_BODY_SANE_SUGGESTED_SIZE / 76);
+                        int lines = -1;
+                        if (SystemProperties.getBoolean("persist.env.email.syncsize", true)) {
+                            if (syncSize != Utility.ENTIRE_MAIL) {
+                                // syncSize == Utility.ENTIRE_MAIL couldn't be here
+                                lines = syncSize / 76;
+                            } else {
+                                Log.w(Logging.LOG_TAG, "Pop3 fetch message with fetch field :"
+                                        + "BODY_SANE, but this account need sync entire mail.");
+                            }
+                        } else {
+                            lines = FETCH_BODY_SANE_SUGGESTED_SIZE / 76;
+                        }
+                        fetchBody(pop3Message, lines);
                     }
                     else if (fp.contains(FetchProfile.Item.STRUCTURE)) {
                         /*
@@ -786,13 +800,19 @@ public class Pop3Store extends Store {
             int messageId = mUidToMsgNumMap.get(message.getUid());
             if (lines == -1) {
                 // Fetch entire message
-                response = executeSimpleCommand(String.format("RETR %d", messageId));
+                response = executeSimpleCommand(String.format(Locale.US, "RETR %d", messageId));
             } else {
                 // Fetch partial message.  Try "TOP", and fall back to slower "RETR" if necessary
                 try {
-                    response = executeSimpleCommand(String.format("TOP %d %d", messageId,  lines));
+                    response = executeSimpleCommand(
+                            String.format(Locale.US, "TOP %d %d", messageId,  lines));
                 } catch (MessagingException me) {
-                    response = executeSimpleCommand(String.format("RETR %d", messageId));
+                    try {
+                        response = executeSimpleCommand(
+                                String.format(Locale.US, "RETR %d", messageId));
+                    } catch (MessagingException e) {
+                        Log.w(Logging.LOG_TAG, "Can't read message " + messageId);
+                    }
                 }
             }
             if (response != null)  {
@@ -846,8 +866,16 @@ public class Pop3Store extends Store {
             }
             try {
                 for (Message message : messages) {
-                    executeSimpleCommand(String.format("DELE %s",
-                            mUidToMsgNumMap.get(message.getUid())));
+                    try {
+                        final String uid = message.getUid();
+                        final int msgNum = mUidToMsgNumMap.get(uid);
+                        executeSimpleCommand(String.format(Locale.US, "DELE %s", msgNum));
+                        // Remove from the maps
+                        mMsgNumToMsgMap.remove(msgNum);
+                        mUidToMsgNumMap.remove(uid);
+                    } catch (MessagingException e) {
+                        // A failed deletion isn't a problem
+                    }
                 }
             }
             catch (IOException ioe) {

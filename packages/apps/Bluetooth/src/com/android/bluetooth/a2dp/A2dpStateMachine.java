@@ -58,13 +58,15 @@ import java.util.List;
 import java.util.Set;
 
 final class A2dpStateMachine extends StateMachine {
-    private static final String TAG = "A2dpStateMachine";
     private static final boolean DBG = false;
 
     static final int CONNECT = 1;
     static final int DISCONNECT = 2;
     private static final int STACK_EVENT = 101;
     private static final int CONNECT_TIMEOUT = 201;
+
+    private static final int IS_INVALID_DEVICE = 0;
+    private static final int IS_VALID_DEVICE = 1;
 
     private Disconnected mDisconnected;
     private Pending mPending;
@@ -116,7 +118,7 @@ final class A2dpStateMachine extends StateMachine {
     }
 
     private A2dpStateMachine(A2dpService svc, Context context) {
-        super(TAG);
+        super("A2dpStateMachine");
         mService = svc;
         mContext = context;
         mAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -143,13 +145,19 @@ final class A2dpStateMachine extends StateMachine {
     }
 
     static A2dpStateMachine make(A2dpService svc, Context context) {
-        Log.d(TAG, "make");
+        Log.d("A2dpStateMachine", "make");
         A2dpStateMachine a2dpSm = new A2dpStateMachine(svc, context);
         a2dpSm.start();
         return a2dpSm;
     }
 
     public void doQuit() {
+        if ((mTargetDevice != null) &&
+            (getConnectionState(mTargetDevice) == BluetoothProfile.STATE_CONNECTING)) {
+            log("doQuit()- Move A2DP State to DISCONNECTED");
+            broadcastConnectionState(mTargetDevice, BluetoothProfile.STATE_DISCONNECTED,
+                                     BluetoothProfile.STATE_CONNECTING);
+        }
         quitNow();
     }
 
@@ -167,7 +175,7 @@ final class A2dpStateMachine extends StateMachine {
         public boolean processMessage(Message message) {
             log("Disconnected process message: " + message.what);
             if (mCurrentDevice != null || mTargetDevice != null  || mIncomingDevice != null) {
-                Log.e(TAG, "ERROR: current, target, or mIncomingDevice not null in Disconnected");
+                loge("ERROR: current, target, or mIncomingDevice not null in Disconnected");
                 return NOT_HANDLED;
             }
 
@@ -202,7 +210,7 @@ final class A2dpStateMachine extends StateMachine {
                             processConnectionEvent(event.valueInt, event.device);
                             break;
                         default:
-                            Log.e(TAG, "Unexpected stack event: " + event.type);
+                            loge("Unexpected stack event: " + event.type);
                             break;
                     }
                     break;
@@ -221,11 +229,11 @@ final class A2dpStateMachine extends StateMachine {
         private void processConnectionEvent(int state, BluetoothDevice device) {
             switch (state) {
             case CONNECTION_STATE_DISCONNECTED:
-                Log.w(TAG, "Ignore HF DISCONNECTED event, device: " + device);
+                logw("Ignore HF DISCONNECTED event, device: " + device);
                 break;
             case CONNECTION_STATE_CONNECTING:
                 if (okToConnect(device)){
-                    Log.i(TAG,"Incoming A2DP accepted");
+                    logi("Incoming A2DP accepted");
                     broadcastConnectionState(device, BluetoothProfile.STATE_CONNECTING,
                                              BluetoothProfile.STATE_DISCONNECTED);
                     synchronized (A2dpStateMachine.this) {
@@ -234,7 +242,7 @@ final class A2dpStateMachine extends StateMachine {
                     }
                 } else {
                     //reject the connection and stay in Disconnected state itself
-                    Log.i(TAG,"Incoming A2DP rejected");
+                    logi("Incoming A2DP rejected");
                     disconnectA2dpNative(getByteAddress(device));
                     // the other profile connection should be initiated
                     AdapterService adapterService = AdapterService.getAdapterService();
@@ -245,9 +253,9 @@ final class A2dpStateMachine extends StateMachine {
                 }
                 break;
             case CONNECTION_STATE_CONNECTED:
-                Log.w(TAG, "A2DP Connected from Disconnected state");
+                logw("A2DP Connected from Disconnected state");
                 if (okToConnect(device)){
-                    Log.i(TAG,"Incoming A2DP accepted");
+                    logi("Incoming A2DP accepted");
                     broadcastConnectionState(device, BluetoothProfile.STATE_CONNECTED,
                                              BluetoothProfile.STATE_DISCONNECTED);
                     synchronized (A2dpStateMachine.this) {
@@ -256,7 +264,7 @@ final class A2dpStateMachine extends StateMachine {
                     }
                 } else {
                     //reject the connection and stay in Disconnected state itself
-                    Log.i(TAG,"Incoming A2DP rejected");
+                    logi("Incoming A2DP rejected");
                     disconnectA2dpNative(getByteAddress(device));
                     // the other profile connection should be initiated
                     AdapterService adapterService = AdapterService.getAdapterService();
@@ -267,10 +275,10 @@ final class A2dpStateMachine extends StateMachine {
                 }
                 break;
             case CONNECTION_STATE_DISCONNECTING:
-                Log.w(TAG, "Ignore HF DISCONNECTING event, device: " + device);
+                logw("Ignore A2dp DISCONNECTING event, device: " + device);
                 break;
             default:
-                Log.e(TAG, "Incorrect state: " + state);
+                loge("Incorrect state: " + state);
                 break;
             }
         }
@@ -317,7 +325,7 @@ final class A2dpStateMachine extends StateMachine {
                             processConnectionEvent(event.valueInt, event.device);
                             break;
                         default:
-                            Log.e(TAG, "Unexpected stack event: " + event.type);
+                            loge("Unexpected stack event: " + event.type);
                             break;
                     }
                     break;
@@ -359,6 +367,14 @@ final class A2dpStateMachine extends StateMachine {
                         // outgoing connection failed
                         broadcastConnectionState(mTargetDevice, BluetoothProfile.STATE_DISCONNECTED,
                                                  BluetoothProfile.STATE_CONNECTING);
+                        // check if there is some incoming connection request
+                        if (mIncomingDevice != null) {
+                            logi("disconnect for outgoing in pending state");
+                            synchronized (A2dpStateMachine.this) {
+                                mTargetDevice = null;
+                            }
+                            break;
+                        }
                         synchronized (A2dpStateMachine.this) {
                             mTargetDevice = null;
                             transitionTo(mDisconnected);
@@ -372,7 +388,7 @@ final class A2dpStateMachine extends StateMachine {
                             transitionTo(mDisconnected);
                         }
                     } else {
-                        Log.e(TAG, "Unknown device Disconnected: " + device);
+                        loge("Unknown device Disconnected: " + device);
                     }
                     break;
             case CONNECTION_STATE_CONNECTED:
@@ -399,13 +415,21 @@ final class A2dpStateMachine extends StateMachine {
                 } else if (mIncomingDevice != null && mIncomingDevice.equals(device)) {
                     broadcastConnectionState(mIncomingDevice, BluetoothProfile.STATE_CONNECTED,
                                              BluetoothProfile.STATE_CONNECTING);
-                    synchronized (A2dpStateMachine.this) {
-                        mCurrentDevice = mIncomingDevice;
-                        mIncomingDevice = null;
-                        transitionTo(mConnected);
+                    // check for a2dp connection allowed for this device in race condition
+                    if (okToConnect(mIncomingDevice)) {
+                        logi("Ready to connect incoming Connection from pending state");
+                        synchronized (A2dpStateMachine.this) {
+                            mCurrentDevice = mIncomingDevice;
+                            mIncomingDevice = null;
+                            transitionTo(mConnected);
+                        }
+                    } else {
+                        // A2dp connection unchecked for this device
+                        loge("Incoming A2DP rejected from pending state");
+                        disconnectA2dpNative(getByteAddress(device));
                     }
                 } else {
-                    Log.e(TAG, "Unknown device Connected: " + device);
+                    loge("Unknown device Connected: " + device);
                     // something is wrong here, but sync our state with stack
                     broadcastConnectionState(device, BluetoothProfile.STATE_CONNECTED,
                                              BluetoothProfile.STATE_DISCONNECTED);
@@ -428,11 +452,14 @@ final class A2dpStateMachine extends StateMachine {
                     log("Stack and target device are connecting");
                 }
                 else if (mIncomingDevice != null && mIncomingDevice.equals(device)) {
-                    Log.e(TAG, "Another connecting event on the incoming device");
+                    loge("Another connecting event on the incoming device");
                 } else {
                     // We get an incoming connecting request while Pending
                     // TODO(BT) is stack handing this case? let's ignore it for now
-                    log("Incoming connection while pending, ignore");
+                    log("Incoming connection while pending, accept it");
+                    broadcastConnectionState(device, BluetoothProfile.STATE_CONNECTING,
+                                             BluetoothProfile.STATE_DISCONNECTED);
+                    mIncomingDevice = device;
                 }
                 break;
             case CONNECTION_STATE_DISCONNECTING:
@@ -442,15 +469,15 @@ final class A2dpStateMachine extends StateMachine {
                         log("stack is disconnecting mCurrentDevice");
                     }
                 } else if (mTargetDevice != null && mTargetDevice.equals(device)) {
-                    Log.e(TAG, "TargetDevice is getting disconnected");
+                    loge("TargetDevice is getting disconnected");
                 } else if (mIncomingDevice != null && mIncomingDevice.equals(device)) {
-                    Log.e(TAG, "IncomingDevice is getting disconnected");
+                    loge("IncomingDevice is getting disconnected");
                 } else {
-                    Log.e(TAG, "Disconnecting unknow device: " + device);
+                    loge("Disconnecting unknow device: " + device);
                 }
                 break;
             default:
-                Log.e(TAG, "Incorrect state: " + state);
+                loge("Incorrect state: " + state);
                 break;
             }
         }
@@ -470,7 +497,7 @@ final class A2dpStateMachine extends StateMachine {
         public boolean processMessage(Message message) {
             log("Connected process message: " + message.what);
             if (mCurrentDevice == null) {
-                Log.e(TAG, "ERROR: mCurrentDevice is null in Connected");
+                loge("ERROR: mCurrentDevice is null in Connected");
                 return NOT_HANDLED;
             }
 
@@ -489,6 +516,9 @@ final class A2dpStateMachine extends StateMachine {
                         broadcastConnectionState(device, BluetoothProfile.STATE_DISCONNECTED,
                                        BluetoothProfile.STATE_CONNECTING);
                         break;
+                    } else {
+                        broadcastConnectionState(mCurrentDevice, BluetoothProfile.STATE_DISCONNECTING,
+                                       BluetoothProfile.STATE_CONNECTED);
                     }
 
                     synchronized (A2dpStateMachine.this) {
@@ -507,7 +537,7 @@ final class A2dpStateMachine extends StateMachine {
                                    BluetoothProfile.STATE_CONNECTED);
                     if (!disconnectA2dpNative(getByteAddress(device))) {
                         broadcastConnectionState(device, BluetoothProfile.STATE_CONNECTED,
-                                       BluetoothProfile.STATE_DISCONNECTED);
+                                       BluetoothProfile.STATE_DISCONNECTING);
                         break;
                     }
                     transitionTo(mPending);
@@ -523,7 +553,7 @@ final class A2dpStateMachine extends StateMachine {
                             processAudioStateEvent(event.valueInt, event.device);
                             break;
                         default:
-                            Log.e(TAG, "Unexpected stack event: " + event.type);
+                            loge("Unexpected stack event: " + event.type);
                             break;
                     }
                     break;
@@ -544,18 +574,25 @@ final class A2dpStateMachine extends StateMachine {
                             mCurrentDevice = null;
                             transitionTo(mDisconnected);
                         }
+                    } else if (mTargetDevice != null && mTargetDevice.equals(device)) {
+                        broadcastConnectionState(device, BluetoothProfile.STATE_DISCONNECTED,
+                                                 BluetoothProfile.STATE_CONNECTING);
+                        synchronized (A2dpStateMachine.this) {
+                            mTargetDevice = null;
+                        }
+                        logi("Disconnected from mTargetDevice in connected state device: " + device);
                     } else {
-                        Log.e(TAG, "Disconnected from unknown device: " + device);
+                        loge("Disconnected from unknown device: " + device);
                     }
                     break;
               default:
-                  Log.e(TAG, "Connection State Device: " + device + " bad state: " + state);
+                  loge("Connection State Device: " + device + " bad state: " + state);
                   break;
             }
         }
         private void processAudioStateEvent(int state, BluetoothDevice device) {
             if (!mCurrentDevice.equals(device)) {
-                Log.e(TAG, "Audio State Device:" + device + "is different from ConnectedDevice:" +
+                loge("Audio State Device:" + device + "is different from ConnectedDevice:" +
                                                            mCurrentDevice);
                 return;
             }
@@ -575,7 +612,7 @@ final class A2dpStateMachine extends StateMachine {
                     }
                     break;
                 default:
-                  Log.e(TAG, "Audio State Device: " + device + " bad state: " + state);
+                  loge("Audio State Device: " + device + " bad state: " + state);
                   break;
             }
         }
@@ -607,7 +644,7 @@ final class A2dpStateMachine extends StateMachine {
                 }
                 return BluetoothProfile.STATE_DISCONNECTED;
             } else {
-                Log.e(TAG, "Bad currentState: " + currentState);
+                loge("Bad currentState: " + currentState);
                 return BluetoothProfile.STATE_DISCONNECTED;
             }
         }
@@ -716,12 +753,21 @@ final class A2dpStateMachine extends StateMachine {
         event.device = getDevice(address);
         sendMessage(STACK_EVENT, event);
     }
-    private BluetoothDevice getDevice(byte[] address) {
-        return mAdapter.getRemoteDevice(Utils.getAddressStringFromByte(address));
+
+    private void onCheckConnectionPriority(byte[] address) {
+        BluetoothDevice device = getDevice(address);
+        logw(" device " + device + " okToConnect " + okToConnect(device));
+        if (okToConnect(device)) {
+            // if connection is allowed then go ahead and connect
+            allowConnectionNative(IS_VALID_DEVICE);
+        } else {
+            // if connection is not allowed DO NOT CONNECT
+            allowConnectionNative(IS_INVALID_DEVICE);
+        }
     }
 
-    private void log(String msg) {
-        Log.d(TAG, msg);
+    private BluetoothDevice getDevice(byte[] address) {
+        return mAdapter.getRemoteDevice(Utils.getAddressStringFromByte(address));
     }
 
     private class StackEvent {
@@ -782,4 +828,5 @@ final class A2dpStateMachine extends StateMachine {
     private native void cleanupNative();
     private native boolean connectA2dpNative(byte[] address);
     private native boolean disconnectA2dpNative(byte[] address);
+    private native void allowConnectionNative(int isValid);
 }

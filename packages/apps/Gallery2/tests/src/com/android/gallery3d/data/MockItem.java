@@ -16,12 +16,10 @@
 
 package com.android.gallery3d.data;
 
-import com.android.gallery3d.data.MediaItem.BitmapInfo;
 import com.android.gallery3d.util.ThreadPool.Job;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapRegionDecoder;
-import android.net.Uri;
 
 public class MockItem extends MediaItem {
     public MockItem(Path path) {
@@ -52,9 +50,4 @@ public class MockItem extends MediaItem {
     public int getHeight() {
         return 0;
     }
-    
-    @Override
-	public Job<BitmapInfo> requestDecodeImage(int type, Uri mUri) {
-		return null;
-	}
 }

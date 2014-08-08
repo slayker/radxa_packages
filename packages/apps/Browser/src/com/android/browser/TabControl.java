@@ -18,10 +18,8 @@ package com.android.browser;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.webkit.WebChromeClient;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.webkit.WebViewClassic;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,12 +28,7 @@ import java.util.Vector;
 class TabControl {
     // Log Tag
     private static final String LOGTAG = "TabControl";
-    private static boolean DEBUG = true;
-    private void LOGD(String msg){
-    	if(DEBUG){
-    		Log.d(LOGTAG,msg);
-    	}
-    }
+
     // next Tab ID, starting at 1
     private static long sNextId = 1;
 
@@ -57,8 +50,6 @@ class TabControl {
     // the main browser controller
     private final Controller mController;
 
-	public static BrowserWebView mIpadview;
-	//private static String mOldUrl = null;
     private OnThumbnailUpdatedListener mOnThumbnailUpdatedListener;
 
     /**
@@ -75,45 +66,6 @@ class TabControl {
         return sNextId++;
     }
 
-	public void CreateIpadview(String url,Tab tab) {
-			Log.i("yyyyTabcntrol","onNewIpadWebView:url:"+url);
-			/*if(url !=null&&mOldUrl!=null&&(url.compareTo(mOldUrl)==0)){
-				LOGD("have been load pre just retrurn");
-				return;
-			}else{
-				LOGD("different mOldUri="+mOldUrl+"url="+url);
-				mOldUrl = url;
-			}*/
-			if(mIpadview == null){
-				LOGD("<---------create ipadwebview--------------");
-				mIpadview = (BrowserWebView) createNewWebView(true);
-			}
-				//mIpadview.setTab(tab);
-				WebViewClassic.fromWebView(mIpadview).setWebViewClient(mWebViewClient);
-				WebViewClassic.fromWebView(mIpadview).setWebChromeClient(mWebChromeClient);
-				WebViewClassic.fromWebView(mIpadview).getSettings().setIpadUA();
-				WebViewClassic.fromWebView(mIpadview).getSettings().setPluginsEnabled(false);
-				
-				mIpadview.setTab(tab);
-				WebViewClassic.fromWebView(mIpadview).loadUrl(url);
-			//}
-			if(WebViewClassic.fromWebView(mIpadview).isPaused()){
-				LOGD("pause to resume");
-				mIpadview.onResume();
-			}
-			mIpadview.setTab(tab);
-			//WebViewClassic.fromWebView(mIpadview).loadUrl(url);
-		
-	}
-	private final WebChromeClient mWebChromeClient = new WebChromeClient(){
-        public void onReceivedVideoUrl(WebView view ,String url){
-        	LOGD(" ipad onReceivedVideoUrl url ="+url);
-        	BrowserWebView bw = (BrowserWebView)view;
-        	bw.getAttachTab().receviedFlashVideoUrl(url);
-        	view.onPause();
-        }
-	};
-	private final WebViewClient mWebViewClient = new WebViewClient(){};
     /**
      * Return the current tab's main WebView. This will always return the main
      * WebView for a given tab and not a subwindow.

@@ -1,20 +1,3 @@
-/*
- * $_FOR_ROCKCHIP_RBOX_$
- * Copyright (C) 2010 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
- 
 package com.android.gallery3d.data;
 
 import android.annotation.TargetApi;
@@ -36,11 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-
-// $_rbox_$_modify_$_chengmingchuan_$20121212
-// $_rbox_$_modify_$_begin
-import android.os.Environment;
-// $_rbox_$_modify_$_end
 
 class BucketHelper {
 
@@ -64,24 +42,15 @@ class BucketHelper {
     //
     // The order of columns below is important: it must match to the index in
     // MediaStore.
-	
-// $_rbox_$_modify_$_chengmingchuan_$20121212
-// $_rbox_$_modify_$_begin
     private static final String[] PROJECTION_BUCKET = {
             ImageColumns.BUCKET_ID,
             FileColumns.MEDIA_TYPE,
-            ImageColumns.BUCKET_DISPLAY_NAME,
-			ImageColumns.DATA
-};
-// $_rbox_$_modify_$_end
+            ImageColumns.BUCKET_DISPLAY_NAME};
 
     // The indices should match the above projections.
     private static final int INDEX_BUCKET_ID = 0;
     private static final int INDEX_MEDIA_TYPE = 1;
     private static final int INDEX_BUCKET_NAME = 2;
-	
-	// $_rbox_$_modify_$_chengmingchuan_$20121212
-	private static final int INDEX_FILE_PATH = 3;
 
     // We want to order the albums by reverse chronological order. We abuse the
     // "WHERE" parameter to insert a "GROUP BY" clause into the SQL statement.
@@ -107,10 +76,7 @@ class BucketHelper {
     private static final String[] PROJECTION_BUCKET_IN_ONE_TABLE = {
             ImageColumns.BUCKET_ID,
             "MAX(datetaken)",
-     // $_rbox_$_modify_$_chengmingchuan_$20121212
-            ImageColumns.BUCKET_DISPLAY_NAME,
-	     ImageColumns.DATA};
-     //$_rbox_$_modify_$_end
+            ImageColumns.BUCKET_DISPLAY_NAME};
 
     // We keep the INDEX_BUCKET_ID and INDEX_BUCKET_NAME the same as
     // PROJECTION_BUCKET so we can reuse the values defined before.
@@ -118,20 +84,6 @@ class BucketHelper {
 
     // When query from the Images or Video tables, we only need to group by BUCKET_ID.
     private static final String BUCKET_GROUP_BY_IN_ONE_TABLE = "1) GROUP BY (1";
-
-    //$_rbox_$_modify_$_chengmingchuan_$20121212
-    //$_rbox_$_modify_$_begin
-   private final static String PRIME_STORAGE = "/mnt/sdcard";
-   private final static  String SECOND_STORAGE =  "/mnt/external_sd";
-   private final static  String HOST_STORAGE =  "/mnt/usb_storage";
-   private final  static String USB0_STORAGE =  "/mnt/usb_storage/USB_DISK0";
-   private final  static String USB1_STORAGE =  "/mnt/usb_storage/USB_DISK1";
-   private final  static String USB2_STORAGE =  "/mnt/usb_storage/USB_DISK2";
-   private final  static String USB3_STORAGE =  "/mnt/usb_storage/USB_DISK3";
-   private final  static String USB4_STORAGE =  "/mnt/usb_storage/USB_DISK4";
-   private final  static String USB5_STORAGE =  "/mnt/usb_storage/USB_DISK5";
-    //$_rbox_$_modify_$_end
-
 
     public static BucketEntry[] loadBucketEntries(
             JobContext jc, ContentResolver resolver, int type) {
@@ -215,14 +167,6 @@ class BucketHelper {
                     BucketEntry entry = new BucketEntry(
                             cursor.getInt(INDEX_BUCKET_ID),
                             cursor.getString(INDEX_BUCKET_NAME));
-		 //$_rbox_$_modify_$_chengmingchuan_$_20121212_$_Filter_Invalid_Path_Quickly
-              //$_rbox_$_modify_$_begin
-		      String filePath = cursor.getString(INDEX_FILE_PATH);
-		      if(false == isValidStorage(filePath)){
-		          Log.d(TAG, "($$$ TV $$$) Filter Invalid File Path; FilePath=" + filePath);
-		          continue;
-		      }
-		      //$_rbox_$_modify_$_end
                     if (!buffer.contains(entry)) {
                         buffer.add(entry);
                     }
@@ -234,44 +178,6 @@ class BucketHelper {
         }
         return buffer.toArray(new BucketEntry[buffer.size()]);
     }
-
-   //$_rbox_$_modify_$_chengmingchuan_$_20121212_$_Filter_Invalid_Storage
-   //$_rbox_$_modify_$_begin
-   private static boolean isValidStorage(String path){
-   	if(true == path.startsWith(PRIME_STORAGE)){
-		return true;
-   	}
-   	if(true == path.startsWith(SECOND_STORAGE)){
-		if(StorageUtils.getSDcardState().startsWith(Environment.MEDIA_MOUNTED)){
-			return true;
-		}
-		return false;
-	}
-
-   	if(true == path.startsWith(HOST_STORAGE)){
-		if(true == path.startsWith(USB0_STORAGE) && Environment.getHostStorage_Extern_0_State().startsWith(Environment.MEDIA_MOUNTED)){
-			return true;
-		}
-		if(true == path.startsWith(USB1_STORAGE) && Environment.getHostStorage_Extern_1_State().startsWith(Environment.MEDIA_MOUNTED)){
-			return true;
-		}
-		if(true == path.startsWith(USB2_STORAGE) && Environment.getHostStorage_Extern_2_State().startsWith(Environment.MEDIA_MOUNTED)){
-			return true;
-		}
-		if(true == path.startsWith(USB3_STORAGE) && Environment.getHostStorage_Extern_3_State().startsWith(Environment.MEDIA_MOUNTED)){
-			return true;
-		}
-		if(true == path.startsWith(USB4_STORAGE) && Environment.getHostStorage_Extern_4_State().startsWith(Environment.MEDIA_MOUNTED)){
-			return true;
-		}
-		if(true == path.startsWith(USB5_STORAGE) && Environment.getHostStorage_Extern_5_State().startsWith(Environment.MEDIA_MOUNTED)){
-			return true;
-		}
-   	}
-
-	return false;
-   }
-   /*$_rbox_$_modify_$_end*/
 
     private static String getBucketNameInTable(
             ContentResolver resolver, Uri tableUri, int bucketId) {

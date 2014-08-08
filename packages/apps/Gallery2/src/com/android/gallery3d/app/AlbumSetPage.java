@@ -1,5 +1,4 @@
 /*
- *$_FOR_ROCKCHIP_RBOX_$ 
  * Copyright (C) 2010 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +23,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Vibrator;
+import android.view.HapticFeedbackConstants;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -42,6 +41,8 @@ import com.android.gallery3d.data.MediaItem;
 import com.android.gallery3d.data.MediaObject;
 import com.android.gallery3d.data.MediaSet;
 import com.android.gallery3d.data.Path;
+import com.android.gallery3d.glrenderer.FadeTexture;
+import com.android.gallery3d.glrenderer.GLCanvas;
 import com.android.gallery3d.picasasource.PicasaSource;
 import com.android.gallery3d.settings.GallerySettings;
 import com.android.gallery3d.ui.ActionModeHandler;
@@ -49,8 +50,6 @@ import com.android.gallery3d.ui.ActionModeHandler.ActionModeListener;
 import com.android.gallery3d.ui.AlbumSetSlotRenderer;
 import com.android.gallery3d.ui.DetailsHelper;
 import com.android.gallery3d.ui.DetailsHelper.CloseListener;
-import com.android.gallery3d.ui.FadeTexture;
-import com.android.gallery3d.ui.GLCanvas;
 import com.android.gallery3d.ui.GLRoot;
 import com.android.gallery3d.ui.GLView;
 import com.android.gallery3d.ui.SelectionManager;
@@ -62,11 +61,6 @@ import com.android.gallery3d.util.HelpUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-
-//$_rbox_$_modify_$_chengmingchuan_$20121212
-//$_rbox_$_modify_$_begin
-import android.view.KeyEvent;
-//$_rbox_$_modify_$_end
 
 public class AlbumSetPage extends ActivityState implements
         SelectionManager.SelectionListener, GalleryActionBar.ClusterRunner,
@@ -98,7 +92,6 @@ public class AlbumSetPage extends ActivityState implements
     private boolean mShowClusterMenu;
     private GalleryActionBar mActionBar;
     private int mSelectedAction;
-    private Vibrator mVibrator;
 
     protected SelectionManager mSelectionManager;
     private AlbumSetDataLoader mAlbumSetDataAdapter;
@@ -122,16 +115,6 @@ public class AlbumSetPage extends ActivityState implements
 
     private int mLoadingBits = 0;
     private boolean mInitialSynced = false;
-	
-   //$_rbox_$_modify_$_chengmingchuan_$20121212
-   //$_rbox_$_modify_$_begin
-    private final int  FOCUS_UP=1;
-    private final int  FOCUS_DOWN=2;
-    private final int  FOCUS_LEFT = 3;
-    private final int  FOCUS_RIGHT = 4;
-    private int mCurrentFocus=0;
-    private int mOldFocusIndex = 0;
-    //$_rbox_$_modify_$_end
 
     private Button mCameraButton;
     private boolean mShowedEmptyToastForSelf = false;
@@ -279,20 +262,18 @@ public class AlbumSetPage extends ActivityState implements
             mActivity.getStateManager().startStateForResult(
                     AlbumSetPage.class, REQUEST_DO_ANIMATION, data);
         } else {
-            if (!mGetContent && (targetSet.getSupportedOperations()
-                    & MediaObject.SUPPORT_IMPORT) != 0) {
-                data.putBoolean(AlbumPage.KEY_AUTO_SELECT_ALL, true);
-            } else if (!mGetContent && albumShouldOpenInFilmstrip(targetSet)) {
+            if (!mGetContent && albumShouldOpenInFilmstrip(targetSet)) {
                 data.putParcelable(PhotoPage.KEY_OPEN_ANIMATION_RECT,
                         mSlotView.getSlotRect(slotIndex, mRootPane));
                 data.putInt(PhotoPage.KEY_INDEX_HINT, 0);
                 data.putString(PhotoPage.KEY_MEDIA_SET_PATH,
                         mediaPath);
+                data.putString(PhotoPage.KEY_MEDIA_ITEM_PATH,
+                        targetSet.getCoverMediaItem().getPath().toString());
                 data.putBoolean(PhotoPage.KEY_START_IN_FILMSTRIP, true);
-//              data.putBoolean(PhotoPage.KEY_IN_CAMERA_ROLL, targetSet.isCameraRoll());
-                data.putBoolean(PhotoPage.KEY_IN_CAMERA_ROLL, false);
+                data.putBoolean(PhotoPage.KEY_IN_CAMERA_ROLL, targetSet.isCameraRoll());
                 mActivity.getStateManager().startStateForResult(
-                        PhotoPage.class, AlbumPage.REQUEST_PHOTO, data);
+                        FilmstripPage.class, AlbumPage.REQUEST_PHOTO, data);
                 return;
             }
             data.putString(AlbumPage.KEY_MEDIA_PATH, mediaPath);
@@ -349,7 +330,6 @@ public class AlbumSetPage extends ActivityState implements
         mSubtitle = data.getString(AlbumSetPage.KEY_SET_SUBTITLE);
         mEyePosition = new EyePosition(context, this);
         mDetailsSource = new MyDetailsSource();
-        mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         mActionBar = mActivity.getGalleryActionBar();
         mSelectedAction = data.getInt(AlbumSetPage.KEY_SELECTED_CLUSTER_TYPE,
                 FilterUtils.CLUSTER_BY_ALBUM);
@@ -370,8 +350,9 @@ public class AlbumSetPage extends ActivityState implements
 
     @Override
     public void onDestroy() {
-        cleanupCameraButton();
         super.onDestroy();
+        cleanupCameraButton();
+        mActionModeHandler.destroy();
     }
 
     private boolean setupCameraButton() {
@@ -456,9 +437,9 @@ public class AlbumSetPage extends ActivityState implements
     public void onPause() {
         super.onPause();
         mIsActive = false;
-        mActionModeHandler.pause();
         mAlbumSetDataAdapter.pause();
         mAlbumSetView.pause();
+        mActionModeHandler.pause();
         mEyePosition.pause();
         DetailsHelper.pause();
         // Call disableClusterMenu to avoid receiving callback after paused.
@@ -593,116 +574,6 @@ public class AlbumSetPage extends ActivityState implements
         }
         return true;
     }
-	
-
-
-
-    //$_rbox_$_modify_$_chengmingchuan_$20121212
-    //$_rbox_$_modify_$_begin
-    private boolean moveFocus(int focus){
-	 if(-1 == mOldFocusIndex){
-	 	int value = mCurrentFocus%2;
-		 switch(focus){
-		 	case FOCUS_UP:
-				if(1 == value){mCurrentFocus--;}
-				else{
-					mOldFocusIndex=mCurrentFocus;
-					return false;
-				}
-				break;
-			case FOCUS_RIGHT:
-				mCurrentFocus += 2;
-				break;
-			case FOCUS_DOWN:
-				if(0 == value){mCurrentFocus++;}
-				else{
-					mOldFocusIndex=mCurrentFocus;
-					return false;
-				}
-				break;
-			case FOCUS_LEFT:
-				mCurrentFocus -= 2;
-				break;
-			default:
-				return false;
-		 }
-		 if(!mAlbumSetDataAdapter.isActive(mCurrentFocus) ){
-			if(mCurrentFocus<0){mCurrentFocus=0;}
-			if(focus == FOCUS_RIGHT){mCurrentFocus-=2;}
-			if(focus == FOCUS_DOWN){mCurrentFocus-=1;}
-			mOldFocusIndex=mCurrentFocus;
-			return false;
-		 }
-	 }
-	 if(-1 != mOldFocusIndex){
-	 	switch(focus){
-			case FOCUS_LEFT:
-			case FOCUS_RIGHT:
-				return false;
-			case FOCUS_UP:
-			case FOCUS_DOWN:
-				int value = mOldFocusIndex%2;
-				if(1==value){mOldFocusIndex-=1;}
-				break;
-			default:
-				return false;
-		 }
-	 	mCurrentFocus=mOldFocusIndex;
-	 }
-	 MediaSet set = mAlbumSetDataAdapter.getMediaSet(mCurrentFocus);
-        Path path = (set == null) ? null : set.getPath();
-        mAlbumSetView.setHighlightItemPath(path);
-	 mAlbumSetView.setPressedIndex(mCurrentFocus);
-	 mSlotView.setCenterIndex(mCurrentFocus);
-	 mSlotView.invalidate();
-	 mOldFocusIndex = -1;
-	 return true;
-    }
-    //$_rbox_$_modify_$_end
-	
-    //$_rbox_$_modify_$_chengmingchuan_$20121212
-    //$_rbox_$_modify_$_begin
-    private boolean gotoAlbum(){
-    	  int slotIndex = mCurrentFocus;
-	  onSingleTapUp(slotIndex);
-	 return true;
-    }
-    //$_rbox_$_modify_$_end
-
-   //$_rbox_$_modify_$_chengmingchuan_$20121212
-   //$_rbox_$_modify_$_begin
-    @Override
-    public void makeDirty(){
-    	this.mAlbumSetDataAdapter.makeDirty();
-    }
-    //$_rbox_$_modify_$_end
-
-    //$_rbox_$_modify_$_chengmingchuan_$20121212
-    //$_rbox_$_modify_$_begin
-    @Override
-    protected boolean onKeyDown(int keyCode, KeyEvent event) {
-        /*cancel slotview heightlight*/
-    	 mAlbumSetView.setHighlightItemPath(null);
-	 mAlbumSetView.setPressedUp();
-	 Log.d(TAG, "=========================================KeyCode="+ keyCode);
-	 switch(keyCode){
-	 	case KeyEvent.KEYCODE_DPAD_LEFT:
-			return this.moveFocus(FOCUS_LEFT);
-		case KeyEvent.KEYCODE_DPAD_RIGHT:
-			return this.moveFocus(FOCUS_RIGHT);
-		case KeyEvent.KEYCODE_DPAD_UP:
-			return this.moveFocus(FOCUS_UP);
-		case KeyEvent.KEYCODE_DPAD_DOWN:
-			return this.moveFocus(FOCUS_DOWN);
-		case KeyEvent.KEYCODE_DPAD_CENTER: 		
-		case KeyEvent.KEYCODE_ENTER:
-			return this.gotoAlbum(); 
-		default:
-			break;
-		}	 
-		return false;
-  }
-  //$_rbox_$_modify_$_end
 
     @Override
     protected boolean onItemSelected(MenuItem item) {
@@ -733,6 +604,9 @@ public class AlbumSetPage extends ActivityState implements
                 GalleryUtils.startCameraActivity(activity);
                 return true;
             }
+/*   Comment out since picasa support is not built in.
+     Also comment out the settings item at albumset.xml menu.
+
             case R.id.action_manage_offline: {
                 Bundle data = new Bundle();
                 String mediaPath = mActivity.getDataManager().getTopSetPath(
@@ -745,10 +619,16 @@ public class AlbumSetPage extends ActivityState implements
                 PicasaSource.requestSync(activity);
                 return true;
             }
+*/
+/*   Comment out to enable Settings in menu. This should be done when
+     GallerySettings.java has content, as it is currently empty.
+     Also comment out the settings item at albumset.xml menu.
+
             case R.id.action_settings: {
                 activity.startActivity(new Intent(activity, GallerySettings.class));
                 return true;
             }
+*/
             default:
                 return false;
         }
@@ -782,7 +662,7 @@ public class AlbumSetPage extends ActivityState implements
             case SelectionManager.ENTER_SELECTION_MODE: {
                 mActionBar.disableClusterMenu(true);
                 mActionModeHandler.startActionMode();
-                if (mHapticsEnabled) mVibrator.vibrate(100);
+                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                 break;
             }
             case SelectionManager.LEAVE_SELECTION_MODE: {
@@ -794,6 +674,11 @@ public class AlbumSetPage extends ActivityState implements
                 break;
             }
             case SelectionManager.SELECT_ALL_MODE: {
+                mActionModeHandler.updateSupportedOperation();
+                mRootPane.invalidate();
+                break;
+            }
+            case SelectionManager.DESELECT_ALL_MODE: {
                 mActionModeHandler.updateSupportedOperation();
                 mRootPane.invalidate();
                 break;

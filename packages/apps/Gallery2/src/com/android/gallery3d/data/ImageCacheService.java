@@ -54,12 +54,9 @@ public class ImageCacheService {
      *
      * @return true if the image data is found; false if not found.
      */
-    public boolean getImageData(Path path,String filePath, int type, BytesBuffer buffer) {
-        byte[] key = makeKey(path,filePath, type);
+    public boolean getImageData(Path path, int type, BytesBuffer buffer) {
+        byte[] key = makeKey(path, type);
         long cacheKey = Utils.crc64Long(key);
-        if(mCache == null){
-        	return false;
-        }
         try {
             LookupRequest request = new LookupRequest();
             request.key = cacheKey;
@@ -79,15 +76,12 @@ public class ImageCacheService {
         return false;
     }
 
-    public void putImageData(Path path,String filePath, int type, byte[] value) {
-        byte[] key = makeKey(path , filePath, type);
+    public void putImageData(Path path, int type, byte[] value) {
+        byte[] key = makeKey(path, type);
         long cacheKey = Utils.crc64Long(key);
         ByteBuffer buffer = ByteBuffer.allocate(key.length + value.length);
         buffer.put(key);
         buffer.put(value);
-        if(mCache == null){
-        	return;
-        }
         synchronized (mCache) {
             try {
                 mCache.insert(cacheKey, buffer.array());
@@ -97,8 +91,8 @@ public class ImageCacheService {
         }
     }
 
-    public void clearImageData(Path path,String filePath, int type) {
-        byte[] key = makeKey(path,filePath, type);
+    public void clearImageData(Path path, int type) {
+        byte[] key = makeKey(path, type);
         long cacheKey = Utils.crc64Long(key);
         synchronized (mCache) {
             try {
@@ -109,8 +103,8 @@ public class ImageCacheService {
         }
     }
 
-    private static byte[] makeKey(Path path,String filePath, int type) {
-        return GalleryUtils.getBytes(path.toString() +"+"+filePath+ "+" + type);
+    private static byte[] makeKey(Path path, int type) {
+        return GalleryUtils.getBytes(path.toString() + "+" + type);
     }
 
     private static boolean isSameKey(byte[] key, byte[] buffer) {

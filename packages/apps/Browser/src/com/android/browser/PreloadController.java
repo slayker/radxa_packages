@@ -31,8 +31,6 @@ import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient.CustomViewCallback;
 import android.webkit.WebView;
 
-import java.util.List;
-
 public class PreloadController implements WebViewController {
 
     private static final boolean LOGD_ENABLED = false;
@@ -272,9 +270,4 @@ public class PreloadController implements WebViewController {
         return false;
     }
 
-	@Override
-	public void onUpdatePlayWindowVisible(Tab tab) {
-		// TODO Auto-generated method stub
-		
-	}
 }

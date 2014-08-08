@@ -128,7 +128,7 @@ public class SlideshowDataAdapter implements SlideshowPage.Model {
                 }
 
                 Bitmap bitmap = item
-                        .requestImage(MediaItem.TYPE_DECODE)
+                        .requestImage(MediaItem.TYPE_THUMBNAIL)
                         .run(jc);
 
                 if (bitmap != null) {

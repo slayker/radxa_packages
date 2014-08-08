@@ -44,6 +44,7 @@ final public class AbstractionLayer {
 
     static final int BT_PROPERTY_REMOTE_FRIENDLY_NAME = 0x0A;
     static final int BT_PROPERTY_REMOTE_RSSI = 0x0B;
+    static final int BT_PROPERTY_REMOTE_TRUST_VALUE = 0x0C;
 
     static final int BT_DEVICE_TYPE_BREDR = 0x01;
     static final int BT_DEVICE_TYPE_BLE = 0x02;
@@ -76,4 +77,6 @@ final public class AbstractionLayer {
     public static final int BT_STATUS_UNHANDLED = 8;
     public static final int BT_STATUS_AUTH_FAILURE = 9;
     public static final int BT_STATUS_RMT_DEV_DOWN = 10;
+    public static final int BT_STATUS_AUTH_REJECTED =11;
+    public static final int BT_STATUS_AUTH_TIMEOUT = 12;
 }

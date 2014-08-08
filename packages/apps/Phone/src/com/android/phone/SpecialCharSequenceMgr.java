@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
+ * Not a Contribution
+ *
  * Copyright (C) 2006 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +21,18 @@ package com.android.phone;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import com.android.internal.telephony.TelephonyIntents;
-import com.android.internal.telephony.Phone;
+import android.telephony.MSimTelephonyManager;
 import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.view.WindowManager;
 
+import com.android.internal.telephony.Phone;
+import com.android.internal.telephony.TelephonyIntents;
 import com.android.internal.telephony.TelephonyCapabilities;
 
 /**
@@ -54,6 +60,7 @@ public class SpecialCharSequenceMgr {
     private static final boolean DBG = false;
 
     private static final String MMI_IMEI_DISPLAY = "*#06#";
+    private static final String MMI_REGULATORY_INFO_DISPLAY = "*#07#";
 
     /** This class is never instantiated. */
     private SpecialCharSequenceMgr() {
@@ -99,6 +106,7 @@ public class SpecialCharSequenceMgr {
         String dialString = PhoneNumberUtils.stripSeparators(input);
 
         if (handleIMEIDisplay(context, dialString)
+            || handleRegulatoryInfoDisplay(context, dialString)
             || handlePinEntry(context, dialString, pukInputActivity)
             || handleAdnEntry(context, dialString)
             || handleSecretCode(context, dialString)) {
@@ -174,8 +182,13 @@ public class SpecialCharSequenceMgr {
                 int index = Integer.parseInt(input.substring(0, len-1));
                 Intent intent = new Intent(Intent.ACTION_PICK);
 
-                intent.setClassName("com.android.phone",
-                                    "com.android.phone.SimContacts");
+                if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
+                    intent.setClassName("com.android.phone",
+                                        "com.android.phone.MSimContacts");
+                } else {
+                    intent.setClassName("com.android.phone",
+                                        "com.android.phone.SimContacts");
+                }
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra("index", index);
                 PhoneGlobals.getInstance().startActivity(intent);
@@ -194,7 +207,15 @@ public class SpecialCharSequenceMgr {
         if ((input.startsWith("**04") || input.startsWith("**05"))
                 && input.endsWith("#")) {
             PhoneGlobals app = PhoneGlobals.getInstance();
-            boolean isMMIHandled = app.phone.handlePinMmi(input);
+            Phone phone = app.phone;
+
+            if (app instanceof com.android.phone.MSimPhoneGlobals) {
+                // In multisim case, handle PIN/PUK MMI commands on
+                // voice preferred sub.
+                int voiceSub = app.getVoiceSubscription();
+                phone = app.getPhone(voiceSub);
+            }
+            boolean isMMIHandled = phone.handlePinMmi(input);
 
             // if the PUK code is recognized then indicate to the
             // phone app that an attempt to unPUK the device was
@@ -234,6 +255,23 @@ public class SpecialCharSequenceMgr {
                 .create();
         alert.getWindow().setType(WindowManager.LayoutParams.TYPE_PRIORITY_PHONE);
         alert.show();
+    }
+
+    private static boolean handleRegulatoryInfoDisplay(Context context, String input) {
+        if (input.equals(MMI_REGULATORY_INFO_DISPLAY)) {
+            log("handleRegulatoryInfoDisplay() sending intent to settings app");
+            ComponentName regInfoDisplayActivity = new ComponentName(
+                    "com.android.settings", "com.android.settings.RegulatoryInfoDisplayActivity");
+            Intent showRegInfoIntent = new Intent("android.settings.SHOW_REGULATORY_INFO");
+            showRegInfoIntent.setComponent(regInfoDisplayActivity);
+            try {
+                context.startActivity(showRegInfoIntent);
+            } catch (ActivityNotFoundException e) {
+                Log.e(TAG, "startActivity() failed: " + e);
+            }
+            return true;
+        }
+        return false;
     }
 
     private static void log(String msg) {

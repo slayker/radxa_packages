@@ -1,5 +1,4 @@
 /*
- * $_FOR_ROCKCHIP_RBOX_$
  * Copyright (C) 2009 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +17,15 @@
 package com.android.gallery3d.app;
 
 import android.app.Dialog;
-import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.OpenableColumns;
+import android.view.InputDevice;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -39,17 +38,6 @@ import com.android.gallery3d.data.MediaSet;
 import com.android.gallery3d.data.Path;
 import com.android.gallery3d.picasasource.PicasaSource;
 import com.android.gallery3d.util.GalleryUtils;
-
-// $_rbox_$_modify_$_chengmingchuan_$20121212
-// $_rbox_$_modify_$_begin
-import android.view.KeyEvent;
-import android.os.Environment;
-import android.os.storage.StorageManager;
-import android.os.storage.StorageEventListener;
-import com.android.gallery3d.ui.GLRootView;
-import com.android.gallery3d.ui.GLRoot;
-import android.content.Context;
-// $_rbox_$_modify_$_end
 
 public final class Gallery extends AbstractGalleryActivity implements OnCancelListener {
     public static final String EXTRA_SLIDESHOW = "slideshow";
@@ -65,12 +53,6 @@ public final class Gallery extends AbstractGalleryActivity implements OnCancelLi
 
     private static final String TAG = "Gallery";
     private Dialog mVersionCheckDialog;
-
-   //$_rbox_$_modify_$_chengmingchuan_$_20121212_$_[Info: Listen Change of Storage]
-   //$_rbox_$_modify_$_begin
-    private StorageManager mStorageManager = null;
-    private StorageEventListener mStorageListener = null;
-   //$_rbox_$_modify_$_end
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,29 +72,6 @@ public final class Gallery extends AbstractGalleryActivity implements OnCancelLi
         } else {
             initializeByIntent();
         }
-
-      //$_rbox_$_modify_$_chengmingchuan_$_20121212_$_[Info: Listen Change of Storage]
-      //$_rbox_$_modify_$_begin
-	 if (mStorageManager == null) {
-		mStorageManager = (StorageManager) getSystemService(Context.STORAGE_SERVICE);
-		mStorageListener = new StorageEventListener() {
-			@Override
-			public void onStorageStateChanged(String path, String oldState, String newState) {
-				if(newState.equals(Environment.MEDIA_UNMOUNTED)){
-					if((null !=getStateManager())&&(null !=getStateManager().getTopState())){
-						getStateManager().getTopState().makeDirty();
-					}
-				}	
-			}
-			@Override
-			public void onUsbMassStorageConnectionChanged(boolean connected) {
-				return ;
-                     }
-		};
-		mStorageManager.registerListener(mStorageListener);
-	}
-       //$_rbox_$_modify_$_end
-
     }
 
     private void initializeByIntent() {
@@ -243,12 +202,7 @@ public final class Gallery extends AbstractGalleryActivity implements OnCancelLi
                     startDefaultPage();
                 }
             } else {
-//                Path itemPath = dm.findPathByUri(uri, contentType);
-            	String type = contentType;
-            	if(type.trim().equals("*/*")){
-            		type = "image/*";
-            	}
-            	Path itemPath = dm.findPathByUri(uri, type);
+                Path itemPath = dm.findPathByUri(uri, contentType);
                 Path albumPath = dm.getDefaultSetOf(itemPath);
 
                 data.putString(PhotoPage.KEY_MEDIA_ITEM_PATH, itemPath.toString());
@@ -267,8 +221,8 @@ public final class Gallery extends AbstractGalleryActivity implements OnCancelLi
                         data.putBoolean(PhotoPage.KEY_TREAT_BACK_AS_UP, true);
                     }
                 }
-
-                getStateManager().startState(PhotoPage.class, data);
+                data.putBoolean("SingleItemOnly", singleItemOnly);
+                getStateManager().startState(SinglePhotoPage.class, data);
             }
         }
     }
@@ -281,50 +235,6 @@ public final class Gallery extends AbstractGalleryActivity implements OnCancelLi
             mVersionCheckDialog.show();
         }
     }
-
-    // $_rbox_$_modify_$_chengmingchuan_$_20121212_$_[Info: Destory mStorageListener]
-    // $_rbox_$_modify_$_begin
-    public void onDestroy() {
-    	if (mStorageManager != null && mStorageListener != null) {
-		Log.d(TAG, "onDestroy----Unregister Listener(mStorageListener)");
-		mStorageManager.unregisterListener(mStorageListener);
-	}
-        super.onDestroy();
-        GLRoot root = getGLRoot();
-        root.lockRenderThread();
-        try {
-            getStateManager().destroy();
-        } finally {
-            root.unlockRenderThread();
-       }
-    }
-    // $_rbox_$_modify_$_end
-
-    // $_rbox_$_modify_$_chengmingchuan_$_20121212_$_[Info: Handle Keycode]
-    // $_rbox_$_modify_$_begin
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-    	 if(KeyEvent.KEYCODE_BACK==keyCode){
-	     this.onBackPressed();
-	     return true;
-	 }
-
-	 GLRoot root = getGLRoot();
-        root.lockRenderThread();
-        try {
-	     boolean flag = getStateManager().onKeyDown(keyCode, event);
-	     if(flag){
-		  ((GLRootView)root).setFocusable(true);
-		  ((GLRootView)root).requestFocus();
-	     }else{
-	         ((GLRootView)root).setFocusable(false);
-	     }
-            return flag||super.onKeyDown(keyCode, event);
-        } finally {    
-            root.unlockRenderThread();
-       }
-    }
-    // $_rbox_$_modify_$_end
 
     @Override
     protected void onPause() {
@@ -339,5 +249,26 @@ public final class Gallery extends AbstractGalleryActivity implements OnCancelLi
         if (dialog == mVersionCheckDialog) {
             mVersionCheckDialog = null;
         }
+    }
+
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+        final boolean isTouchPad = (event.getSource()
+                & InputDevice.SOURCE_CLASS_POSITION) != 0;
+        if (isTouchPad) {
+            float maxX = event.getDevice().getMotionRange(MotionEvent.AXIS_X).getMax();
+            float maxY = event.getDevice().getMotionRange(MotionEvent.AXIS_Y).getMax();
+            View decor = getWindow().getDecorView();
+            float scaleX = decor.getWidth() / maxX;
+            float scaleY = decor.getHeight() / maxY;
+            float x = event.getX() * scaleX;
+            //x = decor.getWidth() - x; // invert x
+            float y = event.getY() * scaleY;
+            //y = decor.getHeight() - y; // invert y
+            MotionEvent touchEvent = MotionEvent.obtain(event.getDownTime(),
+                    event.getEventTime(), event.getAction(), x, y, event.getMetaState());
+            return dispatchTouchEvent(touchEvent);
+        }
+        return super.onGenericMotionEvent(event);
     }
 }

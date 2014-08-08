@@ -74,12 +74,6 @@ public class KeyChainActivity extends Activity {
     // be done on the UI thread.
     private KeyStore mKeyStore = KeyStore.getInstance();
 
-    // the KeyStore.state operation is safe to do on the UI thread, it
-    // does not do a file operation.
-    private boolean isKeyStoreUnlocked() {
-        return mKeyStore.state() == KeyStore.State.UNLOCKED;
-    }
-
     @Override public void onCreate(Bundle savedState) {
         super.onCreate(savedState);
         if (savedState == null) {
@@ -114,7 +108,7 @@ public class KeyChainActivity extends Activity {
         // see if KeyStore has been unlocked, if not start activity to do so
         switch (mState) {
             case INITIAL:
-                if (!isKeyStoreUnlocked()) {
+                if (!mKeyStore.isUnlocked()) {
                     mState = State.UNLOCK_REQUESTED;
                     this.startActivityForResult(new Intent(Credentials.UNLOCK_ACTION),
                                                 REQUEST_UNLOCK);
@@ -362,7 +356,7 @@ public class KeyChainActivity extends Activity {
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_UNLOCK:
-                if (isKeyStoreUnlocked()) {
+                if (mKeyStore.isUnlocked()) {
                     showCertChooserDialog();
                 } else {
                     // user must have canceled unlock, give up

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2013 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!-- This layout is shared by phone and tablet in both landscape and portrait
+ orientation. The purpose of having this layout is to eventually not manually
+ recreate views when the orientation changes, by migrating the views that do not
+ need to be recreated in onConfigurationChanged from old photo_module to this
+ layout. -->
+
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center">
+    <include layout="@layout/count_down_to_capture"/>
+    <com.android.camera.PreviewFrameLayout android:id="@+id/frame"
+        android:layout_centerInParent="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical|center_horizontal">
+        <ViewStub android:id="@+id/face_view_stub"
+            android:inflatedId="@+id/face_view"
+            android:layout="@layout/face_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"/>
+        <com.android.camera.ui.RenderOverlay
+            android:id="@+id/render_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical|center_horizontal" />
+            <com.android.camera.ui.RotateImageView
+                android:id="@+id/scene_detect_icon"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:paddingLeft="12dp"
+                android:paddingTop="12dp"
+                android:visibility="gone"
+                android:src="@drawable/smart_scene_sports" />
+            <com.android.camera.ui.RotateImageView
+                android:id="@+id/burst_mode_icon"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_toRightOf="@+id/scene_detect_icon"
+                android:paddingLeft="12dp"
+                android:paddingTop="12dp"
+                android:visibility="gone"
+                android:src="@drawable/burst_mode_5" />
+    </com.android.camera.PreviewFrameLayout>
+</merge>

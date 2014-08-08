@@ -119,6 +119,10 @@ public class DateTimeSettings extends SettingsPreferenceFragment
         if (currentFormat == null) {
             currentFormat = "";
         }
+
+        // Prevents duplicated values on date format selector.
+        mDummyDate.set(mDummyDate.get(Calendar.YEAR), mDummyDate.DECEMBER, 31, 13, 0, 0);
+
         for (int i = 0; i < formattedDates.length; i++) {
             String formatted =
                     DateFormat.getDateFormatForSetting(getActivity(), dateFormats[i])
@@ -213,6 +217,7 @@ public class DateTimeSettings extends SettingsPreferenceFragment
             Settings.System.putString(getContentResolver(),
                     Settings.System.DATE_FORMAT, format);
             updateTimeAndDateDisplay(getActivity());
+            dateUpdated();
         } else if (key.equals(KEY_AUTO_TIME)) {
             boolean autoEnabled = preferences.getBoolean(key, true);
             Settings.Global.putInt(getContentResolver(), Settings.Global.AUTO_TIME,
@@ -240,6 +245,15 @@ public class DateTimeSettings extends SettingsPreferenceFragment
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
                 calendar.get(Calendar.DAY_OF_MONTH));
+            // The system clock can't represent dates outside this range.
+            DatePickerDialog datePicker = (DatePickerDialog)d;
+            Calendar t = Calendar.getInstance();
+            t.clear();
+            t.set(1970, Calendar.JANUARY, 1);
+            datePicker.getDatePicker().setMinDate(t.getTimeInMillis());
+            t.clear();
+            t.set(2037, Calendar.DECEMBER, 31);
+            datePicker.getDatePicker().setMaxDate(t.getTimeInMillis());
             break;
         }
         case DIALOG_TIMEPICKER: {
@@ -310,6 +324,11 @@ public class DateTimeSettings extends SettingsPreferenceFragment
 
     private void timeUpdated() {
         Intent timeChanged = new Intent(Intent.ACTION_TIME_CHANGED);
+        getActivity().sendBroadcast(timeChanged);
+    }
+
+    private void dateUpdated() {
+        Intent timeChanged = new Intent(Intent.ACTION_DATE_CHANGED);
         getActivity().sendBroadcast(timeChanged);
     }
 

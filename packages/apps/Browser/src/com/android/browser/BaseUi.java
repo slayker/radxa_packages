@@ -32,7 +32,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -424,9 +423,9 @@ public abstract class BaseUi implements UI {
                 .findViewById(R.id.subwindow_close);
         final WebView cancelSubView = subView;
         cancel.setOnClickListener(new OnClickListener() {
+            @Override
             public void onClick(View v) {
-                WebViewClassic.fromWebView(cancelSubView).getWebChromeClient().onCloseWindow(
-                        cancelSubView);
+                ((BrowserWebView) cancelSubView).getWebChromeClient().onCloseWindow(cancelSubView);
             }
         });
         tab.setSubWebView(subView);
@@ -661,13 +660,6 @@ public abstract class BaseUi implements UI {
     @Override
     public void updateMenuState(Tab tab, Menu menu) {
     }
-    
-    
-    @Override
-	public void updatePlayWindowVisible(Tab tab) {
-		// TODO Auto-generated method stub
-		
-	}
 
     @Override
     public void onOptionsMenuOpened() {
@@ -785,6 +777,13 @@ public abstract class BaseUi implements UI {
             }
         }
         win.setAttributes(winParams);
+    }
+
+    public boolean isFullscreen() {
+        Window win = mActivity.getWindow();
+        WindowManager.LayoutParams winParams = win.getAttributes();
+        final int bits = WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        return (winParams.flags & bits) == bits;
     }
 
     public Drawable getFaviconDrawable(Bitmap icon) {

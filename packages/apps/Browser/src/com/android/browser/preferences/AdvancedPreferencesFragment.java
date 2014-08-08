@@ -17,15 +17,10 @@
 package com.android.browser.preferences;
 
 import com.android.browser.BrowserActivity;
-import com.android.browser.BrowserSettings;
 import com.android.browser.PreferenceKeys;
 import com.android.browser.R;
 
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -35,7 +30,6 @@ import android.preference.PreferenceScreen;
 import android.util.Log;
 import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
-import android.webkit.WebSettings.PluginState;
 import android.webkit.WebStorage;
 
 import java.util.Map;
@@ -63,6 +57,7 @@ public class AdvancedPreferencesFragment extends PreferenceFragment
 
         e = findPreference(PreferenceKeys.PREF_DEFAULT_TEXT_ENCODING);
         e.setOnPreferenceChangeListener(this);
+        updateListPreferenceSummary((ListPreference) e);
 
         e = findPreference(PreferenceKeys.PREF_RESET_DEFAULT_PREFERENCES);
         e.setOnPreferenceChangeListener(this);
@@ -74,31 +69,8 @@ public class AdvancedPreferencesFragment extends PreferenceFragment
         e = findPreference(PreferenceKeys.PREF_PLUGIN_STATE);
         e.setOnPreferenceChangeListener(this);
         updateListPreferenceSummary((ListPreference) e);
-        
-        
-        e = findPreference(PreferenceKeys.PREF_POPUP_VIDEO);
-        boolean exist = checkPopupVideoEnable("com.android.rk.mediafloat");
-        if(!exist){
-        	Log.d("AdvancedPreferencesFragment","MediaFloat.apk is not install");
-        	e.setEnabled(false);
-        }else{
-        	e.setEnabled(true);
-        }
     }
-    boolean checkPopupVideoEnable(String packageName){
-    	 PackageInfo info;
-    	try {  
-            info = getActivity().getPackageManager().getPackageInfo(  
-                    packageName,0);  
-        } catch (NameNotFoundException e) {  
-        	info = null;  
-        }  
-    	if(info == null){
-    		return false;
-    	}else{
-    		return true;
-    	}
-    }
+
     void updateListPreferenceSummary(ListPreference e) {
         e.setSummary(e.getEntry());
     }

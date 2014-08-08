@@ -18,7 +18,6 @@ package com.android.gallery3d.data;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapRegionDecoder;
-import android.net.Uri;
 
 import com.android.gallery3d.ui.ScreenNail;
 import com.android.gallery3d.util.ThreadPool.Job;
@@ -93,10 +92,4 @@ public class SnailItem extends MediaItem {
     public void updateVersion() {
         mDataVersion = nextVersionNumber();
     }
-
-	@Override
-	public Job<BitmapInfo> requestDecodeImage(int type, Uri mUri) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

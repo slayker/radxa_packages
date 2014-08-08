@@ -30,7 +30,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Picture;
-import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.net.Uri;
@@ -97,12 +96,7 @@ class Tab implements PictureListener {
     // filter them and match the logtag used for these messages in older versions
     // of the browser.
     private static final String CONSOLE_LOGTAG = "browser";
-    private static final boolean DEBUG = true;
-    public void LOGD(String msg){
-    	if(DEBUG){
-    		Log.d(LOGTAG,msg);
-    	}
-    }
+
     private static final int MSG_CAPTURE = 42;
     private static final int CAPTURE_DELAY = 100;
     private static final int INITIAL_PROGRESS = 5;
@@ -194,7 +188,7 @@ class Tab implements PictureListener {
     private Bitmap mCapture;
     private Handler mHandler;
     private boolean mUpdateThumbnail;
-    private String mVideoUrl = null;
+
     /**
      * See {@link #clearBackStackWhenItemAdded(String)}.
      */
@@ -342,9 +336,6 @@ class Tab implements PictureListener {
 
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
-        	LOGD("onPageStarted");
-        	mVideoUrl = null;
-        	mWebViewController.onUpdatePlayWindowVisible(Tab.this);
             mInPageLoad = true;
             mUpdateThumbnail = true;
             mPageLoadProgress = INITIAL_PROGRESS;
@@ -840,12 +831,7 @@ class Tab implements PictureListener {
                 mTouchIconLoader.execute(url);
             }
         }
-        public void onReceivedVideoUrl(WebView view ,String url){
-        	LOGD("onReceivedVideoUrl url ="+url);
-        	mVideoUrl = url;
-        	mWebViewController.onUpdatePlayWindowVisible(Tab.this);
-        	
-        }
+
         @Override
         public void onShowCustomView(View view,
                 WebChromeClient.CustomViewCallback callback) {
@@ -865,17 +851,6 @@ class Tab implements PictureListener {
         @Override
         public void onHideCustomView() {
             if (mInForeground) mWebViewController.hideCustomView();
-        }
-
-		@Override
-		public void onNewIpadWebView(String url) {
-				if(mVideoUrl!=null){
-					LOGD("this tab have videourl just return the acquire");
-					return ;
-				}
-			
-		//	mIpadview = new WebView(mContext);
-			mWebViewController.getTabControl().CreateIpadview(url,Tab.this);
         }
 
         /**
@@ -1183,12 +1158,7 @@ class Tab implements PictureListener {
         mCurrentState = new PageState(mContext, w != null
                 ? w.isPrivateBrowsingEnabled() : false);
         mInPageLoad = false;
-        if(state !=null){
-        	LOGD("create new tab w="+w);
-        	mInForeground = true;
-        }else{
-        	mInForeground = false;
-        }
+        mInForeground = false;
 
         mDownloadListener = new BrowserDownloadListener() {
             public void onDownloadStart(String url, String userAgent,
@@ -1223,6 +1193,12 @@ class Tab implements PictureListener {
                 R.dimen.tab_thumbnail_width);
         mCaptureHeight = mContext.getResources().getDimensionPixelSize(
                 R.dimen.tab_thumbnail_height);
+        updateShouldCaptureThumbnails();
+        restoreState(state);
+        if (getId() == -1) {
+            mId = TabControl.getNextId();
+        }
+        setWebView(w);
         mHandler = new Handler() {
             @Override
             public void handleMessage(Message m) {
@@ -1233,12 +1209,6 @@ class Tab implements PictureListener {
                 }
             }
         };
-        updateShouldCaptureThumbnails();
-        restoreState(state);
-        if (getId() == -1) {
-            mId = TabControl.getNextId();
-        }
-        setWebView(w);
     }
 
     public boolean shouldUpdateThumbnail() {
@@ -1278,17 +1248,11 @@ class Tab implements PictureListener {
         mWebViewController = ctl;
         updateShouldCaptureThumbnails();
     }
-    public String getVideoUrl(){
-    	return mVideoUrl;
-    }
+
     public long getId() {
         return mId;
     }
-    public void receviedFlashVideoUrl(String url){
-    	LOGD("receivedFlashVideoUrl url="+url);
-    	mVideoUrl = url;
-    	mWebViewController.onUpdatePlayWindowVisible(this);
-    }
+
     void setWebView(WebView w) {
         setWebView(w, true);
     }
@@ -1329,7 +1293,9 @@ class Tab implements PictureListener {
             // does a redirect after a period of time. The user could have
             // switched to another tab while waiting for the download to start.
             mMainView.setDownloadListener(mDownloadListener);
-            getWebViewClassic().setWebBackForwardListClient(mWebBackForwardListClient);
+            if (BrowserWebView.isClassic()) {
+                getWebViewClassic().setWebBackForwardListClient(mWebBackForwardListClient);
+            }
             TabControl tc = mWebViewController.getTabControl();
             if (tc != null && tc.getOnThumbnailUpdatedListener() != null) {
                 mMainView.setPictureListener(this);
@@ -1571,6 +1537,9 @@ class Tab implements PictureListener {
      * @return The main WebView of this tab.
      */
     WebViewClassic getWebViewClassic() {
+        if (!BrowserWebView.isClassic()) {
+            return null;
+        }
         return WebViewClassic.fromWebView(mMainView);
     }
 

@@ -16,41 +16,27 @@
 
 package com.android.gallery3d.ui;
 
-import android.content.ContentUris;
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.net.Uri;
-import android.os.Handler;
-import android.os.Message;
-import android.provider.MediaStore;
-import android.provider.MediaStore.Images.ImageColumns;
+import android.support.v4.util.LongSparseArray;
+import android.util.DisplayMetrics;
 import android.util.FloatMath;
+import android.view.WindowManager;
 
 import com.android.gallery3d.app.GalleryContext;
-import com.android.gallery3d.app.Log;
-import com.android.gallery3d.app.PhotoPage;
-import com.android.gallery3d.common.ApiHelper;
-import com.android.gallery3d.common.LongSparseArray;
 import com.android.gallery3d.common.Utils;
-import com.android.gallery3d.data.BitmapPool;
 import com.android.gallery3d.data.DecodeUtils;
-import com.android.gallery3d.data.MediaItem;
-import com.android.gallery3d.data.MediaItem.BitmapInfo;
+import com.android.photos.data.GalleryBitmapPool;
+import com.android.gallery3d.glrenderer.GLCanvas;
+import com.android.gallery3d.glrenderer.UploadedTexture;
 import com.android.gallery3d.util.Future;
-import com.android.gallery3d.util.FutureListener;
-import com.android.gallery3d.util.GalleryUtils;
 import com.android.gallery3d.util.ThreadPool;
 import com.android.gallery3d.util.ThreadPool.CancelListener;
 import com.android.gallery3d.util.ThreadPool.JobContext;
-import com.android.gif.GifTextrue;
-import com.android.gif.GifTextrueFactory;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TileImageView extends GLView {
@@ -58,15 +44,10 @@ public class TileImageView extends GLView {
 
     @SuppressWarnings("unused")
     private static final String TAG = "TileImageView";
-
-    // TILE_SIZE must be 2^N - 2. We put one pixel border in each side of the
-    // texture to avoid seams between tiles.
-    private static int TILE_SIZE;
-    private static final int TILE_BORDER = 1;
-    private static int BITMAP_SIZE;
     private static final int UPLOAD_LIMIT = 1;
 
-    private static BitmapPool sTilePool;
+    // TILE_SIZE must be 2^N
+    private static int sTileSize;
 
     /*
      *  This is the tile state in the CPU side.
@@ -93,7 +74,7 @@ public class TileImageView extends GLView {
     private static final int STATE_RECYCLING = 0x20;
     private static final int STATE_RECYCLED = 0x40;
 
-    private Model mModel;
+    private TileSource mModel;
     private ScreenNail mScreenNail;
     protected int mLevelCount;  // cache the value of mScaledBitmaps.length
 
@@ -142,7 +123,7 @@ public class TileImageView extends GLView {
     private final ThreadPool mThreadPool;
     private boolean mBackgroundTileUploaded;
 
-    public static interface Model {
+    public static interface TileSource {
         public int getLevelCount();
         public ScreenNail getScreenNail();
         public int getImageWidth();
@@ -150,8 +131,7 @@ public class TileImageView extends GLView {
 
         // The tile returned by this method can be specified this way: Assuming
         // the image size is (width, height), first take the intersection of (0,
-        // 0) - (width, height) and (x, y) - (x + tileSize, y + tileSize). Then
-        // extend this intersection region by borderSize pixels on each side. If
+        // 0) - (width, height) and (x, y) - (x + tileSize, y + tileSize). If
         // in extending the region, we found some part of the region are outside
         // the image, those pixels are filled with black.
         //
@@ -160,207 +140,29 @@ public class TileImageView extends GLView {
         // still refers to the coordinate on the original image.
         //
         // The method would be called in another thread.
-        public Bitmap getTile(int level, int x, int y, int tileSize,
-                int borderSize, BitmapPool pool);
+        public Bitmap getTile(int level, int x, int y, int tileSize);
     }
-    
- // jyzheng add 2012-02-27
- 	public Context mContext = null;
- 	private boolean isGifPic = false;
- 	private boolean isReload = false;
- 	private String filePath = null;
- 	public Uri mUri = null;
- 	private Object obj = new Object();
- 	private Future<?> mTask;
- 	private boolean isBMPPic = false;
- 	private BitmapScreenNail mBitmapScreenNail = null;
 
- 	public void setGifPic(boolean isGifPic) {
- 		synchronized (obj) {
- 			this.isGifPic = isGifPic;
- 			mUri = null;
- 			filePath = null;
- 		}	
- 	}
- 	
- 	public static Uri getTrueUri(Context context,Uri mUri){
- 		if(mUri == null || mUri.getPath() == null){
- 			return mUri;
- 		}
- 		if(mUri.toString().startsWith("file://")){
- 			Uri uri = MediaStore.Images.Media.getContentUri("external");
- 			Cursor cur = context.getContentResolver().query(uri, null, null, null, null);
- 			String path = mUri.getPath();
- 			if(cur.moveToFirst()){
- 				while(!cur.isAfterLast()){
- 					if(cur.getString(cur.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)).equals(path)){
- 						Uri result = ContentUris.withAppendedId(uri,cur.getInt(cur.getColumnIndexOrThrow(MediaStore.Images.Media._ID)));
- 						cur.close();
- 						cur = null;
- 						return result;
- 					}else{ 
- 						cur.moveToNext();
- 					}
- 				}
- 			}
- 			if(cur != null){
- 				cur.close();
- 				cur = null;
- 			}
- 		}		
- 		return mUri;	
- 	}
-
- 	public void isGifStream() {
- 		mDecodeUri = null;
-                 isBMPPic = false;
- 		synchronized (obj) {
- 		if(!(mModel instanceof PhotoPage.Model)){
- 			isGifPic = false;
- 			return;
- 		}
- 		MediaItem item = ((PhotoPage.Model) mModel).getCurrentMediaItem();
- 		if(item == null){
- 			isGifPic = false;
- 			isReload = true;
- 			return;
- 		}
- 		isReload = false;
- 		Uri uri = null;
- 		try{
- 			uri = getTrueUri(mContext, item.getContentUri());
- 		}catch (Exception e) {
- 			isGifPic = false;
- 			return;
- 		}
- 		/*if(mUri != null  && mUri.equals(uri)){
- 			return;
- 		}*/
- 		mUri = uri;
- 		String mimeType = item.getMimeType();
- 		if(mimeType != null && mimeType.startsWith("image/")&& mimeType.endsWith("bmp")){
- 			if(mTask != null){
- 				mTask.cancel();
- 			}
- 			isBMPPic = true;
- 			mTask = mThreadPool.submit(
- 					item.requestDecodeImage(MediaItem.TYPE_DECODE,mUri),
-                     mListener);
- 		}else{
- 			isBMPPic = false;
- 		}
- 		String str = uri != null ? uri.toString():null;
- 		InputStream is = getInputStream(mContext, str);
- 		if (GifTextrue.isGifStream(is)) {
- 			isGifPic = true;
- 			Cursor c = mContext.getContentResolver().query(uri,
- 					new String[] { ImageColumns.DATA }, null, null, null);
- 			if (c != null) {
- 				c.moveToFirst();
- 				filePath = c.getString(0);
- 				if(filePath == null){
- 					 isGifPic = false;
- 					 return;
- 				}
- 				GifTextrueFactory.startOnly(new GifTextrue(this, null,
- 						filePath));
- 				c.close();
- 				c = null;
- 			}else{
- 				if(filePath == null){
- 					String temp = uri.toString();
- 					if(temp != null && temp.startsWith("file://")){
- 						filePath = temp.substring(7);
- 					}else{
- 					    isGifPic = false;
- 					    return;
- 					}
- 				}
- 			}
- 		} else {
- 			GifTextrueFactory.freezeAllGif();
- 			isGifPic = false;
- 		}
- 		}
- 	}
- 	
- 	private static final int MSG_UPDATE_IMAGE = 1;
- 	private FutureListener<BitmapInfo> mListener = new FutureListener<BitmapInfo>() {
- 		public void onFutureDone(Future<BitmapInfo> future) {
- 			mHandler.sendMessage(mHandler.obtainMessage(MSG_UPDATE_IMAGE,
- 					future));
- 		}
- 	};
- 	
- 	private Handler mHandler = new Handler() {
-         public void handleMessage(Message message) {
-             onDecodeComplete((Future<BitmapInfo>) message.obj);
-         }
-     };
-     
-     private Uri mDecodeUri = null;
-     private void onDecodeComplete(Future<BitmapInfo> future) {
-         try {
-         	if(future == null || future.get() == null){
-         		return;
-         	}       	
-         	if(future.get().getmUri() != mUri){
-         		return;
-         	}
-         	mDecodeUri = future.get().getmUri();
-             Bitmap backup = future.get().getmBitmap();
-             if(mBitmapScreenNail != null){
-             	mBitmapScreenNail.recycle();
-             	mBitmapScreenNail = null;
-             }
-             if(backup == null){
-             	return;
-             }
-             
-             mBitmapScreenNail = new BitmapScreenNail(backup);
-             notifyModelInvalidated();
-         } catch (Throwable t) {
-             Log.w(TAG, "fail to decode thumb", t);
-         }
-     }
-
- 	public void decodePhoto() {
-
- 	}
-
- 	private static InputStream getInputStream(Context c, String uri) {
- 		if (uri == null) {
- 			return null;
- 		}
- 		try {
- 			return c.getContentResolver().openInputStream(Uri.parse(uri));
- 		} catch (FileNotFoundException e) {
-
- 			e.printStackTrace();
- 			return null;
- 		}
-
- 	}
+    public static boolean isHighResolution(Context context) {
+        DisplayMetrics metrics = new DisplayMetrics();
+        WindowManager wm = (WindowManager)
+                context.getSystemService(Context.WINDOW_SERVICE);
+        wm.getDefaultDisplay().getMetrics(metrics);
+        return metrics.heightPixels > 2048 ||  metrics.widthPixels > 2048;
+    }
 
     public TileImageView(GalleryContext context) {
-    	mContext = context.getAndroidContext();
         mThreadPool = context.getThreadPool();
-        mTileDecoder = mThreadPool.submit(new TileDecoder());
-        if (TILE_SIZE == 0) {
-            if (GalleryUtils.isHighResolution(context.getAndroidContext())) {
-                TILE_SIZE = 510 ;
+        if (sTileSize == 0) {
+            if (isHighResolution(context.getAndroidContext())) {
+                sTileSize = 512 ;
             } else {
-                TILE_SIZE = 254;
+                sTileSize = 256;
             }
-            BITMAP_SIZE = TILE_SIZE + TILE_BORDER * 2;
-            sTilePool =
-                    ApiHelper.HAS_REUSING_BITMAP_IN_BITMAP_REGION_DECODER
-                    ? new BitmapPool(BITMAP_SIZE, BITMAP_SIZE, 128)
-                    : null;
         }
     }
 
-    public void setModel(Model model) {
+    public void setModel(TileSource model) {
         mModel = model;
         if (model != null) notifyModelInvalidated();
     }
@@ -462,7 +264,7 @@ public class TileImageView extends GLView {
         }
 
         for (int i = fromLevel; i < endLevel; ++i) {
-            int size = TILE_SIZE << i;
+            int size = sTileSize << i;
             Rect r = range[i - fromLevel];
             for (int y = r.top, bottom = r.bottom; y < bottom; y += size) {
                 for (int x = r.left, right = r.right; x < right; x += size) {
@@ -516,7 +318,7 @@ public class TileImageView extends GLView {
         int bottom = (int) FloatMath.ceil(top + height / scale);
 
         // align the rectangle to tile boundary
-        int size = TILE_SIZE << level;
+        int size = sTileSize << level;
         left = Math.max(0, size * (left / size));
         top = Math.max(0, size * (top / size));
         right = Math.min(mImageWidth, right);
@@ -588,8 +390,6 @@ public class TileImageView extends GLView {
             }
         }
         setScreenNail(null);
-        if (sTilePool != null) sTilePool.clear();
-        GifTextrueFactory.freezeAllGif();
     }
 
     public void prepareTextures() {
@@ -605,10 +405,6 @@ public class TileImageView extends GLView {
 
     @Override
     protected void render(GLCanvas canvas) {
-    	if(isReload && ((PhotoPage.Model) mModel).getCurrentMediaItem() != null){
-    		isGifStream();
-    		isReload = false;
-    	}
         mUploadQuota = UPLOAD_LIMIT;
         mRenderComplete = true;
 
@@ -626,43 +422,24 @@ public class TileImageView extends GLView {
                 canvas.translate(-centerX, -centerY);
             }
         }
-        if (isGifPic) {
-			if (GifTextrueFactory.getGifTextrue() != null) {
-				BitmapTexture bitmapTexture = GifTextrueFactory.getGifTextrue()
-						.getBitmapTexture();
-				if (bitmapTexture != null) {
-					bitmapTexture.draw(canvas, mOffsetX, mOffsetY, Math
-							.round(mImageWidth * mScale), Math
-							.round(mImageHeight * mScale));
-					if(bitmapTexture.mBitmap != null){
-					   bitmapTexture.mBitmap.recycle();
-					   bitmapTexture.mBitmap= null;
-					}
-					bitmapTexture = null;
-				} else if (mScreenNail != null) {
-	                mScreenNail.draw(canvas, mOffsetX, mOffsetY,
-	                        Math.round(mImageWidth * mScale),
-	                        Math.round(mImageHeight * mScale));
-	                if (isScreenNailAnimating()) {
-	                    invalidate();
-	                }
-	            }
-			}else{
-				if(filePath == null){
-					isGifPic = false;
-					return;
-				}
-				GifTextrueFactory.startOnly(new GifTextrue(this, null,
-						filePath));
-			}
-			if (rotation != 0)
-				canvas.restore();
-		} else if(isBMPPic){
-			if(mBitmapScreenNail != null && mDecodeUri != null && mDecodeUri == mUri){
-				mBitmapScreenNail.draw(canvas, mOffsetX, mOffsetY,
-                        Math.round(mImageWidth * mScale),
-                        Math.round(mImageHeight * mScale));
-			} else if (mScreenNail != null) {
+        try {
+            if (level != mLevelCount && !isScreenNailAnimating()) {
+                if (mScreenNail != null) {
+                    mScreenNail.noDraw();
+                }
+
+                int size = (sTileSize << level);
+                float length = size * mScale;
+                Rect r = mTileRange;
+
+                for (int ty = r.top, i = 0; ty < r.bottom; ty += size, i++) {
+                    float y = mOffsetY + i * length;
+                    for (int tx = r.left, j = 0; tx < r.right; tx += size, j++) {
+                        float x = mOffsetX + j * length;
+                        drawTile(canvas, tx, ty, level, x, y, length);
+                    }
+                }
+            } else if (mScreenNail != null) {
                 mScreenNail.draw(canvas, mOffsetX, mOffsetY,
                         Math.round(mImageWidth * mScale),
                         Math.round(mImageHeight * mScale));
@@ -670,37 +447,9 @@ public class TileImageView extends GLView {
                     invalidate();
                 }
             }
-		}else{
-				try {
-					if (level != mLevelCount && !isScreenNailAnimating()) {
-						if (mScreenNail != null) {
-							mScreenNail.noDraw();
-						}
-
-						int size = (TILE_SIZE << level);
-						float length = size * mScale;
-						Rect r = mTileRange;
-
-						for (int ty = r.top, i = 0; ty < r.bottom; ty += size, i++) {
-							float y = mOffsetY + i * length;
-							for (int tx = r.left, j = 0; tx < r.right; tx += size, j++) {
-								float x = mOffsetX + j * length;
-								drawTile(canvas, tx, ty, level, x, y, length);
-							}
-						}
-					} else if (mScreenNail != null) {
-						mScreenNail.draw(canvas, mOffsetX, mOffsetY, Math
-								.round(mImageWidth * mScale), Math
-								.round(mImageHeight * mScale));
-						if (isScreenNailAnimating()) {
-							invalidate();
-						}
-					}
-				} finally {
-					if (flags != 0)
-						canvas.restore();
-				}
-		}
+        } finally {
+            if (flags != 0) canvas.restore();
+        }
 
         if (mRenderComplete) {
             if (!mBackgroundTileUploaded) uploadBackgroundTiles(canvas);
@@ -749,7 +498,7 @@ public class TileImageView extends GLView {
             if (tile.mTileState == STATE_RECYCLING) {
                 tile.mTileState = STATE_RECYCLED;
                 if (tile.mDecodedTile != null) {
-                    if (sTilePool != null) sTilePool.recycle(tile.mDecodedTile);
+                    GalleryBitmapPool.getInstance().put(tile.mDecodedTile);
                     tile.mDecodedTile = null;
                 }
                 mRecycledQueue.push(tile);
@@ -777,7 +526,7 @@ public class TileImageView extends GLView {
         }
         tile.mTileState = STATE_RECYCLED;
         if (tile.mDecodedTile != null) {
-            if (sTilePool != null) sTilePool.recycle(tile.mDecodedTile);
+            GalleryBitmapPool.getInstance().put(tile.mDecodedTile);
             tile.mDecodedTile = null;
         }
         mRecycledQueue.push(tile);
@@ -842,7 +591,7 @@ public class TileImageView extends GLView {
         RectF source = mSourceRect;
         RectF target = mTargetRect;
         target.set(x, y, x + length, y + length);
-        source.set(0, 0, TILE_SIZE, TILE_SIZE);
+        source.set(0, 0, sTileSize, sTileSize);
 
         Tile tile = getTile(tx, ty, level);
         if (tile != null) {
@@ -862,7 +611,7 @@ public class TileImageView extends GLView {
             if (drawTile(tile, canvas, source, target)) return;
         }
         if (mScreenNail != null) {
-            int size = TILE_SIZE << level;
+            int size = sTileSize << level;
             float scaleX = (float) mScreenNail.getWidth() / mImageWidth;
             float scaleY = (float) mScreenNail.getHeight() / mImageHeight;
             source.set(tx * scaleX, ty * scaleY, (tx + size) * scaleX,
@@ -875,8 +624,6 @@ public class TileImageView extends GLView {
             Tile tile, GLCanvas canvas, RectF source, RectF target) {
         while (true) {
             if (tile.isContentValid()) {
-                // offset source rectangle for the texture border.
-                source.offset(TILE_BORDER, TILE_BORDER);
                 canvas.drawTexture(tile, source, target);
                 return true;
             }
@@ -888,15 +635,15 @@ public class TileImageView extends GLView {
                 source.left /= 2f;
                 source.right /= 2f;
             } else {
-                source.left = (TILE_SIZE + source.left) / 2f;
-                source.right = (TILE_SIZE + source.right) / 2f;
+                source.left = (sTileSize + source.left) / 2f;
+                source.right = (sTileSize + source.right) / 2f;
             }
             if (tile.mY == parent.mY) {
                 source.top /= 2f;
                 source.bottom /= 2f;
             } else {
-                source.top = (TILE_SIZE + source.top) / 2f;
-                source.bottom = (TILE_SIZE + source.bottom) / 2f;
+                source.top = (sTileSize + source.top) / 2f;
+                source.bottom = (sTileSize + source.bottom) / 2f;
             }
             tile = parent;
         }
@@ -918,7 +665,7 @@ public class TileImageView extends GLView {
 
         @Override
         protected void onFreeBitmap(Bitmap bitmap) {
-            if (sTilePool != null) sTilePool.recycle(bitmap);
+            GalleryBitmapPool.getInstance().put(bitmap);
         }
 
         boolean decode() {
@@ -926,7 +673,7 @@ public class TileImageView extends GLView {
             // by (1 << mTilelevel) from a region in the original image.
             try {
                 mDecodedTile = DecodeUtils.ensureGLCompatibleBitmap(mModel.getTile(
-                        mTileLevel, mX, mY, TILE_SIZE, TILE_BORDER, sTilePool));
+                        mTileLevel, mX, mY, sTileSize));
             } catch (Throwable t) {
                 Log.w(TAG, "fail to decode tile", t);
             }
@@ -939,9 +686,9 @@ public class TileImageView extends GLView {
 
             // We need to override the width and height, so that we won't
             // draw beyond the boundaries.
-            int rightEdge = ((mImageWidth - mX) >> mTileLevel) + TILE_BORDER;
-            int bottomEdge = ((mImageHeight - mY) >> mTileLevel) + TILE_BORDER;
-            setSize(Math.min(BITMAP_SIZE, rightEdge), Math.min(BITMAP_SIZE, bottomEdge));
+            int rightEdge = ((mImageWidth - mX) >> mTileLevel);
+            int bottomEdge = ((mImageHeight - mY) >> mTileLevel);
+            setSize(Math.min(sTileSize, rightEdge), Math.min(sTileSize, bottomEdge));
 
             Bitmap bitmap = mDecodedTile;
             mDecodedTile = null;
@@ -955,12 +702,12 @@ public class TileImageView extends GLView {
         // boundary).
         @Override
         public int getTextureWidth() {
-            return TILE_SIZE + TILE_BORDER * 2;
+            return sTileSize;
         }
 
         @Override
         public int getTextureHeight() {
-            return TILE_SIZE + TILE_BORDER * 2;
+            return sTileSize;
         }
 
         public void update(int x, int y, int level) {
@@ -972,7 +719,7 @@ public class TileImageView extends GLView {
 
         public Tile getParentTile() {
             if (mTileLevel + 1 == mLevelCount) return null;
-            int size = TILE_SIZE << (mTileLevel + 1);
+            int size = sTileSize << (mTileLevel + 1);
             int x = size * (mX / size);
             int y = size * (mY / size);
             return getTile(x, y, mTileLevel + 1);
@@ -981,7 +728,7 @@ public class TileImageView extends GLView {
         @Override
         public String toString() {
             return String.format("tile(%s, %s, %s / %s)",
-                    mX / TILE_SIZE, mY / TILE_SIZE, mLevel, mLevelCount);
+                    mX / sTileSize, mY / sTileSize, mLevel, mLevelCount);
         }
     }
 

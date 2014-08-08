@@ -15,16 +15,10 @@
  */
 package com.android.browser;
 
-import java.util.List;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -33,7 +27,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -42,13 +35,7 @@ import com.android.browser.UI.ComboViews;
 import com.android.browser.UrlInputView.StateListener;
 
 public class NavigationBarTablet extends NavigationBarBase implements StateListener {
-	private static final String TAG = "NavigationBarTablet";
-	private static final boolean DEBUG = true;
-	public void LOGD(String msg){
-		if(DEBUG){
-			Log.d(TAG,msg);
-		}
-	}
+
     private Drawable mStopDrawable;
     private Drawable mReloadDrawable;
     private String mStopDescription;
@@ -62,7 +49,6 @@ public class NavigationBarTablet extends NavigationBarBase implements StateListe
     private ImageView mSearchButton;
     private ImageView mStopButton;
     private View mAllButton;
-   // private View mPlayWindow;
     private View mClearButton;
     private View mVoiceButton;
     private View mNavButtons;
@@ -70,8 +56,6 @@ public class NavigationBarTablet extends NavigationBarBase implements StateListe
     private Drawable mUnfocusDrawable;
     private boolean mHideNavButtons;
     private Drawable mFaviconDrawable;
-
-    private Context mContext;
 
     public NavigationBarTablet(Context context) {
         super(context);
@@ -89,8 +73,6 @@ public class NavigationBarTablet extends NavigationBarBase implements StateListe
     }
 
     private void init(Context context) {
-    	mContext = context;
-       
         Resources resources = context.getResources();
         mStopDrawable = resources.getDrawable(R.drawable.ic_stop_holo_dark);
         mReloadDrawable = resources.getDrawable(R.drawable.ic_refresh_holo_dark);
@@ -107,8 +89,6 @@ public class NavigationBarTablet extends NavigationBarBase implements StateListe
     protected void onFinishInflate() {
         super.onFinishInflate();
         mAllButton = findViewById(R.id.all_btn);
-       // mPlayWindow = findViewById(R.id.window_play);
-        mPlayWindow.setVisibility(View.GONE);
         // TODO: Change enabled states based on whether you can go
         // back/forward.  Probably should be done inside onPageStarted.
         mNavButtons = findViewById(R.id.navbuttons);
@@ -125,7 +105,6 @@ public class NavigationBarTablet extends NavigationBarBase implements StateListe
         mForwardButton.setOnClickListener(this);
         mStar.setOnClickListener(this);
         mAllButton.setOnClickListener(this);
-       // mPlayWindow.setOnClickListener(this);
         mStopButton.setOnClickListener(this);
         mSearchButton.setOnClickListener(this);
         mClearButton.setOnClickListener(this);
@@ -160,20 +139,16 @@ public class NavigationBarTablet extends NavigationBarBase implements StateListe
 
     void updateNavigationState(Tab tab) {
         if (tab != null) {
-        	LOGD("updateNavigationState");
             mBackButton.setImageResource(tab.canGoBack()
                     ? R.drawable.ic_back_holo_dark
                     : R.drawable.ic_back_disabled_holo_dark);
             mForwardButton.setImageResource(tab.canGoForward()
                     ? R.drawable.ic_forward_holo_dark
                     : R.drawable.ic_forward_disabled_holo_dark);
-           // mPlayWindow.setVisibility((tab.getVideoUrl()==null)?View.GONE:View.VISIBLE);
-            updatePlayWindowVisible(tab);
         }
         updateUrlIcon();
     }
-    
- 
+
     @Override
     public void onTabDataChanged(Tab tab) {
         super.onTabDataChanged(tab);

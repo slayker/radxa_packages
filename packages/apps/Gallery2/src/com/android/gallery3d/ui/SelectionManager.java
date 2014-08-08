@@ -33,6 +33,7 @@ public class SelectionManager {
     public static final int ENTER_SELECTION_MODE = 1;
     public static final int LEAVE_SELECTION_MODE = 2;
     public static final int SELECT_ALL_MODE = 3;
+    public static final int DESELECT_ALL_MODE = 4;
 
     private Set<Path> mClickedSet;
     private MediaSet mSourceMediaSet;
@@ -74,9 +75,10 @@ public class SelectionManager {
     }
 
     public void deSelectAll() {
-        leaveSelectionMode();
+        //leaveSelectionMode();
         mInverseSelection = false;
         mClickedSet.clear();
+        if (mListener != null) mListener.onSelectionModeChange(DESELECT_ALL_MODE);
     }
 
     public boolean inSelectAllMode() {
@@ -110,11 +112,10 @@ public class SelectionManager {
     private int getTotalCount() {
         if (mSourceMediaSet == null) return -1;
 
-        if (mTotal < 0) {
-            mTotal = mIsAlbumSet
-                    ? mSourceMediaSet.getSubMediaSetCount()
-                    : mSourceMediaSet.getMediaItemCount();
-        }
+        // Sometimes mSourceMediaSet is updated for database change, so mTotal should also be updated.
+        mTotal = mIsAlbumSet
+                ? mSourceMediaSet.getSubMediaSetCount()
+                : mSourceMediaSet.getMediaItemCount();
         return mTotal;
     }
 
@@ -143,13 +144,23 @@ public class SelectionManager {
         if (mListener != null) mListener.onSelectionChange(path, isItemSelected(path));
         if (count == 0 && mAutoLeave) {
             leaveSelectionMode();
+        } else if (count == 0) {
+            deSelectAll();
         }
     }
 
-    private static void expandMediaSet(ArrayList<Path> items, MediaSet set) {
+    public void onSizeChanged() {
+        if (mListener != null && inSelectAllMode()) {
+            mListener.onSelectionChange(null, true);
+        }
+    }
+
+    private static boolean expandMediaSet(ArrayList<Path> items, MediaSet set, int maxSelection) {
         int subCount = set.getSubMediaSetCount();
         for (int i = 0; i < subCount; i++) {
-            expandMediaSet(items, set.getSubMediaSet(i));
+            if (!expandMediaSet(items, set.getSubMediaSet(i), maxSelection)) {
+                return false;
+            }
         }
         int total = set.getMediaItemCount();
         int batch = 50;
@@ -160,14 +171,23 @@ public class SelectionManager {
                     ? batch
                     : total - index;
             ArrayList<MediaItem> list = set.getMediaItem(index, count);
+            if (list != null
+                    && list.size() > (maxSelection - items.size())) {
+                return false;
+            }
             for (MediaItem item : list) {
                 items.add(item.getPath());
             }
             index += batch;
         }
+        return true;
     }
 
     public ArrayList<Path> getSelected(boolean expandSet) {
+        return getSelected(expandSet, Integer.MAX_VALUE);
+    }
+
+    public ArrayList<Path> getSelected(boolean expandSet, int maxSelection) {
         ArrayList<Path> selected = new ArrayList<Path>();
         if (mIsAlbumSet) {
             if (mInverseSelection) {
@@ -177,18 +197,29 @@ public class SelectionManager {
                     Path id = set.getPath();
                     if (!mClickedSet.contains(id)) {
                         if (expandSet) {
-                            expandMediaSet(selected, set);
+                            if (!expandMediaSet(selected, set, maxSelection)) {
+                                return null;
+                            }
                         } else {
                             selected.add(id);
+                            if (selected.size() > maxSelection) {
+                                return null;
+                            }
                         }
                     }
                 }
             } else {
                 for (Path id : mClickedSet) {
                     if (expandSet) {
-                        expandMediaSet(selected, mDataManager.getMediaSet(id));
+                        if (!expandMediaSet(selected, mDataManager.getMediaSet(id),
+                                maxSelection)) {
+                            return null;
+                        }
                     } else {
                         selected.add(id);
+                        if (selected.size() > maxSelection) {
+                            return null;
+                        }
                     }
                 }
             }
@@ -201,13 +232,21 @@ public class SelectionManager {
                     ArrayList<MediaItem> list = mSourceMediaSet.getMediaItem(index, count);
                     for (MediaItem item : list) {
                         Path id = item.getPath();
-                        if (!mClickedSet.contains(id)) selected.add(id);
+                        if (!mClickedSet.contains(id)) {
+                            selected.add(id);
+                            if (selected.size() > maxSelection) {
+                                return null;
+                            }
+                        }
                     }
                     index += count;
                 }
             } else {
                 for (Path id : mClickedSet) {
                     selected.add(id);
+                    if (selected.size() > maxSelection) {
+                        return null;
+                    }
                 }
             }
         }

@@ -76,6 +76,7 @@ import com.android.emailcommon.utility.Utility;
 import com.android.exchange.adapter.CalendarSyncAdapter;
 import com.android.exchange.adapter.ContactsSyncAdapter;
 import com.android.exchange.adapter.Search;
+import com.android.exchange.FetchMessageRequest;
 import com.android.exchange.provider.MailboxUtilities;
 import com.android.exchange.utility.FileLogger;
 
@@ -333,8 +334,14 @@ public class ExchangeService extends Service implements Runnable {
         }
 
         @Override
-        public void loadMessageStatus(long messageId, int statusCode, int progress)
-                throws RemoteException {
+        public void loadMessageStatus(final long messageId, final int statusCode,
+                final int progress) throws RemoteException {
+            broadcastCallback(new ServiceCallbackWrapper() {
+                @Override
+                public void call(IEmailServiceCallback cb) throws RemoteException {
+                    cb.loadMessageStatus(messageId, statusCode, progress);
+                }
+            });
         }
     };
 
@@ -472,6 +479,81 @@ public class ExchangeService extends Service implements Runnable {
 
         @Override
         public void loadMore(long messageId) throws RemoteException {
+            ExchangeService exchangeService = INSTANCE;
+            if (exchangeService == null) {
+                log("load message from view, the exchange service is null");
+                return;
+            }
+
+            checkExchangeServiceServiceRunning();
+            Message msg = Message.restoreMessageWithId(exchangeService, messageId);
+            if (msg == null) {
+                log("load message from view, the message is null");
+                return;
+            }
+
+            Account account = Account.restoreAccountWithId(exchangeService, msg.mAccountKey);
+            if (account == null) {
+                log("load message from view, the account of this message is null");
+                return;
+            }
+
+            Mailbox mailbox = Mailbox.restoreMailboxWithId(exchangeService, msg.mMailboxKey);
+            if (mailbox == null) {
+                log("load message from view, the mailbox of this message is null");
+                return;
+            }
+
+            // This is a user request and we're being held, release the hold; this allows us to
+            // try again (the hold might have been specific to this account and released already)
+            if (onSyncDisabledHold(account)) {
+                releaseSyncHolds(exchangeService, AbstractSyncService.EXIT_ACCESS_DENIED, account);
+                log("User requested sync of account in sync disabled hold; releasing");
+            } else if (onSecurityHold(account)) {
+                releaseSyncHolds(exchangeService, AbstractSyncService.EXIT_SECURITY_FAILURE,
+                        account);
+                log("User requested sync of account in security hold; releasing");
+            }
+            if (sConnectivityHold) {
+                try {
+                    // UI is expecting the callbacks....
+                    sCallbackProxy.syncMailboxStatus(msg.mMailboxKey,
+                            EmailServiceStatus.IN_PROGRESS, 0);
+                    sCallbackProxy.syncMailboxStatus(msg.mMailboxKey,
+                            EmailServiceStatus.CONNECTION_ERROR, 0);
+                } catch (RemoteException ignore) {
+                }
+                return;
+            }
+            if (mailbox.mType == Mailbox.TYPE_OUTBOX) {
+                // We're using SERVER_ID to indicate an error condition (it has no other use for
+                // sent mail)  Upon request to sync the Outbox, we clear this so that all messages
+                // are candidates for sending.
+                ContentValues cv = new ContentValues();
+                cv.put(SyncColumns.SERVER_ID, 0);
+                exchangeService.getContentResolver().update(Message.CONTENT_URI,
+                        cv, WHERE_MAILBOX_KEY, new String[] {Long.toString(msg.mMailboxKey)});
+                // Clear the error state; the Outbox sync will be started from checkMailboxes
+                exchangeService.mSyncErrorMap.remove(msg.mMailboxKey);
+                kick("start outbox");
+                // Outbox can't be synced in EAS
+                return;
+            } else if (!isSyncable(mailbox)) {
+                try {
+                    // UI may be expecting the callbacks, so send them
+                    sCallbackProxy.syncMailboxStatus(msg.mMailboxKey,
+                            EmailServiceStatus.IN_PROGRESS, 0);
+                    sCallbackProxy.syncMailboxStatus(msg.mMailboxKey,
+                            EmailServiceStatus.SUCCESS, 0);
+                } catch (RemoteException ignore) {
+                    // We tried
+                }
+                return;
+            }
+
+            FetchMessageRequest msgRequest
+                    = new FetchMessageRequest(messageId, Utility.ENTIRE_MAIL);
+            startManualSync(msg.mMailboxKey, ExchangeService.SYNC_UI_REQUEST, msgRequest);
         }
 
         // The following three methods are not implemented in this version
@@ -642,7 +724,7 @@ public class ExchangeService extends Service implements Runnable {
         }
     }
 
-    private boolean onSecurityHold(Account account) {
+    static boolean onSecurityHold(Account account) {
         return (account.mFlags & Account.FLAGS_SECURITY_HOLD) != 0;
     }
 
@@ -690,7 +772,7 @@ public class ExchangeService extends Service implements Runnable {
                                     PolicyServiceProxy.setAccountHoldFlag(ExchangeService.this,
                                             account, false);
                                     log("isActive true; release hold for " + account.mDisplayName);
-                                }
+				}
                             }
                         }
                     }
@@ -1900,6 +1982,15 @@ public class ExchangeService extends Service implements Runnable {
     @Override
     public void onDestroy() {
         log("!!! EAS ExchangeService, onDestroy");
+        // Stop receivers
+        if (mConnectivityReceiver != null) {
+            unregisterReceiver(mConnectivityReceiver);
+            mConnectivityReceiver = null;
+        }
+        if (mBackgroundDataSettingReceiver != null) {
+            unregisterReceiver(mBackgroundDataSettingReceiver);
+            mBackgroundDataSettingReceiver = null;
+        }
         // Handle shutting down off the UI thread
         Utility.runAsync(new Runnable() {
             @Override
@@ -2064,9 +2155,11 @@ public class ExchangeService extends Service implements Runnable {
                 // Stop receivers
                 if (mConnectivityReceiver != null) {
                     unregisterReceiver(mConnectivityReceiver);
+                    mConnectivityReceiver = null;
                 }
                 if (mBackgroundDataSettingReceiver != null) {
                     unregisterReceiver(mBackgroundDataSettingReceiver);
+                    mBackgroundDataSettingReceiver = null;
                 }
 
                 // Unregister observers
@@ -2162,7 +2255,11 @@ public class ExchangeService extends Service implements Runnable {
             if (policy == null) {
                 policy = Policy.restorePolicyWithId(INSTANCE, policyKey);
                 account.mPolicy = policy;
-                if (!PolicyServiceProxy.isActive(exchangeService, policy)) return false;
+                if (!PolicyServiceProxy.isActive(exchangeService, policy)) {
+                    PolicyServiceProxy.setAccountHoldFlag(exchangeService, account, true);
+                    log("canAutoSync; policies not active, set hold flag");
+                    return false;
+                }
             }
             if (policy != null && policy.mRequireManualSyncWhenRoaming && networkInfo.isRoaming()) {
                 return false;
@@ -2280,7 +2377,7 @@ public class ExchangeService extends Service implements Runnable {
         if (c == null) throw new ProviderUnavailableException();
         try {
             while (c.moveToNext()) {
-                long mailboxId = c.getLong(Mailbox.CONTENT_ID_COLUMN);
+                final long mailboxId = c.getLong(Mailbox.CONTENT_ID_COLUMN);
                 AbstractSyncService service = null;
                 synchronized (sSyncLock) {
                     service = mServiceMap.get(mailboxId);
@@ -2289,12 +2386,6 @@ public class ExchangeService extends Service implements Runnable {
                     // Get the cached account
                     Account account = getAccountById(c.getInt(Mailbox.CONTENT_ACCOUNT_KEY_COLUMN));
                     if (account == null) continue;
-
-                    // We handle a few types of mailboxes specially
-                    int mailboxType = c.getInt(Mailbox.CONTENT_TYPE_COLUMN);
-                    if (!isMailboxSyncable(account, mailboxType)) {
-                        continue;
-                    }
 
                     // Check whether we're in a hold (temporary or permanent)
                     SyncError syncError = mSyncErrorMap.get(mailboxId);
@@ -2313,6 +2404,18 @@ public class ExchangeService extends Service implements Runnable {
                             // Keep the error around, but clear the end time
                             syncError.holdEndTime = 0;
                         }
+                    }
+
+                    // We handle a few types of mailboxes specially
+                    final int mailboxType = c.getInt(Mailbox.CONTENT_TYPE_COLUMN);
+                    if (!isMailboxSyncable(account, mailboxType)) {
+                        // If there isn't an entry in the sync error map, in case of a security
+                        // hold, add one to allow the next sync to be deferred
+                        if (syncError == null && onSecurityHold(account)) {
+                            mSyncErrorMap.put(mailboxId,
+                                    new SyncError(AbstractSyncService.EXIT_SECURITY_FAILURE, true));
+                        }
+                        continue;
                     }
 
                     // Otherwise, we use the sync interval

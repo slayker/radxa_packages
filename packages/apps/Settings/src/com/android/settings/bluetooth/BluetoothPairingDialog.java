@@ -43,6 +43,8 @@ import com.android.internal.app.AlertController;
 import com.android.settings.R;
 import android.view.KeyEvent;
 
+import java.util.Locale;
+
 /**
  * BluetoothPairingDialog asks the user to enter a PIN / Passkey / simple confirmation
  * for pairing with a remote Bluetooth device. It is an activity that appears as a dialog.
@@ -58,6 +60,7 @@ public final class BluetoothPairingDialog extends AlertActivity implements
     private String mPairingKey;
     private EditText mPairingView;
     private Button mOkButton;
+    private boolean mIsSecurityHigh;
 
     /**
      * Dismiss the dialog if the bond state changes to bonded or none,
@@ -70,8 +73,8 @@ public final class BluetoothPairingDialog extends AlertActivity implements
             if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
                 int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE,
                                                    BluetoothDevice.ERROR);
-                if (bondState == BluetoothDevice.BOND_BONDED ||
-                        bondState == BluetoothDevice.BOND_NONE) {
+                if (((bondState == BluetoothDevice.BOND_BONDED) && (!mIsSecurityHigh) ) ||
+                    (bondState == BluetoothDevice.BOND_NONE)) {
                     dismiss();
                 }
             } else if (BluetoothDevice.ACTION_PAIRING_CANCEL.equals(action)) {
@@ -106,6 +109,8 @@ public final class BluetoothPairingDialog extends AlertActivity implements
 
         mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
         mType = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, BluetoothDevice.ERROR);
+        mIsSecurityHigh = intent.getBooleanExtra(BluetoothDevice.EXTRA_SECURE_PAIRING, false);
+        Log.i(TAG, "Secure is " + mIsSecurityHigh);
 
         switch (mType) {
             case BluetoothDevice.PAIRING_VARIANT_PIN:
@@ -120,7 +125,7 @@ public final class BluetoothPairingDialog extends AlertActivity implements
                     Log.e(TAG, "Invalid Confirmation Passkey received, not showing any dialog");
                     return;
                 }
-                mPairingKey = String.format("%06d", passkey);
+                mPairingKey = String.format(Locale.US, "%06d", passkey);
                 createConfirmationDialog(deviceManager);
                 break;
 
@@ -186,7 +191,11 @@ public final class BluetoothPairingDialog extends AlertActivity implements
         int maxLength;
         switch (mType) {
             case BluetoothDevice.PAIRING_VARIANT_PIN:
-                messageId1 = R.string.bluetooth_enter_pin_msg;
+                if (mIsSecurityHigh)
+                    messageId1 = R.string.bluetooth_enter_pin_msg_hs;
+                else
+                    messageId1 = R.string.bluetooth_enter_pin_msg;
+
                 messageId2 = R.string.bluetooth_enter_pin_other_device;
                 // Maximum of 16 characters in a PIN
                 maxLength = BLUETOOTH_PIN_MAX_LENGTH;
@@ -299,7 +308,13 @@ public final class BluetoothPairingDialog extends AlertActivity implements
 
     public void afterTextChanged(Editable s) {
         if (mOkButton != null) {
-            mOkButton.setEnabled(s.length() > 0);
+            if (s.length() > 0 && !mIsSecurityHigh) {
+                mOkButton.setEnabled(true);
+            } else if (mIsSecurityHigh && s.length() == BLUETOOTH_PIN_MAX_LENGTH) {
+                mOkButton.setEnabled(true);
+            } else {
+                mOkButton.setEnabled(false);
+            }
         }
     }
 

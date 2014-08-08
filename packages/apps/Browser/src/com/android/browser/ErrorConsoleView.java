@@ -129,9 +129,6 @@ import java.util.Vector;
             if (mErrorMessageCache == null) {
                 mErrorMessageCache = new Vector<ConsoleMessage>();
             }
-			else if (mErrorMessageCache.size() > 10) {
-				mErrorMessageCache.clear();
-			}
             mErrorMessageCache.add(consoleMessage);
         }
     }

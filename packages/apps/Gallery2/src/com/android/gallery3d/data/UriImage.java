@@ -190,10 +190,6 @@ public class UriImage extends MediaItem {
         @Override
         public Bitmap run(JobContext jc) {
             if (!prepareInputFile(jc)) return null;
-            if(mType == MediaItem.TYPE_DECODE){
-            	return new com.android.gallery3d.util.BitmapUtils(mApplication.getAndroidContext())
-                              .getBitmap(mUri, 1024, 768);
-            }
             int targetSize = MediaItem.getTargetSize(mType);
             Options options = new Options();
             options.inPreferredConfig = Config.ARGB_8888;
@@ -299,10 +295,4 @@ public class UriImage extends MediaItem {
     public int getRotation() {
         return mRotation;
     }
-
-	@Override
-	public Job<BitmapInfo> requestDecodeImage(int type, Uri mUri) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

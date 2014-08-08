@@ -111,7 +111,7 @@ public class KeyChainService extends IntentService {
             if (alias == null) {
                 throw new NullPointerException("alias == null");
             }
-            if (!isKeyStoreUnlocked()) {
+            if (!mKeyStore.isUnlocked()) {
                 throw new IllegalStateException("keystore is "
                         + mKeyStore.state().toString());
             }
@@ -121,10 +121,6 @@ public class KeyChainService extends IntentService {
                 throw new IllegalStateException("uid " + callingUid
                         + " doesn't have permission to access the requested alias");
             }
-        }
-
-        private boolean isKeyStoreUnlocked() {
-            return (mKeyStore.state() == KeyStore.State.UNLOCKED);
         }
 
         @Override public void installCaCertificate(byte[] caCertificate) {
