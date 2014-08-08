@@ -16,41 +16,32 @@
 
 package com.android.gallery3d.filtershow.filters;
 
-import com.android.gallery3d.R;
-
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
 
-public class ImageFilterBwFilter extends SimpleImageFilter {
+public class ImageFilterBwFilter extends ImageFilter {
 
     public ImageFilterBwFilter() {
         mName = "BW Filter";
+        mMaxParameter = 180;
+        mMinParameter = -180;
     }
 
-    public FilterRepresentation getDefaultRepresentation() {
-        FilterBasicRepresentation representation = (FilterBasicRepresentation) super.getDefaultRepresentation();
-        representation.setName("BW Filter");
-        representation.setFilterClass(ImageFilterBwFilter.class);
-        representation.setMaximum(180);
-        representation.setMinimum(-180);
-        representation.setTextId(R.string.bwfilter);
-        representation.setButtonId(R.id.bwfilterButton);
-        representation.setSupportsPartialRendering(true);
-        return representation;
+    @Override
+    public ImageFilter clone() throws CloneNotSupportedException {
+        ImageFilterBwFilter filter = (ImageFilterBwFilter) super.clone();
+        return filter;
     }
 
     native protected void nativeApplyFilter(Bitmap bitmap, int w, int h, int r, int g, int b);
 
     @Override
-    public Bitmap apply(Bitmap bitmap, float scaleFactor, int quality) {
-        if (getParameters() == null) {
-            return bitmap;
-        }
+    public Bitmap apply(Bitmap bitmap, float scaleFactor, boolean highQuality) {
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
         float[] hsv = new float[] {
-                180 + getParameters().getValue(), 1, 1
+                180 + mParameter, 1, 1
         };
         int rgb = Color.HSVToColor(hsv);
         int r = 0xFF & (rgb >> 16);

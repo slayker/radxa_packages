@@ -46,12 +46,6 @@ class HeadsetPhoneState {
     // Number of held (background) calls
     private int mNumHeld = 0;
 
-    // Phone Number
-    private String mNumber;
-
-    // Type of Phone Number
-    private int mType = 0;
-
     // HFP 1.6 CIND signal
     private int mSignal = 0;
 
@@ -122,23 +116,6 @@ class HeadsetPhoneState {
         mNumHeld = numHeldCall;
     }
 
-    void setNumber(String mNumberCall ) {
-        mNumber = mNumberCall;
-    }
-
-    String getNumber()
-    {
-        return mNumber;
-    }
-
-    void setType(int mTypeCall) {
-        mType = mTypeCall;
-    }
-
-    int getType() {
-        return mType;
-    }
-
     int getSignal() {
         return mSignal;
     }
@@ -148,10 +125,7 @@ class HeadsetPhoneState {
     }
 
     void setRoam(int roam) {
-        if (mRoam != roam) {
-            mRoam = roam;
-            sendDeviceStateChanged();
-        }
+        mRoam = roam;
     }
 
     void setBatteryCharge(int batteryLevel) {
@@ -264,12 +238,9 @@ class HeadsetPhoneState {
 
             cdmaIconLevel = (levelDbm < levelEcio) ? levelDbm : levelEcio;
 
-            // STOPSHIP: Change back to getRilVoiceRadioTechnology
             if (mServiceState != null &&
-                  (mServiceState.getRadioTechnology() ==
-                      ServiceState.RIL_RADIO_TECHNOLOGY_EVDO_0 ||
-                   mServiceState.getRadioTechnology() ==
-                       ServiceState.RIL_RADIO_TECHNOLOGY_EVDO_A)) {
+                  (mServiceState.getRadioTechnology() == ServiceState.RIL_RADIO_TECHNOLOGY_EVDO_0 ||
+                   mServiceState.getRadioTechnology() == ServiceState.RIL_RADIO_TECHNOLOGY_EVDO_A)) {
                   int evdoEcio = signalStrength.getEvdoEcio();
                   int evdoSnr = signalStrength.getEvdoSnr();
                   int levelEvdoEcio = 0;

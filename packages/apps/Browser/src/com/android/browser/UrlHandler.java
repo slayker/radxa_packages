@@ -136,6 +136,16 @@ public class UrlHandler {
           return false;
       }
 
+	  //if is m3u8
+	  if(url.startsWith("http://") && url.endsWith(".m3u8")) {
+		Log.i("browser", "it is m3u8 "+ url);
+		Uri uri = Uri.parse(url);
+		intent.setDataAndType(uri, "video/mp4");
+		mActivity.startActivity(intent);
+		mController.closeEmptyTab();
+		return true;
+	  }
+
       // check whether the intent can be resolved. If not, we will see
       // whether we can download it from the Market.
       if (mActivity.getPackageManager().resolveActivity(intent, 0) == null) {

@@ -122,7 +122,7 @@ public class DeviceAdminAdd extends Activity {
         if (!mDPM.isAdminActive(cn)) {
             List<ResolveInfo> avail = getPackageManager().queryBroadcastReceivers(
                     new Intent(DeviceAdminReceiver.ACTION_DEVICE_ADMIN_ENABLED),
-                    PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS);
+                    0);
             int count = avail == null ? 0 : avail.size();
             boolean found = false;
             for (int i=0; i<count; i++) {

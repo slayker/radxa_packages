@@ -123,9 +123,8 @@ public class CalendarAppWidgetService extends RemoteViewsService {
         private Context mContext;
         private Resources mResources;
         private static CalendarAppWidgetModel mModel;
-        private static Object mLock = new Object();
-        private static volatile int mSerialNum = 0;
-        private int mLastSerialNum = -1;
+        private static volatile Integer mLock = new Integer(0);
+        private int mLastLock;
         private CursorLoader mLoader;
         private final Handler mHandler = new Handler();
         private static final AtomicInteger currentVersion = new AtomicInteger(0);
@@ -155,7 +154,7 @@ public class CalendarAppWidgetService extends RemoteViewsService {
                         mLoader.setUri(uri);
                         mLoader.setSelection(selection);
                         synchronized (mLock) {
-                            mLastSerialNum = ++mSerialNum;
+                            mLastLock = ++mLock;
                         }
                         mLoader.forceLoad();
                     }
@@ -380,7 +379,7 @@ public class CalendarAppWidgetService extends RemoteViewsService {
                     EVENT_SORT_ORDER);
             mLoader.setUpdateThrottle(WIDGET_UPDATE_THROTTLE);
             synchronized (mLock) {
-                mLastSerialNum = ++mSerialNum;
+                mLastLock = ++mLock;
             }
             mLoader.registerListener(mAppWidgetId, this);
             mLoader.startLoading();
@@ -485,7 +484,7 @@ public class CalendarAppWidgetService extends RemoteViewsService {
                     return;
                 }
 
-                if (mLastSerialNum != mSerialNum) {
+                if (mLastLock != mLock) {
                     return;
                 }
 

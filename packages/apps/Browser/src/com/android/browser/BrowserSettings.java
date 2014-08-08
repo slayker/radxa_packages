@@ -26,6 +26,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Message;
+import android.os.SystemProperties;
+import android.text.TextUtils;
 import android.preference.PreferenceManager;
 import android.provider.Browser;
 import android.provider.Settings;
@@ -54,6 +56,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.WeakHashMap;
 
+import java.util.Locale;
 /**
  * Class for managing settings
  */
@@ -65,13 +68,13 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         "Linux x86_64) AppleWebKit/534.24 (KHTML, like Gecko) " +
         "Chrome/11.0.696.34 Safari/534.24";
 
-    private static final String IPHONE_USERAGENT = "Mozilla/5.0 (iPhone; U; " +
-        "CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 " +
-        "(KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7";
+    private static final String IPHONE_USERAGENT ="Mozilla/5.0 (iPad; CPU OS 5_1 " + 
+		"like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko ) Version/5.1 " + 
+		"Mobile/9B176 Safari/7534.48.3";
 
-    private static final String IPAD_USERAGENT = "Mozilla/5.0 (iPad; U; " +
-        "CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 " +
-        "(KHTML, like Gecko) Version/4.0.4 Mobile/7B367 Safari/531.21.10";
+    private static final String IPAD_USERAGENT = "Mozilla/5.0 (iPad; CPU OS 5_1 " + 
+		"like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko ) Version/5.1 " + 
+		"Mobile/9B176 Safari/7534.48.3";
 
     private static final String FROYO_USERAGENT = "Mozilla/5.0 (Linux; U; " +
         "Android 2.2; en-us; Nexus One Build/FRF91) AppleWebKit/533.1 " +
@@ -88,6 +91,9 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
             FROYO_USERAGENT,
             HONEYCOMB_USERAGENT,
     };
+
+    public static String PREF_USER_AGENT_DEFAULT = "0";
+    public static String PREF_PLUGIN_STATE_DEFAULT = "ON";
 
     // The minimum min font size
     // Aka, the lower bounds for the min font size range
@@ -129,6 +135,8 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
 
     private static String sFactoryResetUrl;
 
+    private static boolean sWebGLAvailable;
+
     public static void initialize(final Context context) {
         sInstance = new BrowserSettings(context);
     }
@@ -155,14 +163,13 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
     }
 
     public void startManagingSettings(WebSettings settings) {
-
+        WebSettingsClassic settingsClassic = (WebSettingsClassic) settings;
         if (mNeedsSharedSync) {
             syncSharedSettings();
         }
-
         synchronized (mManagedSettings) {
-            syncStaticSettings(settings);
-            syncSetting(settings);
+            syncStaticSettings(settingsClassic);
+            syncSetting(settingsClassic);
             mManagedSettings.add(new WeakReference<WebSettings>(settings));
         }
     }
@@ -225,7 +232,12 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
                 mPrefs.edit().remove(PREF_TEXT_SIZE).apply();
             }
 
-            sFactoryResetUrl = mContext.getResources().getString(R.string.homepage_base);
+           // sFactoryResetUrl = mContext.getResources().getString(R.string.homepage_base);
+		if (TextUtils.isEmpty(SystemProperties.get("ro.rk.homepage_base"))){
+			sFactoryResetUrl = mContext.getResources().getString(R.string.homepage_base);
+		}else{
+			sFactoryResetUrl =SystemProperties.get("ro.rk.homepage_base");
+		}
             if (sFactoryResetUrl.indexOf("{CID}") != -1) {
                 sFactoryResetUrl = sFactoryResetUrl.replace("{CID}",
                     BrowserProvider.getClientId(mContext.getContentResolver()));
@@ -252,17 +264,24 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
     /**
      * Syncs all the settings that have a Preference UI
      */
-    private void syncSetting(WebSettings settings) {
+    private void syncSetting(WebSettingsClassic settings) {
+    	settings.setPopupVideoEnable(popupVideo());
         settings.setGeolocationEnabled(enableGeolocation());
         settings.setJavaScriptEnabled(enableJavascript());
         settings.setLightTouchEnabled(enableLightTouch());
         settings.setNavDump(enableNavDump());
+        settings.setHardwareAccelSkiaEnabled(isSkiaHardwareAccelerated());
+        settings.setShowVisualIndicator(enableVisualIndicator());
         settings.setDefaultTextEncodingName(getDefaultTextEncoding());
         settings.setDefaultZoom(getDefaultZoom());
         settings.setMinimumFontSize(getMinimumFontSize());
         settings.setMinimumLogicalFontSize(getMinimumFontSize());
+        settings.setForceUserScalable(forceEnableUserScalable());
         settings.setPluginState(getPluginState());
+        settings.setAdBlockPolicy(getAdBlockPolicy());
         settings.setTextZoom(getTextZoom());
+        settings.setDoubleTapZoom(getDoubleTapZoom());
+        settings.setAutoFillEnabled(isAutofillEnabled());
         settings.setLayoutAlgorithm(getLayoutAlgorithm());
         settings.setJavaScriptCanOpenWindowsAutomatically(!blockPopupWindows());
         settings.setLoadsImagesAutomatically(loadImages());
@@ -270,6 +289,10 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         settings.setSavePassword(rememberPasswords());
         settings.setSaveFormData(saveFormdata());
         settings.setUseWideViewPort(isWideViewport());
+        settings.setAutoFillProfile(getAutoFillProfile());
+        setIsWebGLAvailable(settings.isWebGLAvailable());
+        settings.setWebGLEnabled(isWebGLAvailable() && isWebGLEnabled());
+        settings.setWebSocketsEnabled(isWebSocketsEnabled());
 
         String ua = mCustomUserAgents.get(settings);
         if (ua != null) {
@@ -278,40 +301,30 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
             settings.setUserAgentString(USER_AGENTS[getUserAgent()]);
         }
 
-        if (!(settings instanceof WebSettingsClassic)) return;
-
-        WebSettingsClassic settingsClassic = (WebSettingsClassic) settings;
-        settingsClassic.setHardwareAccelSkiaEnabled(isSkiaHardwareAccelerated());
-        settingsClassic.setShowVisualIndicator(enableVisualIndicator());
-        settingsClassic.setForceUserScalable(forceEnableUserScalable());
-        settingsClassic.setDoubleTapZoom(getDoubleTapZoom());
-        settingsClassic.setAutoFillEnabled(isAutofillEnabled());
-        settingsClassic.setAutoFillProfile(getAutoFillProfile());
-        settingsClassic.setWebSocketsEnabled(isWebSocketsEnabled());
-
         boolean useInverted = useInvertedRendering();
-        settingsClassic.setProperty(WebViewProperties.gfxInvertedScreen,
+        settings.setProperty(WebViewProperties.gfxInvertedScreen,
                 useInverted ? "true" : "false");
         if (useInverted) {
-          settingsClassic.setProperty(WebViewProperties.gfxInvertedScreenContrast,
+            settings.setProperty(WebViewProperties.gfxInvertedScreenContrast,
                     Float.toString(getInvertedContrast()));
         }
 
         if (isDebugEnabled()) {
-          settingsClassic.setProperty(WebViewProperties.gfxEnableCpuUploadPath,
+            settings.setProperty(WebViewProperties.gfxEnableCpuUploadPath,
                     enableCpuUploadPath() ? "true" : "false");
         }
 
-        settingsClassic.setLinkPrefetchEnabled(mLinkPrefetchAllowed);
+        settings.setLinkPrefetchEnabled(mLinkPrefetchAllowed);
     }
 
     /**
      * Syncs all the settings that have no UI
      * These cannot change, so we only need to set them once per WebSettings
      */
-    private void syncStaticSettings(WebSettings settings) {
+    private void syncStaticSettings(WebSettingsClassic settings) {
         settings.setDefaultFontSize(16);
         settings.setDefaultFixedFontSize(13);
+        settings.setPageCacheCapacity(getPageCacheCapacity());
 
         // WebView inside Browser doesn't want initial focus to be set.
         settings.setNeedInitialFocus(false);
@@ -320,6 +333,13 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         // enable smooth transition for better performance during panning or
         // zooming
         settings.setEnableSmoothTransition(true);
+        // WebView should be preserving the memory as much as possible.
+        // However, apps like browser wish to turn on the performance mode which
+        // would require more memory.
+        // TODO: We need to dynamically allocate/deallocate temporary memory for
+        // apps which are trying to use minimal memory. Currently, double
+        // buffering is always turned on, which is unnecessary.
+        settings.setProperty(WebViewProperties.gfxUseMinimalMemory, "false");
         // disable content url access
         settings.setAllowContentAccess(false);
 
@@ -327,6 +347,7 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         settings.setAppCacheEnabled(true);
         settings.setDatabaseEnabled(true);
         settings.setDomStorageEnabled(true);
+        settings.setWorkersEnabled(true);  // This only affects V8.
 
         // HTML5 configuration parametersettings.
         settings.setAppCacheMaxSize(getWebStorageSizeManager().getAppCacheMaxSize());
@@ -336,19 +357,6 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         // origin policy for file access
         settings.setAllowUniversalAccessFromFileURLs(false);
         settings.setAllowFileAccessFromFileURLs(false);
-
-        if (!(settings instanceof WebSettingsClassic)) return;
-
-        WebSettingsClassic settingsClassic = (WebSettingsClassic) settings;
-        settingsClassic.setPageCacheCapacity(getPageCacheCapacity());
-        // WebView should be preserving the memory as much as possible.
-        // However, apps like browser wish to turn on the performance mode which
-        // would require more memory.
-        // TODO: We need to dynamically allocate/deallocate temporary memory for
-        // apps which are trying to use minimal memory. Currently, double
-        // buffering is always turned on, which is unnecessary.
-        settingsClassic.setProperty(WebViewProperties.gfxUseMinimalMemory, "false");
-        settingsClassic.setWorkersEnabled(true);  // This only affects V8.
     }
 
     private void syncSharedSettings() {
@@ -365,7 +373,7 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
             Iterator<WeakReference<WebSettings>> iter = mManagedSettings.iterator();
             while (iter.hasNext()) {
                 WeakReference<WebSettings> ref = iter.next();
-                WebSettings settings = ref.get();
+                WebSettingsClassic settings = (WebSettingsClassic)ref.get();
                 if (settings == null) {
                     iter.remove();
                     continue;
@@ -667,10 +675,6 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         return mPrefs.getString(PREF_SEARCH_ENGINE, SearchEngine.GOOGLE);
     }
 
-    public int getUserAgent() {
-        return Integer.parseInt(mPrefs.getString(PREF_USER_AGENT, "0"));
-    }
-
     public boolean allowAppTabs() {
         return mPrefs.getBoolean(PREF_ALLOW_APP_TABS, false);
     }
@@ -683,9 +687,13 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         return mPrefs.getBoolean(PREF_ENABLE_JAVASCRIPT, true);
     }
 
+    public int getAdBlockPolicy() {
+        return Integer.parseInt(mPrefs.getString(PREF_ADBLOCK_POLICY, "0"));
+    }
+
     // TODO: Cache
     public PluginState getPluginState() {
-        String state = mPrefs.getString(PREF_PLUGIN_STATE, "ON");
+        String state = mPrefs.getString(PREF_PLUGIN_STATE, PREF_PLUGIN_STATE_DEFAULT);
         return PluginState.valueOf(state);
     }
 
@@ -706,13 +714,19 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
     public boolean blockPopupWindows() {
         return mPrefs.getBoolean(PREF_BLOCK_POPUP_WINDOWS, true);
     }
-
+    public boolean popupVideo(){
+    	return mPrefs.getBoolean(PREF_POPUP_VIDEO, false);
+    }
     public boolean loadImages() {
         return mPrefs.getBoolean(PREF_LOAD_IMAGES, true);
     }
 
     public String getDefaultTextEncoding() {
-        return mPrefs.getString(PREF_DEFAULT_TEXT_ENCODING, null);
+		Locale currentLocale = Locale.getDefault();
+		if (currentLocale.equals(Locale.CHINA) || currentLocale.equals(Locale.CHINESE))
+			return "GBK";
+		else 
+        	return mPrefs.getString(PREF_DEFAULT_TEXT_ENCODING, null);
     }
 
     // -----------------------------
@@ -751,6 +765,13 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
             return false;
         }
         return mPrefs.getBoolean(PREF_ENABLE_HARDWARE_ACCEL_SKIA, false);
+    }
+
+    public int getUserAgent() {
+        if (!isDebugEnabled()) {
+            return Integer.parseInt(mPrefs.getString(PREF_USER_AGENT_REL, PREF_USER_AGENT_DEFAULT));
+        }
+        return Integer.parseInt(mPrefs.getString(PREF_USER_AGENT, PREF_USER_AGENT_DEFAULT));
     }
 
     // -----------------------------
@@ -851,6 +872,10 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         return 1 + (mPrefs.getInt(PREF_INVERTED_CONTRAST, 0) / 10f);
     }
 
+    public boolean isWebGLEnabled() {
+        return mPrefs.getBoolean(PREF_ENABLE_WEBGL, true);
+    }
+
     public boolean isWebSocketsEnabled() {
         return mPrefs.getBoolean(PREF_ENABLE_WEBSOCKETS, false);
     }
@@ -932,6 +957,14 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         return mPrefs.getString(PREF_LINK_PREFETCH, getDefaultLinkPrefetchSetting());
     }
 
+    private static void setIsWebGLAvailable(boolean available) {
+        sWebGLAvailable = available;
+    }
+
+    public static boolean isWebGLAvailable() {
+        return sWebGLAvailable;
+    }
+
     // -----------------------------
     // getter/setters for browser recovery
     // -----------------------------
@@ -974,5 +1007,17 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
         mPrefs.edit()
             .putBoolean(KEY_LAST_RUN_PAUSED, isPaused)
             .apply();
+    }
+
+    public boolean isNeverSleepEnabled() {
+        requireInitialization();
+		//fixed by Charles Chen for switch the never sleep mode value is true
+        return mPrefs.getBoolean(PREF_NEVER_SLEEP_WHEN_BROWSING, true);
+    }
+
+    public void setNeverSleepEnabled(boolean value) {
+        Editor edit = mPrefs.edit();
+        edit.putBoolean(PREF_NEVER_SLEEP_WHEN_BROWSING, value);
+        edit.apply();
     }
 }

@@ -23,14 +23,10 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.UserManager;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.android.settings.R;
 import com.android.settings.Utils;
 
 import java.io.IOException;
@@ -75,8 +71,7 @@ public class AddAccountSettings extends Activity {
 
     private PendingIntent mPendingIntent;
 
-    private final AccountManagerCallback<Bundle> mCallback = new AccountManagerCallback<Bundle>() {
-        @Override
+    private AccountManagerCallback<Bundle> mCallback = new AccountManagerCallback<Bundle>() {
         public void run(AccountManagerFuture<Bundle> future) {
             boolean done = true;
             try {
@@ -125,14 +120,6 @@ public class AddAccountSettings extends Activity {
             if (Log.isLoggable(TAG, Log.VERBOSE)) Log.v(TAG, "restored");
         }
 
-        final UserManager um = (UserManager) getSystemService(Context.USER_SERVICE);
-        if (um.hasUserRestriction(UserManager.DISALLOW_MODIFY_ACCOUNTS)) {
-            // We aren't allowed to add an account.
-            Toast.makeText(this, R.string.user_cannot_add_accounts_message, Toast.LENGTH_LONG)
-                    .show();
-            finish();
-            return;
-        }
         if (mAddAccountCalled) {
             // We already called add account - maybe the callback was lost.
             finish();
@@ -175,7 +162,6 @@ public class AddAccountSettings extends Activity {
         }
     }
 
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(KEY_ADD_CALLED, mAddAccountCalled);

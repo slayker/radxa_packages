@@ -17,6 +17,7 @@ package com.android.browser;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
@@ -47,6 +48,7 @@ public class NavigationBarPhone extends NavigationBarBase implements
     private View mComboIcon;
     private View mTitleContainer;
     private View mMore;
+    //private View mPlayWindow;
     private Drawable mTextfieldBgDrawable;
     private PopupMenu mPopupMenu;
     private boolean mOverflowMenuShowing;
@@ -79,6 +81,8 @@ public class NavigationBarPhone extends NavigationBarBase implements
         mTabSwitcher.setOnClickListener(this);
         mMore = findViewById(R.id.more);
         mMore.setOnClickListener(this);
+       // mPlayWindow = findViewById(R.id.window_play);
+       // mPlayWindow.setOnClickListener(this);
         mComboIcon = findViewById(R.id.iconcombo);
         mComboIcon.setOnClickListener(this);
         mTitleContainer = findViewById(R.id.title_bg);
@@ -159,7 +163,7 @@ public class NavigationBarPhone extends NavigationBarBase implements
             mUiController.showPageInfo();
         } else if (mVoiceButton == v) {
             mUiController.startVoiceRecognizer();
-        } else {
+        } else  {
             super.onClick(v);
         }
     }
@@ -261,5 +265,12 @@ public class NavigationBarPhone extends NavigationBarBase implements
     public boolean onMenuItemClick(MenuItem item) {
         return mUiController.onOptionsItemSelected(item);
     }
+
+	public void updateNavigationState(Tab tab) {
+		// TODO Auto-generated method stub
+		if(tab != null){
+			updatePlayWindowVisible(tab);
+		}
+	}
 
 }

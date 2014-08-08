@@ -422,8 +422,7 @@ public class GalleryActionBar implements OnNavigationListener {
         return mActionBarMenu;
     }
 
-    public void setShareIntents(Intent sharePanoramaIntent, Intent shareIntent,
-        ShareActionProvider.OnShareTargetSelectedListener onShareListener) {
+    public void setShareIntents(Intent sharePanoramaIntent, Intent shareIntent) {
         mSharePanoramaIntent = sharePanoramaIntent;
         if (mSharePanoramaActionProvider != null) {
             mSharePanoramaActionProvider.setShareIntent(sharePanoramaIntent);
@@ -431,8 +430,6 @@ public class GalleryActionBar implements OnNavigationListener {
         mShareIntent = shareIntent;
         if (mShareActionProvider != null) {
             mShareActionProvider.setShareIntent(shareIntent);
-            mShareActionProvider.setOnShareTargetSelectedListener(
-                onShareListener);
         }
     }
 }

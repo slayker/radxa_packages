@@ -23,7 +23,6 @@ import android.provider.ContactsContract;
 import android.util.AttributeSet;
 
 import com.android.contacts.R;
-import com.android.contacts.common.preference.ContactsPreferences;
 
 /**
  * Custom preference: sort-by.

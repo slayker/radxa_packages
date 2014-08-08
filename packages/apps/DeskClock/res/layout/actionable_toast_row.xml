@@ -22,7 +22,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="center_vertical"
         android:paddingLeft="16dip"
-        android:paddingStart="16dip"
         android:src="@drawable/ic_menu_revert_holo_dark" />
 
     <TextView
@@ -33,7 +32,6 @@
         android:ellipsize="end"
         android:gravity="center_vertical"
         android:paddingLeft="16dip"
-        android:paddingStart="16dip"
         android:singleLine="true"
         android:text="@string/alarm_deleted"
         android:textColor="@android:color/white"
@@ -52,7 +50,6 @@
             android:layout_height="match_parent"
             android:layout_marginBottom="10dip"
             android:layout_marginRight="12dip"
-            android:layout_marginEnd="12dip"
             android:layout_marginTop="10dip"
             android:background="#aaaaaa" />
 
@@ -62,7 +59,6 @@
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:layout_marginRight="4dip"
-            android:layout_marginEnd="4dip"
             android:src="@drawable/ic_menu_revert_holo_dark" />
 
         <TextView
@@ -71,10 +67,8 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_marginLeft="4dip"
-            android:layout_marginStart="4dip"
             android:gravity="center_vertical"
             android:paddingRight="16dip"
-            android:paddingEnd="16dip"
             android:textAllCaps="true" />
     </LinearLayout>
 

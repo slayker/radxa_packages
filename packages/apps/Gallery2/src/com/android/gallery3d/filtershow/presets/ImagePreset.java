@@ -17,20 +17,13 @@
 package com.android.gallery3d.filtershow.presets;
 
 import android.graphics.Bitmap;
-import android.graphics.Rect;
-import android.support.v8.renderscript.Allocation;
 import android.util.Log;
 
-import com.android.gallery3d.filtershow.cache.CachingPipeline;
+import com.android.gallery3d.filtershow.ImageStateAdapter;
 import com.android.gallery3d.filtershow.cache.ImageLoader;
-import com.android.gallery3d.filtershow.filters.BaseFiltersManager;
-import com.android.gallery3d.filtershow.filters.FilterRepresentation;
 import com.android.gallery3d.filtershow.filters.ImageFilter;
 import com.android.gallery3d.filtershow.imageshow.GeometryMetadata;
-import com.android.gallery3d.filtershow.imageshow.MasterImage;
-import com.android.gallery3d.filtershow.state.State;
-import com.android.gallery3d.filtershow.state.StateAdapter;
-import com.android.gallery3d.util.UsageStatistics;
+import com.android.gallery3d.filtershow.imageshow.ImageShow;
 
 import java.util.Vector;
 
@@ -38,16 +31,13 @@ public class ImagePreset {
 
     private static final String LOGTAG = "ImagePreset";
 
-    private FilterRepresentation mBorder = null;
-    public static final int QUALITY_ICON = 0;
-    public static final int QUALITY_PREVIEW = 1;
-    public static final int QUALITY_FINAL = 2;
-    public static final int STYLE_ICON = 3;
-
+    private ImageShow mEndPoint = null;
+    private ImageFilter mImageBorder = null;
+    private float mScaleFactor = 1.0f;
+    private boolean mIsHighQuality = false;
     private ImageLoader mImageLoader = null;
 
-    private Vector<FilterRepresentation> mFilters = new Vector<FilterRepresentation>();
-
+    protected Vector<ImageFilter> mFilters = new Vector<ImageFilter>();
     protected String mName = "Original";
     private String mHistoryName = "Original";
     protected boolean mIsFxPreset = false;
@@ -56,10 +46,10 @@ public class ImagePreset {
     private boolean mDoApplyFilters = true;
 
     public final GeometryMetadata mGeoData = new GeometryMetadata();
-    private boolean mPartialRendering = false;
-    private Rect mPartialRenderingBounds;
 
-    private Bitmap mPreviewImage;
+    enum FullRotate {
+        ZERO, NINETY, HUNDRED_EIGHTY, TWO_HUNDRED_SEVENTY
+    }
 
     public ImagePreset() {
         setup();
@@ -79,12 +69,13 @@ public class ImagePreset {
 
     public ImagePreset(ImagePreset source) {
         try {
-            if (source.mBorder != null) {
-                mBorder = source.mBorder.clone();
+            if (source.mImageBorder != null) {
+                mImageBorder = source.mImageBorder.clone();
             }
             for (int i = 0; i < source.mFilters.size(); i++) {
-                FilterRepresentation representation = source.mFilters.elementAt(i).clone();
-                addFilter(representation);
+                ImageFilter filter = source.mFilters.elementAt(i).clone();
+                filter.setImagePreset(this);
+                add(filter);
             }
         } catch (java.lang.CloneNotSupportedException e) {
             Log.v(LOGTAG, "Exception trying to clone: " + e);
@@ -93,80 +84,8 @@ public class ImagePreset {
         mHistoryName = source.name();
         mIsFxPreset = source.isFx();
         mImageLoader = source.getImageLoader();
-        mPreviewImage = source.getPreviewImage();
 
         mGeoData.set(source.mGeoData);
-    }
-
-    public FilterRepresentation getFilterRepresentation(int position) {
-        FilterRepresentation representation = null;
-        try {
-            representation = mFilters.elementAt(position).clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
-        return representation;
-    }
-
-    public int getPositionForRepresentation(FilterRepresentation representation) {
-        for (int i = 0; i < mFilters.size(); i++) {
-            if (mFilters.elementAt(i).getFilterClass() == representation.getFilterClass()) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    public FilterRepresentation getFilterRepresentationCopyFrom(FilterRepresentation filterRepresentation) {
-        // TODO: add concept of position in the filters (to allow multiple instances)
-        if (filterRepresentation == null) {
-            return null;
-        }
-        FilterRepresentation representation = null;
-        if ((mBorder != null)
-                && (mBorder.getFilterClass() == filterRepresentation.getFilterClass())) {
-            // TODO: instead of special casing for border, we should correctly implements "filters priority set"
-            representation = mBorder;
-        } else {
-            int position = getPositionForRepresentation(filterRepresentation);
-            if (position == -1) {
-                return null;
-            }
-            representation = mFilters.elementAt(position);
-        }
-        if (representation != null) {
-            try {
-                representation = representation.clone();
-            } catch (CloneNotSupportedException e) {
-                e.printStackTrace();
-            }
-        }
-        return representation;
-    }
-
-    public void updateFilterRepresentation(FilterRepresentation representation) {
-        if (representation == null) {
-            return;
-        }
-        synchronized (mFilters) {
-            if (representation instanceof GeometryMetadata) {
-                setGeometry((GeometryMetadata) representation);
-            } else {
-                if ((mBorder != null)
-                        && (mBorder.getFilterClass() == representation.getFilterClass())) {
-                    mBorder.updateTempParametersFrom(representation);
-                } else {
-                    int position = getPositionForRepresentation(representation);
-                    if (position == -1) {
-                        return;
-                    }
-                    FilterRepresentation old = mFilters.elementAt(position);
-                    old.updateTempParametersFrom(representation);
-                }
-            }
-        }
-        MasterImage.getImage().invalidatePreview();
-        fillImageStateAdapter(MasterImage.getImage().getState());
     }
 
     public void setDoApplyGeometry(boolean value) {
@@ -177,24 +96,16 @@ public class ImagePreset {
         mDoApplyFilters = value;
     }
 
-    public boolean getDoApplyFilters() {
-        return mDoApplyFilters;
-    }
-
-    public synchronized GeometryMetadata getGeometry() {
-        return mGeoData;
-    }
-
     public boolean hasModifications() {
-        if (mBorder != null && !mBorder.isNil()) {
+        if (mImageBorder != null && !mImageBorder.isNil()) {
             return true;
         }
         if (mGeoData.hasModifications()) {
             return true;
         }
         for (int i = 0; i < mFilters.size(); i++) {
-            FilterRepresentation filter = mFilters.elementAt(i);
-            if (!filter.isNil() && !filter.getName().equalsIgnoreCase("none")) {
+            ImageFilter filter = mFilters.elementAt(i);
+            if (!filter.isNil()) {
                 return true;
             }
         }
@@ -202,36 +113,31 @@ public class ImagePreset {
     }
 
     public boolean isPanoramaSafe() {
-        if (mBorder != null && !mBorder.isNil()) {
+        if (mImageBorder != null && !mImageBorder.isNil()) {
             return false;
         }
         if (mGeoData.hasModifications()) {
             return false;
         }
-        for (FilterRepresentation representation : mFilters) {
-            if (representation.getPriority() == FilterRepresentation.TYPE_VIGNETTE
-                && !representation.isNil()) {
+        for (ImageFilter filter : mFilters) {
+            if (filter.getFilterType() == ImageFilter.TYPE_VIGNETTE
+                    && !filter.isNil()) {
                 return false;
             }
-            if (representation.getPriority() == FilterRepresentation.TYPE_TINYPLANET
-                && !representation.isNil()) {
+            if (filter.getFilterType() == ImageFilter.TYPE_TINYPLANET
+                    && !filter.isNil()) {
                 return false;
             }
         }
         return true;
     }
 
-    public synchronized void setGeometry(GeometryMetadata m) {
+    public void setGeometry(GeometryMetadata m) {
         mGeoData.set(m);
-        MasterImage.getImage().notifyGeometryChange();
     }
 
-    private void setBorder(FilterRepresentation filter) {
-        mBorder = filter;
-    }
-
-    public void resetBorder() {
-        mBorder = null;
+    private void setBorder(ImageFilter filter) {
+        mImageBorder = filter;
     }
 
     public boolean isFx() {
@@ -259,31 +165,10 @@ public class ImagePreset {
         this.mImageLoader = mImageLoader;
     }
 
-    public boolean equals(ImagePreset preset) {
-        if (!same(preset)) {
-            return false;
-        }
-        if (mDoApplyFilters && preset.mDoApplyFilters) {
-            for (int i = 0; i < preset.mFilters.size(); i++) {
-                FilterRepresentation a = preset.mFilters.elementAt(i);
-                FilterRepresentation b = mFilters.elementAt(i);
-                if (!a.equals(b)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     public boolean same(ImagePreset preset) {
-        if (preset == null) {
-            return false;
-        }
-
         if (preset.mFilters.size() != mFilters.size()) {
             return false;
         }
-
         if (!mName.equalsIgnoreCase(preset.name())) {
             return false;
         }
@@ -296,11 +181,11 @@ public class ImagePreset {
             return false;
         }
 
-        if (mDoApplyGeometry && mBorder != preset.mBorder) {
+        if (mDoApplyGeometry && mImageBorder != preset.mImageBorder) {
             return false;
         }
 
-        if (mBorder != null && !mBorder.equals(preset.mBorder)) {
+        if (mImageBorder != null && !mImageBorder.same(preset.mImageBorder)) {
             return false;
         }
 
@@ -312,37 +197,14 @@ public class ImagePreset {
 
         if (mDoApplyFilters && preset.mDoApplyFilters) {
             for (int i = 0; i < preset.mFilters.size(); i++) {
-                FilterRepresentation a = preset.mFilters.elementAt(i);
-                FilterRepresentation b = mFilters.elementAt(i);
+                ImageFilter a = preset.mFilters.elementAt(i);
+                ImageFilter b = mFilters.elementAt(i);
                 if (!a.same(b)) {
                     return false;
                 }
             }
         }
-
         return true;
-    }
-
-    public int similarUpTo(ImagePreset preset) {
-        if (!mGeoData.equals(preset.mGeoData)) {
-            return -1;
-        }
-
-        for (int i = 0; i < preset.mFilters.size(); i++) {
-            FilterRepresentation a = preset.mFilters.elementAt(i);
-            if (i < mFilters.size()) {
-                FilterRepresentation b = mFilters.elementAt(i);
-                if (!a.same(b)) {
-                    return i;
-                }
-                if (!a.equals(b)) {
-                    return i;
-                }
-            } else {
-                return i;
-            }
-        }
-        return preset.mFilters.size();
     }
 
     public String name() {
@@ -353,85 +215,56 @@ public class ImagePreset {
         return mHistoryName;
     }
 
-    public void showFilters() {
-        Log.v(LOGTAG, "\\\\\\ showFilters -- " + mFilters.size() + " filters");
-        int n = 0;
-        for (FilterRepresentation representation : mFilters) {
-            Log.v(LOGTAG, " filter " + n + " : " + representation.toString());
-            n++;
-        }
-        Log.v(LOGTAG, "/// showFilters -- " + mFilters.size() + " filters");
-    }
+    public void add(ImageFilter filter) {
 
-    public FilterRepresentation getLastRepresentation() {
-        if (mFilters.size() > 0) {
-            return mFilters.lastElement();
-        }
-        return null;
-    }
-
-    public void removeFilter(FilterRepresentation filterRepresentation) {
-        if (filterRepresentation.getPriority() == FilterRepresentation.TYPE_BORDER) {
-            setBorder(null);
-            setHistoryName("Remove");
-            return;
-        }
-        for (int i = 0; i < mFilters.size(); i++) {
-            if (mFilters.elementAt(i).getFilterClass() == filterRepresentation.getFilterClass()) {
-                mFilters.remove(i);
-                setHistoryName("Remove");
-                return;
-            }
-        }
-    }
-
-    public void addFilter(FilterRepresentation representation) {
-        if (representation instanceof GeometryMetadata) {
-            setGeometry((GeometryMetadata) representation);
-            return;
-        }
-        if (representation.getPriority() == FilterRepresentation.TYPE_BORDER) {
-            setHistoryName(representation.getName());
-            setBorder(representation);
-        } else if (representation.getPriority() == FilterRepresentation.TYPE_FX) {
+        if (filter.getFilterType() == ImageFilter.TYPE_BORDER) {
+            setHistoryName(filter.getName());
+            setBorder(filter);
+        } else if (filter.getFilterType() == ImageFilter.TYPE_FX) {
             boolean found = false;
             for (int i = 0; i < mFilters.size(); i++) {
-                int type = mFilters.elementAt(i).getPriority();
+                byte type = mFilters.get(i).getFilterType();
                 if (found) {
-                    if (type != FilterRepresentation.TYPE_VIGNETTE) {
+                    if (type != ImageFilter.TYPE_VIGNETTE) {
                         mFilters.remove(i);
                         continue;
                     }
                 }
-                if (type == FilterRepresentation.TYPE_FX) {
+                if (type == ImageFilter.TYPE_FX) {
                     mFilters.remove(i);
-                    mFilters.add(i, representation);
-                    setHistoryName(representation.getName());
+                    mFilters.add(i, filter);
+                    setHistoryName(filter.getName());
                     found = true;
                 }
             }
             if (!found) {
-                mFilters.add(representation);
-                setHistoryName(representation.getName());
+                mFilters.add(filter);
+                setHistoryName(filter.getName());
             }
         } else {
-            mFilters.add(representation);
-            setHistoryName(representation.getName());
+            mFilters.add(filter);
+            setHistoryName(filter.getName());
+        }
+        filter.setImagePreset(this);
+    }
+
+    public void remove(String filterName) {
+        ImageFilter filter = getFilter(filterName);
+        if (filter != null) {
+            mFilters.remove(filter);
         }
     }
 
-    public FilterRepresentation getRepresentation(FilterRepresentation filterRepresentation) {
-        if (filterRepresentation instanceof GeometryMetadata) {
-            return mGeoData;
-        }
+    public int getCount() {
+        return mFilters.size();
+    }
+
+    public ImageFilter getFilter(String name) {
         for (int i = 0; i < mFilters.size(); i++) {
-            FilterRepresentation representation = mFilters.elementAt(i);
-            if (representation.getFilterClass() == filterRepresentation.getFilterClass()) {
-                return representation;
+            ImageFilter filter = mFilters.elementAt(i);
+            if (filter.getName().equalsIgnoreCase(name)) {
+                return filter;
             }
-        }
-        if (mBorder != null && mBorder.getFilterClass() == filterRepresentation.getFilterClass()) {
-            return mBorder;
         }
         return null;
     }
@@ -440,169 +273,58 @@ public class ImagePreset {
         // do nothing here
     }
 
-    public Bitmap apply(Bitmap original, FilterEnvironment environment) {
+    public void setEndpoint(ImageShow image) {
+        mEndPoint = image;
+    }
+
+    public Bitmap apply(Bitmap original) {
+        // First we apply any transform -- 90 rotate, flip, straighten, crop
         Bitmap bitmap = original;
-        bitmap = applyFilters(bitmap, -1, -1, environment);
-        return applyBorder(bitmap, environment);
-    }
 
-    public Bitmap applyGeometry(Bitmap bitmap, FilterEnvironment environment) {
-        // Apply any transform -- 90 rotate, flip, straighten, crop
-        // Returns a new bitmap.
         if (mDoApplyGeometry) {
-            mGeoData.synchronizeRepresentation();
-            bitmap = environment.applyRepresentation(mGeoData, bitmap);
+            bitmap = mGeoData.apply(original, mScaleFactor, mIsHighQuality);
         }
-        return bitmap;
-    }
 
-    public Bitmap applyBorder(Bitmap bitmap, FilterEnvironment environment) {
-        if (mBorder != null && mDoApplyGeometry) {
-            mBorder.synchronizeRepresentation();
-            bitmap = environment.applyRepresentation(mBorder, bitmap);
-            if (environment.getQuality() == QUALITY_FINAL) {
-                UsageStatistics.onEvent(UsageStatistics.COMPONENT_EDITOR,
-                        "SaveBorder", mBorder.getName(), 1);
-            }
-        }
-        return bitmap;
-    }
-
-    public Bitmap applyFilters(Bitmap bitmap, int from, int to, FilterEnvironment environment) {
         if (mDoApplyFilters) {
-            if (from < 0) {
-                from = 0;
+            for (int i = 0; i < mFilters.size(); i++) {
+                ImageFilter filter = mFilters.elementAt(i);
+                bitmap = filter.apply(bitmap, mScaleFactor, mIsHighQuality);
             }
-            if (to == -1) {
-                to = mFilters.size();
-            }
-            for (int i = from; i < to; i++) {
-                FilterRepresentation representation = null;
-                synchronized (mFilters) {
-                    representation = mFilters.elementAt(i);
-                    representation.synchronizeRepresentation();
-                }
-                bitmap = environment.applyRepresentation(representation, bitmap);
-                if (environment.getQuality() == QUALITY_FINAL) {
-                    UsageStatistics.onEvent(UsageStatistics.COMPONENT_EDITOR,
-                            "SaveFilter", representation.getName(), 1);
-                }
-                if (environment.needsStop()) {
-                    return bitmap;
-                }
-            }
+        }
+
+        if (mImageBorder != null && mDoApplyGeometry) {
+            bitmap = mImageBorder.apply(bitmap, mScaleFactor, mIsHighQuality);
+        }
+
+        if (mEndPoint != null) {
+            mEndPoint.updateFilteredImage(bitmap);
         }
 
         return bitmap;
     }
 
-    public void applyBorder(Allocation in, Allocation out, FilterEnvironment environment) {
-        if (mBorder != null && mDoApplyGeometry) {
-            mBorder.synchronizeRepresentation();
-            // TODO: should keep the bitmap around
-            Allocation bitmapIn = Allocation.createTyped(CachingPipeline.getRenderScriptContext(), in.getType());
-            bitmapIn.copyFrom(out);
-            environment.applyRepresentation(mBorder, bitmapIn, out);
-        }
-    }
-
-    public void applyFilters(int from, int to, Allocation in, Allocation out, FilterEnvironment environment) {
-        if (mDoApplyFilters) {
-            if (from < 0) {
-                from = 0;
-            }
-            if (to == -1) {
-                to = mFilters.size();
-            }
-            for (int i = from; i < to; i++) {
-                FilterRepresentation representation = null;
-                synchronized (mFilters) {
-                    representation = mFilters.elementAt(i);
-                    representation.synchronizeRepresentation();
-                }
-                if (i > from) {
-                    in.copyFrom(out);
-                }
-                environment.applyRepresentation(representation, in, out);
-            }
-        }
-    }
-
-    public boolean canDoPartialRendering() {
-        if (mGeoData.hasModifications()) {
-            return false;
-        }
-        if (mBorder != null && !mBorder.supportsPartialRendering()) {
-            return false;
-        }
-        if (ImageLoader.getZoomOrientation() != ImageLoader.ORI_NORMAL) {
-            return false;
-        }
-        for (int i = 0; i < mFilters.size(); i++) {
-            FilterRepresentation representation = null;
-            synchronized (mFilters) {
-                representation = mFilters.elementAt(i);
-            }
-            if (!representation.supportsPartialRendering()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public void fillImageStateAdapter(StateAdapter imageStateAdapter) {
+    public void fillImageStateAdapter(ImageStateAdapter imageStateAdapter) {
         if (imageStateAdapter == null) {
             return;
         }
-        Vector<State> states = new Vector<State>();
-        // TODO: supports Geometry representations in the state panel.
-        if (false && mGeoData != null && mGeoData.hasModifications()) {
-            State geo = new State("Geometry");
-            geo.setFilterRepresentation(mGeoData);
-            states.add(geo);
-        }
-        for (FilterRepresentation filter : mFilters) {
-            State state = new State(filter.getName());
-            state.setFilterRepresentation(filter);
-            states.add(state);
-        }
-        if (mBorder != null) {
-            State border = new State(mBorder.getName());
-            border.setFilterRepresentation(mBorder);
-            states.add(border);
-        }
-        imageStateAdapter.fill(states);
+        imageStateAdapter.clear();
+        imageStateAdapter.addAll(mFilters);
+        imageStateAdapter.notifyDataSetChanged();
     }
 
-    public void setPartialRendering(boolean partialRendering, Rect bounds) {
-        mPartialRendering = partialRendering;
-        mPartialRenderingBounds = bounds;
+    public float getScaleFactor() {
+        return mScaleFactor;
     }
 
-    public boolean isPartialRendering() {
-        return mPartialRendering;
+    public boolean isHighQuality() {
+        return mIsHighQuality;
     }
 
-    public Rect getPartialRenderingBounds() {
-        return mPartialRenderingBounds;
+    public void setIsHighQuality(boolean value) {
+        mIsHighQuality = value;
     }
 
-    public Bitmap getPreviewImage() {
-        return mPreviewImage;
+    public void setScaleFactor(float value) {
+        mScaleFactor = value;
     }
-
-    public void setPreviewImage(Bitmap previewImage) {
-        mPreviewImage = previewImage;
-    }
-
-    public Vector<ImageFilter> getUsedFilters(BaseFiltersManager filtersManager) {
-        Vector<ImageFilter> usedFilters = new Vector<ImageFilter>();
-        for (int i = 0; i < mFilters.size(); i++) {
-            FilterRepresentation representation = mFilters.elementAt(i);
-            ImageFilter filter = filtersManager.getFilterForRepresentation(representation);
-            usedFilters.add(filter);
-        }
-        return usedFilters;
-    }
-
 }

@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2011 The Android Open Source Project
- * Copyright (c) 2012, The Linux Foundation. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +30,6 @@ import android.os.Environment;
 import android.util.Log;
 
 public class Recorder implements OnCompletionListener, OnErrorListener {
-    static final String TAG = "Recorder";
     static final String SAMPLE_PREFIX = "recording";
     static final String SAMPLE_PATH_KEY = "sample_path";
     static final String SAMPLE_LENGTH_KEY = "sample_length";
@@ -46,11 +44,7 @@ public class Recorder implements OnCompletionListener, OnErrorListener {
     public static final int SDCARD_ACCESS_ERROR = 1;
     public static final int INTERNAL_ERROR = 2;
     public static final int IN_CALL_RECORD_ERROR = 3;
-    public static final int UNSUPPORTED_FORMAT = 4;
-
-    public int mChannels = 0;
-    public int mSamplingRate = 0;
-
+    
     public interface OnStateChangedListener {
         public void onStateChanged(int state);
         public void onError(int error);
@@ -103,15 +97,7 @@ public class Recorder implements OnCompletionListener, OnErrorListener {
     public void setOnStateChangedListener(OnStateChangedListener listener) {
         mOnStateChangedListener = listener;
     }
-
-    public void setChannels(int nChannelsCount) {
-        mChannels = nChannelsCount;
-    }
-
-    public void setSamplingRate(int samplingRate) {
-        mSamplingRate = samplingRate;
-    }
-
+    
     public int state() {
         return mState;
     }
@@ -157,7 +143,7 @@ public class Recorder implements OnCompletionListener, OnErrorListener {
         signalStateChanged(IDLE_STATE);
     }
     
-    public void startRecording(int outputfileformat, String extension, Context context, int audiosourcetype, int codectype) {
+    public void startRecording(int outputfileformat, String extension, Context context) {
         stop();
         
         if (mSampleFile == null) {
@@ -174,31 +160,12 @@ public class Recorder implements OnCompletionListener, OnErrorListener {
         }
         
         mRecorder = new MediaRecorder();
-        mRecorder.setAudioSource(audiosourcetype);
-        //set channel for surround sound recording.
-        if (mChannels > 0) {
-            mRecorder.setAudioChannels(mChannels);
-        }
-        if (mSamplingRate > 0) {
-            mRecorder.setAudioSamplingRate(mSamplingRate);
-        }
-
+        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(outputfileformat);
-
-        try {
-            mRecorder.setAudioEncoder(codectype);
-        } catch(RuntimeException exception) {
-            setError(UNSUPPORTED_FORMAT);
-            mRecorder.reset();
-            mRecorder.release();
-            if (mSampleFile != null)
-               mSampleFile.delete();
-            mSampleFile = null;
-            mSampleLength = 0;
-            mRecorder = null;
-            return;
-        }
-
+ //       mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mRecorder.setAudioEncodingBitRate(64*1024);
+        mRecorder.setAudioSamplingRate(44100);
         mRecorder.setOutputFile(mSampleFile.getAbsolutePath());
 
         // Handle IOException
@@ -208,15 +175,10 @@ public class Recorder implements OnCompletionListener, OnErrorListener {
             setError(INTERNAL_ERROR);
             mRecorder.reset();
             mRecorder.release();
-            if (mSampleFile != null)
-               mSampleFile.delete();
-            mSampleFile = null;
-            mSampleLength = 0;
             mRecorder = null;
             return;
         }
         // Handle RuntimeException if the recording couldn't start
-        Log.e(TAG,"audiosourcetype " +audiosourcetype);
         try {
             mRecorder.start();
         } catch (RuntimeException exception) {
@@ -230,10 +192,6 @@ public class Recorder implements OnCompletionListener, OnErrorListener {
             }
             mRecorder.reset();
             mRecorder.release();
-            if (mSampleFile != null)
-                mSampleFile.delete();
-            mSampleFile = null;
-            mSampleLength = 0;
             mRecorder = null;
             return;
         }
@@ -246,7 +204,6 @@ public class Recorder implements OnCompletionListener, OnErrorListener {
             return;
 
         mRecorder.stop();
-        mRecorder.reset();
         mRecorder.release();
         mRecorder = null;
 

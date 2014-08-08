@@ -26,9 +26,9 @@ import android.graphics.Rect;
 
 import com.android.gallery3d.common.ApiHelper;
 import com.android.gallery3d.common.Utils;
-import com.android.photos.data.GalleryBitmapPool;
+import com.android.gallery3d.data.BitmapPool;
 
-public class TileImageViewAdapter implements TileImageView.TileSource {
+public class TileImageViewAdapter implements TileImageView.Model {
     private static final String TAG = "TileImageViewAdapter";
     protected ScreenNail mScreenNail;
     protected boolean mOwnScreenNail;
@@ -84,14 +84,16 @@ public class TileImageViewAdapter implements TileImageView.TileSource {
     // (44, 44, 256, 256) from the original photo and down sample it to 106.
     @TargetApi(ApiHelper.VERSION_CODES.HONEYCOMB)
     @Override
-    public Bitmap getTile(int level, int x, int y, int tileSize) {
+    public Bitmap getTile(int level, int x, int y, int tileSize,
+            int borderSize, BitmapPool pool) {
         if (!ApiHelper.HAS_REUSING_BITMAP_IN_BITMAP_REGION_DECODER) {
-            return getTileWithoutReusingBitmap(level, x, y, tileSize);
+            return getTileWithoutReusingBitmap(level, x, y, tileSize, borderSize);
         }
 
+        int b = borderSize << level;
         int t = tileSize << level;
 
-        Rect wantRegion = new Rect(x, y, x + t, y + t);
+        Rect wantRegion = new Rect(x - b, y - b, x + t + b, y + t + b);
 
         boolean needClear;
         BitmapRegionDecoder regionDecoder = null;
@@ -106,11 +108,12 @@ public class TileImageViewAdapter implements TileImageView.TileSource {
                     .contains(wantRegion);
         }
 
-        Bitmap bitmap = GalleryBitmapPool.getInstance().get(tileSize, tileSize);
+        Bitmap bitmap = pool == null ? null : pool.getBitmap();
         if (bitmap != null) {
             if (needClear) bitmap.eraseColor(0);
         } else {
-            bitmap = Bitmap.createBitmap(tileSize, tileSize, Config.ARGB_8888);
+            int s = tileSize + 2 * borderSize;
+            bitmap = Bitmap.createBitmap(s, s, Config.ARGB_8888);
         }
 
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -126,7 +129,7 @@ public class TileImageViewAdapter implements TileImageView.TileSource {
             }
         } finally {
             if (options.inBitmap != bitmap && options.inBitmap != null) {
-                GalleryBitmapPool.getInstance().put(options.inBitmap);
+                if (pool != null) pool.recycle(options.inBitmap);
                 options.inBitmap = null;
             }
         }
@@ -138,9 +141,10 @@ public class TileImageViewAdapter implements TileImageView.TileSource {
     }
 
     private Bitmap getTileWithoutReusingBitmap(
-            int level, int x, int y, int tileSize) {
+            int level, int x, int y, int tileSize, int borderSize) {
+        int b = borderSize << level;
         int t = tileSize << level;
-        Rect wantRegion = new Rect(x, y, x + t, y + t);
+        Rect wantRegion = new Rect(x - b, y - b, x + t + b, y + t + b);
 
         BitmapRegionDecoder regionDecoder;
         Rect overlapRegion;
@@ -169,7 +173,8 @@ public class TileImageViewAdapter implements TileImageView.TileSource {
 
         if (wantRegion.equals(overlapRegion)) return bitmap;
 
-        Bitmap result = Bitmap.createBitmap(tileSize, tileSize, Config.ARGB_8888);
+        int s = tileSize + 2 * borderSize;
+        Bitmap result = Bitmap.createBitmap(s, s, Config.ARGB_8888);
         Canvas canvas = new Canvas(result);
         canvas.drawBitmap(bitmap,
                 (overlapRegion.left - wantRegion.left) >> level,

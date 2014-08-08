@@ -3,8 +3,6 @@ package com.android.gallery3d.ui;
 import android.os.ConditionVariable;
 
 import com.android.gallery3d.app.AbstractGalleryActivity;
-import com.android.gallery3d.glrenderer.GLCanvas;
-import com.android.gallery3d.glrenderer.RawTexture;
 import com.android.gallery3d.ui.GLRoot.OnGLIdleListener;
 
 public class PreparePageFadeoutTexture implements OnGLIdleListener {

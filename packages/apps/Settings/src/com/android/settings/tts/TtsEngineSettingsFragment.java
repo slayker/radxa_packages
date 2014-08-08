@@ -35,6 +35,7 @@ import android.util.Pair;
 
 import com.android.settings.R;
 import com.android.settings.SettingsPreferenceFragment;
+import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -201,7 +202,7 @@ public class TtsEngineSettingsFragment extends SettingsPreferenceFragment implem
                 getEngineName());
 
         ArrayList<Pair<String, String>> entryPairs =
-                new ArrayList<Pair<String, String>>(availableLangs.size());
+                Lists.newArrayListWithCapacity(availableLangs.size());
         for (int i = 0; i < availableLangs.size(); i++) {
             String[] langCountryVariant = availableLangs.get(i).split("-");
             Locale loc = null;

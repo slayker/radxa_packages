@@ -29,11 +29,10 @@
         android:id="@+id/icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="4dip"
-        android:maxWidth="36dip"
-        android:maxHeight="36dip"
-        android:adjustViewBounds="true"
-        android:layout_gravity="center" />
+        android:layout_marginStart="6dip"
+        android:layout_marginEnd="6dip"
+        android:layout_gravity="center"
+        android:contentDescription="@null" />
 
     <RelativeLayout
         android:layout_width="wrap_content"

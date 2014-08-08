@@ -4,9 +4,9 @@
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
      You may obtain a copy of the License at
-  
+
           http://www.apache.org/licenses/LICENSE-2.0
-  
+
      Unless required by applicable law or agreed to in writing, software
      distributed under the License is distributed on an "AS IS" BASIS,
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,8 +48,6 @@
     <string name="password">Password</string>
     <!-- The label on the "sign in" button -->
     <string name="action">Sign in</string>
-    <!-- The name of the add bookmark page activity.-->
-    <string name="bookmarks_add_page">Save bookmark</string>
     <!-- The name of the bookmarks and history search suggestion source.  -->
     <string name="bookmarks_search">Browser</string>
     <!-- Label for a cancel button.  It is used for multiple cancel buttons in different contexts -->
@@ -143,6 +141,7 @@
     <string name="save_to_bookmarks">Save to bookmarks</string>
     <!-- Title of the dialog to bookmark a page -->
     <string name="bookmark_this_page">Bookmark this page</string>
+    <string name="show_playwindow">Play with embeded window</string>
     <!-- Option on bookmark dialog to remove the bookmark [CHAR LIMIT=30] -->
     <string name="remove">Remove</string>
     <!-- Menu item on the bookmarks page, to edit an existing bookmark -->
@@ -175,7 +174,7 @@
     <string name="bookmark_cannot_save_url">This URL can\'t be bookmarked.</string>
     <!-- Menu item in the page that displays all bookmarks. It brings up a
             dialog that allows the user to bookmark the page that the browser is
-            currently on, but is not visible because the bookmarks page is 
+            currently on, but is not visible because the bookmarks page is
             showing. -->
     <string name="bookmark_page">Bookmark last-viewed page</string>
     <!-- Menu item in the page that displays all bookmarks.  Switches to
@@ -265,7 +264,7 @@
     <!-- Context Menu item to show the currently selected address in the Maps
             application -->
     <string name="contextmenu_map">Map</string>
- 
+
      <!-- Title of the dialog used for selecting the application that should be
             used for sharing a link (e.g. Gmail or another app). See also
             contextmenu_sharelink above -->
@@ -296,6 +295,8 @@
     <string name="pref_content_load_images_summary">Display images on web pages</string>
     <!-- Settings label [CHAR LIMIT=30] -->
     <string name="pref_content_block_popups">Block pop-ups</string>
+    <string name="pref_popup_video">Popup video</string>
+    <string name="pre_popup_video_summary">Play video in independent window</string>
     <!-- Settings label -->
     <string name="pref_content_javascript">Enable JavaScript</string>
     <!-- Settings label -->
@@ -576,6 +577,7 @@
     <string name="js_engine_flags" translatable="false">Set JS flags</string>
     <!-- Do not tranlsate.  Development option -->
     <string name="pref_development_uastring" translatable="false">UAString</string>
+    <string name="pref_adblock_policy" translatable="false">ADBlock Policy</string>
     <!-- Do not tranlsate.  Development option -->
     <string-array name="pref_development_ua_choices" translatable="false">
         <item>Android</item>
@@ -585,6 +587,11 @@
         <item>Froyo-N1</item>
         <item>Honeycomb-Xoom</item>
     </string-array>
+    <string-array name="pref_adblock_policy_choices" translatable="false">
+        <item>disable</item>
+        <item>Video</item>
+        <item>All</item>
+    </string-array>
     <!-- Do not tranlsate.  Development option -->
     <string-array name="pref_development_ua_values" translatable="false">
         <item>0</item>
@@ -593,6 +600,11 @@
         <item>3</item>
         <item>4</item>
         <item>5</item>
+    </string-array>
+    <string-array name="pref_adblock_policy_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
     </string-array>
     <string name="pref_development_error_console" translatable="false">Show JavaScript Console</string>
     <!-- Do not translate. Development option to reset the prologin time [CHAR LIMIT=20] -->
@@ -648,6 +660,14 @@
     <!-- Summary for the fullscreen lab feature [CHAR LIMIT=120] -->
     <string name="pref_lab_fullscreen_summary">
       Use fullscreen mode to hide the status bar</string>
+    <!-- Title for the WebGL feature [CHAR LIMIT=40] -->
+    <string name="pref_lab_webgl">WebGL</string>
+    <!-- Summary for the WebGL lab feature [CHAR LIMIT=120] -->
+    <string name="pref_lab_webgl_summary">Enables WebGL</string>
+    <!-- Title for the WebSockets feature [CHAR LIMIT=40] -->
+    <string name="pref_lab_websockets">WebSockets</string>
+    <!-- Summary for the WebGL lab feature [CHAR LIMIT=120] -->
+    <string name="pref_lab_websockets_summary">Enable WebSockets</string>
     <!-- Title for bandwidth management preference [CHAR LIMIT=25] -->
     <string name="pref_data_title">Bandwidth management</string>
     <!-- Title for search preloading [CHAR LIMIT=40] -->
@@ -722,7 +742,7 @@
     <!-- Verb placed in front of a screenshot of a web page that, when clicked,
             will add that page to bookmarks -->
     <string name="add_bookmark_short">Add</string>
-    
+
     <!-- This string is for the browser "Go To" UI. -->
     <!-- Do not translate.  This string is not displayed in UI (no badge is selected for go to). -->
     <string name="search_label" translatable="false">Browser</string>
@@ -842,7 +862,7 @@
     <string name="webstorage_outofspace_notification_text">Touch to free up space.</string>
     <!-- Used in the Browser Settings -->
     <string name="webstorage_clear_data_title">Clear stored data</string>
-    
+
     <!-- Confirmation dialog when the user ask to clear all data for an origin -->
     <string name="webstorage_clear_data_dialog_message">Delete all data stored by this website?</string>
     <string name="webstorage_clear_data_dialog_ok_button">OK</string>
@@ -958,6 +978,8 @@
     <string name="local_bookmarks">Local</string>
     <!-- Popup menu checkbox that allows the user to request the desktop version of a webpage [CHAR LIMIT=50] -->
     <string name="ua_switcher_desktop">Request desktop site</string>
+    <!-- Popup menu checkbox that never sleep when browsing [CHAR LIMIT=50] -->
+    <string name="never_sleep_when_browsing">Never sleep when browsing</string>
     <!-- Preload permission label [CHAR LIMIT=40] -->
     <string name="permission_preload_label">Preload results</string>
     <!-- Empty text for the "saved pages" tab that is shown when no saved pages exist. [CHAR LIMIT=None] -->

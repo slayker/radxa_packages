@@ -114,7 +114,7 @@ public class NetworkStateHandler {
 
     private void sendNetworkType(String type, String subtype) {
         WebView w = mController.getCurrentWebView();
-        if (w != null && BrowserWebView.isClassic()) {
+        if (w != null) {
             WebViewClassic.fromWebView(w).setNetworkType(type, subtype);
         }
     }

@@ -16,26 +16,24 @@
 
 package com.android.calculator2;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 import android.content.Context;
 
-import com.android.calculator2.BaseModule.Mode;
-
 class Persist {
-    private static final int LAST_VERSION = 3;
+    private static final int LAST_VERSION = 2;
     private static final String FILE_NAME = "calculator.data";
-    private final Context mContext;
-    History mHistory = new History();
+    private Context mContext;
+
+    History history = new History();
     private int mDeleteMode;
-    private Mode mMode;
 
     Persist(Context context) {
         this.mContext = context;
@@ -49,39 +47,22 @@ class Persist {
         return mDeleteMode;
     }
 
-    public void setMode(Mode mode) {
-        this.mMode = mode;
-    }
-
-    public Mode getMode() {
-        return mMode;
-    }
-
     public void load() {
         try {
             InputStream is = new BufferedInputStream(mContext.openFileInput(FILE_NAME), 8192);
             DataInputStream in = new DataInputStream(is);
             int version = in.readInt();
-            if(version > LAST_VERSION) {
+            if (version > 1) {
+                mDeleteMode = in.readInt();
+            } else if (version > LAST_VERSION) {
                 throw new IOException("data version " + version + "; expected " + LAST_VERSION);
             }
-            if(version > 1) {
-                mDeleteMode = in.readInt();
-            }
-            if(version > 2) {
-                int quickSerializable = in.readInt();
-                for(Mode m : Mode.values()) {
-                    if(m.getQuickSerializable() == quickSerializable) this.mMode = m;
-                }
-            }
-            mHistory = new History(version, in);
+            history = new History(version, in);
             in.close();
-        }
-        catch(FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        catch(IOException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            Calculator.log("" + e);
+        } catch (IOException e) {
+            Calculator.log("" + e);
         }
     }
 
@@ -91,12 +72,10 @@ class Persist {
             DataOutputStream out = new DataOutputStream(os);
             out.writeInt(LAST_VERSION);
             out.writeInt(mDeleteMode);
-            out.writeInt(mMode.quickSerializable);
-            mHistory.write(out);
+            history.write(out);
             out.close();
-        }
-        catch(IOException e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            Calculator.log("" + e);
         }
     }
 }

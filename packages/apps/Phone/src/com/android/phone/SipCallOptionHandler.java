@@ -1,7 +1,4 @@
 /**
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
- * Not a Contribution.
- *
  * Copyright (C) 2010 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,13 +18,10 @@ package com.android.phone;
 
 import com.android.internal.telephony.CallManager;
 import com.android.internal.telephony.Phone;
-import com.android.internal.telephony.PhoneBase;
-import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.telephony.PhoneFactory;
 import com.android.phone.sip.SipProfileDb;
 import com.android.phone.sip.SipSettings;
 import com.android.phone.sip.SipSharedPreferences;
-import com.android.phone.ims.ImsSharedPreferences;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -45,8 +39,6 @@ import android.os.Bundle;
 import android.os.SystemProperties;
 import android.provider.Settings;
 import android.telephony.PhoneNumberUtils;
-import android.telephony.ServiceState;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -73,36 +65,25 @@ public class SipCallOptionHandler extends Activity implements
     static final String TAG = "SipCallOptionHandler";
     private static final boolean DBG =
             (PhoneGlobals.DBG_LEVEL >= 1) && (SystemProperties.getInt("ro.debuggable", 0) == 1);
-    private static final boolean IMS_DBG = Log.isLoggable("IMS", Log.DEBUG);
 
     static final int DIALOG_SELECT_PHONE_TYPE = 0;
     static final int DIALOG_SELECT_OUTGOING_SIP_PHONE = 1;
     static final int DIALOG_START_SIP_SETTINGS = 2;
     static final int DIALOG_NO_INTERNET_ERROR = 3;
     static final int DIALOG_NO_VOIP = 4;
-    static final int DIALOG_NO_VOLTE = 5;
-    static final int DIALOG_SIZE = 6;
+    static final int DIALOG_SIZE = 5;
 
     private Intent mIntent;
     private List<SipProfile> mProfileList;
     private String mCallOption;
     private String mNumber;
     private SipSharedPreferences mSipSharedPreferences;
-    private ImsSharedPreferences mImsSharedPreferences;
     private SipProfileDb mSipProfileDb;
     private Dialog[] mDialogs = new Dialog[DIALOG_SIZE];
     private SipProfile mOutgoingSipProfile;
     private TextView mUnsetPriamryHint;
     private boolean mUseSipPhone = false;
     private boolean mMakePrimary = false;
-    private boolean mIsImsDefault = false;
-    private String mImsServerAddress;
-    private int mImsCallType;
-
-    /**
-     * Specify if IMS calls should be originated with PS domain
-     */
-    private static final String IMS_PS_DOMAIN = "persist.radio.domain.ps";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -163,26 +144,14 @@ public class SipCallOptionHandler extends Activity implements
         mSipSharedPreferences = new SipSharedPreferences(this);
         mCallOption = mSipSharedPreferences.getSipCallOption();
         if (DBG) Log.v(TAG, "Call option: " + mCallOption);
-
-        mImsSharedPreferences = new ImsSharedPreferences(this);
-        mIsImsDefault = mImsSharedPreferences.getisImsDefault();
-        mImsServerAddress = mImsSharedPreferences.getServerAddress();
-        mImsCallType = mImsSharedPreferences.getCallType();
-        if (IMS_DBG) Log.v(TAG, "IMS Server: " + mImsServerAddress +
-                " IMS call type: " + mImsCallType +
-                " is IMS default: " + mIsImsDefault);
-
         Uri uri = mIntent.getData();
         String scheme = uri.getScheme();
         mNumber = PhoneNumberUtils.getNumberFromIntent(mIntent, this);
         boolean isInCellNetwork = PhoneGlobals.getInstance().phoneMgr.isRadioOn();
         boolean isKnownCallScheme = Constants.SCHEME_TEL.equals(scheme)
                 || Constants.SCHEME_SIP.equals(scheme);
-        boolean isRegularCall = (Constants.SCHEME_TEL.equals(scheme)
-                && !PhoneNumberUtils.isUriNumber(mNumber))
-                || PhoneUtils.isImsCallIntent(scheme, mIntent)
-                || mIntent.getBooleanExtra(
-                        OutgoingCallBroadcaster.EXTRA_DIAL_CONFERENCE_URI, false);
+        boolean isRegularCall = Constants.SCHEME_TEL.equals(scheme)
+                && !PhoneNumberUtils.isUriNumber(mNumber);
 
         // Bypass the handler if the call scheme is not sip or tel.
         if (!isKnownCallScheme) {
@@ -301,14 +270,6 @@ public class SipCallOptionHandler extends Activity implements
                     .setOnCancelListener(this)
                     .create();
             break;
-        case DIALOG_NO_VOLTE:
-            dialog = new AlertDialog.Builder(this)
-                    .setTitle(R.string.no_volte)
-                    .setIconAttribute(android.R.attr.alertDialogIcon)
-                    .setPositiveButton(android.R.string.ok, this)
-                    .setOnCancelListener(this)
-                    .create();
-            break;
         default:
             dialog = null;
         }
@@ -360,8 +321,7 @@ public class SipCallOptionHandler extends Activity implements
         } else if (dialog == mDialogs[DIALOG_SELECT_OUTGOING_SIP_PHONE]) {
             mOutgoingSipProfile = mProfileList.get(id);
         } else if ((dialog == mDialogs[DIALOG_NO_INTERNET_ERROR])
-                || (dialog == mDialogs[DIALOG_NO_VOIP])
-                || (dialog == mDialogs[DIALOG_NO_VOLTE])) {
+                || (dialog == mDialogs[DIALOG_NO_VOIP])) {
             finish();
             return;
         } else {
@@ -408,24 +368,6 @@ public class SipCallOptionHandler extends Activity implements
         }
     }
 
-    private boolean useImsPhone() {
-        boolean useIms = false;
-        // mIsImsDefault is UI preference to use ims call
-        if (!mUseSipPhone && mIsImsDefault && PhoneUtils.isCallOnImsEnabled()) {
-            CallManager cm = PhoneGlobals.getInstance().mCM;
-            // If a 1x call exists, place current call on CDMA even though IMS is available
-            // If airplane mode is on then use default phone for call
-            if (!((cm.getPhoneInCall().getPhoneType() == PhoneConstants.PHONE_TYPE_CDMA
-                    && cm.getPhoneInCall().getState() != PhoneConstants.State.IDLE) ||
-                    (cm.getDefaultPhone().getServiceState().getState()
-                            == ServiceState.STATE_POWER_OFF))){
-                useIms = true;
-            }
-        }
-        Log.d(TAG, "useImsPhone returns " + useIms);
-        return useIms;
-    }
-
     private void setResultAndFinish() {
         runOnUiThread(new Runnable() {
             public void run() {
@@ -449,33 +391,6 @@ public class SipCallOptionHandler extends Activity implements
                     showDialog(DIALOG_START_SIP_SETTINGS);
                     return;
                 } else {
-                    // Check if this is dial conference
-                    boolean isConferenceUri = mIntent.getBooleanExtra(
-                            OutgoingCallBroadcaster.EXTRA_DIAL_CONFERENCE_URI, false);
-
-                    if (useImsPhone()) {
-                        /*
-                         * Convert the voice call intent to the IMS intent as
-                         * user requested to make an IMS call
-                         */
-                        Phone phone = PhoneUtils.getImsPhone(PhoneGlobals.getInstance().mCM);
-                        if (phone != null &&
-                                phone.getServiceState().getState()
-                                    == ServiceState.STATE_IN_SERVICE) {
-                            PhoneUtils.convertCallToIMS(mIntent, mImsCallType);
-                        } else {
-                            // Ims Call cannot be placed
-                            if (SystemProperties.getBoolean(IMS_PS_DOMAIN, true)) {
-                                // show UI error
-                                showDialog(DIALOG_NO_VOLTE);
-                                return;
-                            } else {
-                                // place call silently in CS
-                                Log.d(TAG, "IMS phone is unavailable , place CS call");
-                            }
-                        }
-                    }
-
                     // Woo hoo -- it's finally OK to initiate the outgoing call!
                     PhoneGlobals.getInstance().callController.placeCall(mIntent);
                 }

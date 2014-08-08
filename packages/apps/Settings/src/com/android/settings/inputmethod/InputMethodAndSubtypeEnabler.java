@@ -36,13 +36,10 @@ import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 public class InputMethodAndSubtypeEnabler extends SettingsPreferenceFragment {
     private static final String TAG =InputMethodAndSubtypeEnabler.class.getSimpleName();
@@ -57,7 +54,6 @@ public class InputMethodAndSubtypeEnabler extends SettingsPreferenceFragment {
     private String mInputMethodId;
     private String mTitle;
     private String mSystemLocale = "";
-    private Collator mCollator = Collator.getInstance();
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -88,9 +84,7 @@ public class InputMethodAndSubtypeEnabler extends SettingsPreferenceFragment {
             }
         }
 
-        final Locale locale = config.locale;
-        mSystemLocale = locale.toString();
-        mCollator = Collator.getInstance(locale);
+        mSystemLocale = config.locale.toString();
         onCreateIMM();
         setPreferenceScreen(createPreferenceHierarchy());
     }
@@ -265,7 +259,7 @@ public class InputMethodAndSubtypeEnabler extends SettingsPreferenceFragment {
                         }
                     } else {
                         final CheckBoxPreference chkbxPref = new SubtypeCheckBoxPreference(
-                                context, subtype.getLocale(), mSystemLocale, mCollator);
+                                context, subtype.getLocale(), mSystemLocale);
                         chkbxPref.setKey(imiId + subtype.hashCode());
                         chkbxPref.setTitle(subtypeLabel);
                         subtypePreferences.add(chkbxPref);
@@ -376,10 +370,9 @@ public class InputMethodAndSubtypeEnabler extends SettingsPreferenceFragment {
     private static class SubtypeCheckBoxPreference extends CheckBoxPreference {
         private final boolean mIsSystemLocale;
         private final boolean mIsSystemLanguage;
-        private final Collator mCollator;
 
         public SubtypeCheckBoxPreference(
-                Context context, String subtypeLocale, String systemLocale, Collator collator) {
+                Context context, String subtypeLocale, String systemLocale) {
             super(context);
             if (TextUtils.isEmpty(subtypeLocale)) {
                 mIsSystemLocale = false;
@@ -389,7 +382,6 @@ public class InputMethodAndSubtypeEnabler extends SettingsPreferenceFragment {
                 mIsSystemLanguage = mIsSystemLocale
                         || subtypeLocale.startsWith(systemLocale.substring(0, 2));
             }
-            mCollator = collator;
         }
 
         @Override
@@ -419,10 +411,10 @@ public class InputMethodAndSubtypeEnabler extends SettingsPreferenceFragment {
                 if (TextUtils.isEmpty(t1)) {
                     return -1;
                 }
-                return mCollator.compare(t0.toString(), t1.toString());
+                return t0.toString().compareTo(t1.toString());
             } else {
                 Log.w(TAG, "Illegal preference type.");
-                return super.compareTo(p);
+                return -1;
             }
         }
     }

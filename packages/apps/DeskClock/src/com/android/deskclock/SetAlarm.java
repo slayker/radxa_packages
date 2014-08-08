@@ -52,7 +52,6 @@ public class SetAlarm extends PreferenceActivity implements Preference.OnPrefere
     private Preference mTimePref;
     private AlarmPreference mAlarmPref;
     private CheckBoxPreference mVibratePref;
-    private CheckBoxPreference mIncreasingVolumePref;
     private RepeatPreference mRepeatPref;
 
     private int     mId;
@@ -88,8 +87,6 @@ public class SetAlarm extends PreferenceActivity implements Preference.OnPrefere
         if (!v.hasVibrator()) {
             getPreferenceScreen().removePreference(mVibratePref);
         }
-        mIncreasingVolumePref = (CheckBoxPreference) findPreference("increasingVolume");
-        mIncreasingVolumePref.setOnPreferenceChangeListener(this);
         mRepeatPref = (RepeatPreference) findPreference("setRepeat");
         mRepeatPref.setOnPreferenceChangeListener(this);
 
@@ -236,7 +233,6 @@ public class SetAlarm extends PreferenceActivity implements Preference.OnPrefere
         mMinute = alarm.minutes;
         mRepeatPref.setDaysOfWeek(alarm.daysOfWeek);
         mVibratePref.setChecked(alarm.vibrate);
-        mIncreasingVolumePref.setChecked(alarm.increasingVolume);
         // Give the alert uri to the preference.
         mAlarmPref.setAlert(alarm.alert);
         updateTime();
@@ -304,7 +300,6 @@ public class SetAlarm extends PreferenceActivity implements Preference.OnPrefere
         alarm.vibrate = mVibratePref.isChecked();
         alarm.label = mLabel.getText().toString();
         alarm.alert = mAlarmPref.getAlert();
-        alarm.increasingVolume = mIncreasingVolumePref.isChecked();
         return alarm;
     }
 

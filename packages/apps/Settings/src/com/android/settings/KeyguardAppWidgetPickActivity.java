@@ -39,7 +39,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.ServiceManager;
-import android.os.UserHandle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.IWindowManager;
@@ -516,9 +515,7 @@ public class KeyguardAppWidgetPickActivity extends Activity
                 if (mAddingToKeyguard && mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
                     // Found in KeyguardHostView.java
                     final int KEYGUARD_HOST_ID = 0x4B455947;
-                    int userId = ActivityManager.getCurrentUser();
-                    mAppWidgetId = AppWidgetHost.allocateAppWidgetIdForSystem(KEYGUARD_HOST_ID,
-                            userId);
+                    mAppWidgetId = AppWidgetHost.allocateAppWidgetIdForSystem(KEYGUARD_HOST_ID);
                 }
                 mAppWidgetManager.bindAppWidgetId(
                         mAppWidgetId, intent.getComponent(), mExtraConfigureOptions);
@@ -582,8 +579,7 @@ public class KeyguardAppWidgetPickActivity extends Activity
             } else {
                 if (mAddingToKeyguard &&
                         mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    int userId = ActivityManager.getCurrentUser();
-                    AppWidgetHost.deleteAppWidgetIdForSystem(mAppWidgetId, userId);
+                    AppWidgetHost.deleteAppWidgetIdForSystem(mAppWidgetId);
                 }
                 finishDelayedAndShowLockScreen(AppWidgetManager.INVALID_APPWIDGET_ID);
             }

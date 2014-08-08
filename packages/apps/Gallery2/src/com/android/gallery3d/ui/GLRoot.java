@@ -20,7 +20,6 @@ import android.content.Context;
 import android.graphics.Matrix;
 
 import com.android.gallery3d.anim.CanvasAnimation;
-import com.android.gallery3d.glrenderer.GLCanvas;
 
 public interface GLRoot {
 

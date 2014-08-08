@@ -249,8 +249,6 @@ public class AttachmentProvider extends ContentProvider {
                     new String[] {
                         Columns._ID,
                         Columns.DATA,
-                        Columns.DISPLAY_NAME, // matched the DISPLAY_NAME of {@link OpenableColumns}
-                        Columns.SIZE,         // matched the SIZE of {@link OpenableColumns}
                 };
             }
 

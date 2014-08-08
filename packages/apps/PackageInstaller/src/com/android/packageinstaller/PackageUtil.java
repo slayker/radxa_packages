@@ -72,12 +72,8 @@ public class PackageUtil {
         metrics.setToDefaults();
         PackageParser.Package pkg =  packageParser.parsePackage(sourceFile,
                 archiveFilePath, metrics, 0);
-        if (pkg == null) {
-            return null;
-        }
-        if (!packageParser.collectManifestDigest(pkg)) {
-            return null;
-        }
+        // Nuke the parser reference.
+        packageParser = null;
         return pkg;
     }
 

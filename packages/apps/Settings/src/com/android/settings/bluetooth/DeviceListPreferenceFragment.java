@@ -109,14 +109,9 @@ public abstract class DeviceListPreferenceFragment extends
         super.onPause();
         if (mLocalManager == null) return;
 
+        removeAllDevices();
         mLocalManager.setForegroundActivity(null);
         mLocalManager.getEventManager().unregisterCallback(this);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        removeAllDevices();
     }
 
     void removeAllDevices() {
@@ -133,23 +128,6 @@ public abstract class DeviceListPreferenceFragment extends
         }
     }
 
-    void removeOorDevices() {
-        Collection<CachedBluetoothDevice> cachedDevices =
-                mLocalManager.getCachedDeviceManager().getCachedDevicesCopy();
-        for (CachedBluetoothDevice cachedDevice : cachedDevices) {
-             if (cachedDevice.getBondState() == BluetoothDevice.BOND_NONE &&
-                 !cachedDevice.isVisible()) {
-                 Log.d(TAG, "Device Removed " + cachedDevice);
-                 BluetoothDevicePreference preference = mDevicePreferenceMap.get(cachedDevice);
-                 if (preference != null) {
-                     mDeviceListGroup.removePreference(preference);
-                 }
-                 mDevicePreferenceMap.remove(cachedDevice);
-                 cachedDevice.setRemovable(true);
-             }
-         }
-    }
-
     @Override
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen,
             Preference preference) {
@@ -164,9 +142,15 @@ public abstract class DeviceListPreferenceFragment extends
             mSelectedDevice = device.getDevice();
             onDevicePreferenceClick(btPreference);
             return true;
+        }else{//add by ljh for adding a checkbox switch
+            onOtherPreferenceClick(preferenceScreen,preference);
         }
 
         return super.onPreferenceTreeClick(preferenceScreen, preference);
+    }
+
+    void onOtherPreferenceClick(PreferenceScreen preferenceScreen,
+            Preference preference){//add by ljh for adding a checkbox switch
     }
 
     void onDevicePreferenceClick(BluetoothDevicePreference btPreference) {
@@ -211,9 +195,6 @@ public abstract class DeviceListPreferenceFragment extends
     }
 
     public void onScanningStateChanged(boolean started) {
-        if (started == false) {
-          removeOorDevices();
-        }
         updateProgressUi(started);
     }
 

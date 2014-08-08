@@ -588,9 +588,8 @@ class MailboxFragmentAdapter extends CursorAdapter {
                 int accountStarredCount = Message.getFavoriteMessageCount(mContext, mAccountId);
                 if (accountStarredCount > 0) {
                     // Only add "Starred", if there is at least one starred message
-                    addMailboxRow(starredCursor, Mailbox.QUERY_ALL_FAVORITES, "",
-                            Mailbox.TYPE_STARRED, accountStarredCount, accountStarredCount,
-                            ROW_TYPE_MAILBOX, Mailbox.FLAG_NONE, mAccountId);
+                    addCombinedMailboxRow(mContext, starredCursor, Mailbox.QUERY_ALL_FAVORITES,
+                            Mailbox.TYPE_MAIL, true);
                 }
                 returnCursor = new MergeCursor(new Cursor[] {
                         starredCursor, systemMailboxCursor, recentCursor, headerCursor,

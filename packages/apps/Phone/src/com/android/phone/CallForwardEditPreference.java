@@ -61,12 +61,7 @@ public class CallForwardEditPreference extends EditPhoneNumberPreference {
         this(context, null);
     }
 
-    void init(TimeConsumingPreferenceListener listener, boolean skipReading, int subscription) {
-
-        // getting selected subscription
-        if (DBG) Log.d(LOG_TAG, "Getting CallForwardEditPreference subscription =" + subscription);
-        phone = PhoneGlobals.getInstance().getPhone(subscription);
-
+    void init(TimeConsumingPreferenceListener listener, boolean skipReading) {
         tcpListener = listener;
         if (!skipReading) {
             phone.getCallForwardingOption(reason,

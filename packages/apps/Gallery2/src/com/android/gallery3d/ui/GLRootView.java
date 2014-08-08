@@ -33,11 +33,6 @@ import com.android.gallery3d.R;
 import com.android.gallery3d.anim.CanvasAnimation;
 import com.android.gallery3d.common.ApiHelper;
 import com.android.gallery3d.common.Utils;
-import com.android.gallery3d.glrenderer.BasicTexture;
-import com.android.gallery3d.glrenderer.GLCanvas;
-import com.android.gallery3d.glrenderer.GLES11Canvas;
-import com.android.gallery3d.glrenderer.GLES20Canvas;
-import com.android.gallery3d.glrenderer.UploadedTexture;
 import com.android.gallery3d.util.GalleryUtils;
 import com.android.gallery3d.util.MotionEventHelper;
 import com.android.gallery3d.util.Profile;
@@ -66,7 +61,6 @@ public class GLRootView extends GLSurfaceView
     private static final boolean DEBUG_FPS = false;
     private int mFrameCount = 0;
     private long mFrameCountingStart = 0;
-    private int mClearCount = 0;
 
     private static final boolean DEBUG_INVALIDATE = false;
     private int mInvalidateColor = 0;
@@ -95,6 +89,9 @@ public class GLRootView extends GLSurfaceView
     private int mFlags = FLAG_NEED_LAYOUT;
     private volatile boolean mRenderRequested = false;
 
+    private final GalleryEGLConfigChooser mEglConfigChooser =
+            new GalleryEGLConfigChooser();
+
     private final ArrayList<CanvasAnimation> mAnimations =
             new ArrayList<CanvasAnimation>();
 
@@ -120,18 +117,10 @@ public class GLRootView extends GLSurfaceView
         super(context, attrs);
         mFlags |= FLAG_INITIALIZED;
         setBackgroundDrawable(null);
-        setEGLContextClientVersion(ApiHelper.HAS_GLES20_REQUIRED ? 2 : 1);
-        if (ApiHelper.USE_888_PIXEL_FORMAT) {
-            setEGLConfigChooser(8, 8, 8, 0, 0, 0);
-        } else {
-            setEGLConfigChooser(5, 6, 5, 0, 0, 0);
-        }
+        //setEGLConfigChooser(mEglConfigChooser);
+        setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         setRenderer(this);
-        if (ApiHelper.USE_888_PIXEL_FORMAT) {
-            getHolder().setFormat(PixelFormat.RGB_888);
-        } else {
-            getHolder().setFormat(PixelFormat.RGB_565);
-        }
+        getHolder().setFormat(PixelFormat.RGBA_8888);
 
         // Uncomment this to enable gl error check.
         // setDebugFlags(DEBUG_CHECK_GL_ERROR);
@@ -291,7 +280,7 @@ public class GLRootView extends GLSurfaceView
         mRenderLock.lock();
         try {
             mGL = gl;
-            mCanvas = ApiHelper.HAS_GLES20_REQUIRED ? new GLES20Canvas() : new GLES11Canvas(gl);
+            mCanvas = new GLCanvasImpl(gl);
             BasicTexture.invalidateAllTextures();
         } finally {
             mRenderLock.unlock();
@@ -340,15 +329,6 @@ public class GLRootView extends GLSurfaceView
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        //The view is undefined before the first frame of camera preview data
-        //come up. This makes the UI has random corruption when open camera
-        //and exit quickly. However, we have no way to know the timing of
-        //the first frame. So, we clear the buffer for first 15 frames.
-        if(mFirstDraw || (mClearCount < 15)){
-            mCanvas.clearBuffer();
-            mClearCount++;
-        }
-
         AnimationTime.update();
         long t0;
         if (DEBUG_PROFILE_SLOW_ONLY) {
@@ -409,11 +389,7 @@ public class GLRootView extends GLSurfaceView
 
         mRenderRequested = false;
 
-        if ((mOrientationSource != null
-                && mDisplayRotation != mOrientationSource.getDisplayRotation())
-                || (mFlags & FLAG_NEED_LAYOUT) != 0) {
-            layoutContentPane();
-        }
+        if ((mFlags & FLAG_NEED_LAYOUT) != 0) layoutContentPane();
 
         mCanvas.save(GLCanvas.SAVE_FLAG_ALL);
         rotateCanvas(-mCompensation);
@@ -546,12 +522,6 @@ public class GLRootView extends GLSurfaceView
             Profile.dumpToFile("/sdcard/gallery.prof");
             Profile.reset();
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mClearCount = 0;
     }
 
     @Override

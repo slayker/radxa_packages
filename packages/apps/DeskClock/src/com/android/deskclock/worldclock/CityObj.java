@@ -27,13 +27,11 @@ public class CityObj {
     public String mCityName;
     public String mTimeZone;
     public String mCityId;
-    public boolean mUserDefined;
 
     public CityObj(String name, String timezone, String id) {
         mCityName = name;
         mTimeZone = timezone;
         mCityId = id;
-        mUserDefined = false;
     }
 
     @Override
@@ -42,7 +40,6 @@ public class CityObj {
                 "name=" + mCityName +
                 ", timezone=" + mTimeZone +
                 ", id=" + mCityId +
-                ", user-defined=" + mUserDefined +
                 '}';
     }
 

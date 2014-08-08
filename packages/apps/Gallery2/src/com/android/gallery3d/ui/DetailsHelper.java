@@ -16,8 +16,6 @@
 package com.android.gallery3d.ui;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.view.View.MeasureSpec;
 
 import com.android.gallery3d.R;
@@ -44,10 +42,6 @@ public class DetailsHelper {
         public void setCloseListener(CloseListener listener);
         public void show();
         public void hide();
-    }
-
-    public interface ResolutionResolvingListener {
-        public void onResolutionAvailable(int width, int height);
     }
 
     public DetailsHelper(AbstractGalleryActivity activity, GLView rootPane, DetailsSource source) {
@@ -79,12 +73,6 @@ public class DetailsHelper {
             sAddressResolver.cancel();
         }
         return sAddressResolver.resolveAddress(latlng, listener);
-    }
-
-    public static void resolveResolution(String path, ResolutionResolvingListener listener) {
-        Bitmap bitmap = BitmapFactory.decodeFile(path);
-        if (bitmap == null) return;
-        listener.onResolutionAvailable(bitmap.getWidth(), bitmap.getHeight());
     }
 
     public static void pause() {

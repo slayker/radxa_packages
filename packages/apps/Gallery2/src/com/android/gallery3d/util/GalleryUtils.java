@@ -46,7 +46,6 @@ import com.android.gallery3d.ui.TiledScreenNail;
 import com.android.gallery3d.util.ThreadPool.CancelListener;
 import com.android.gallery3d.util.ThreadPool.JobContext;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -93,6 +92,14 @@ public class GalleryUtils {
         // For screen-nails, we never need to completely fill the screen
         MediaItem.setThumbnailSizes(maxPixels / 2, maxPixels / 5);
         TiledScreenNail.setMaxSide(maxPixels / 2);
+    }
+
+    public static boolean isHighResolution(Context context) {
+        DisplayMetrics metrics = new DisplayMetrics();
+        WindowManager wm = (WindowManager)
+                context.getSystemService(Context.WINDOW_SERVICE);
+        wm.getDefaultDisplay().getMetrics(metrics);
+        return metrics.heightPixels > 2048 ||  metrics.widthPixels > 2048;
     }
 
     public static float[] intColorToFloatARGBArray(int from) {
@@ -233,6 +240,8 @@ public class GalleryUtils {
     }
 
     public static boolean isCameraAvailable(Context context) {
+	//radxa:modify by yao, because the radxa rock does not have the camera 
+	/*
         if (sCameraAvailableInitialized) return sCameraAvailable;
         PackageManager pm = context.getPackageManager();
         ComponentName name = new ComponentName(context, CAMERA_LAUNCHER_NAME);
@@ -242,6 +251,9 @@ public class GalleryUtils {
             (state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT)
              || (state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
         return sCameraAvailable;
+	*/
+	return false;
+	//radxa:modify end
     }
 
     public static void startCameraActivity(Context context) {
@@ -252,9 +264,7 @@ public class GalleryUtils {
     }
 
     public static void startGalleryActivity(Context context) {
-        Intent intent = new Intent(context, Gallery.class)
-                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                | Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent intent = new Intent(context, Gallery.class);
         context.startActivity(intent);
     }
 
@@ -271,64 +281,25 @@ public class GalleryUtils {
     }
 
     public static void showOnMap(Context context, double latitude, double longitude) {
-        // We use isIntentResolved here, because startActivity could derive in ProxyLauncher
-        // invocation, which makes an startActivity, and if the intent not exists we get a FC.
-
-        // 1.- GMM with MapView
-        // We don't use "geo:latitude,longitude" because it only centers
-        // the MapView to the specified location, but we need a marker
-        // for further operations (routing to/from).
-        // The q=(lat, lng) syntax is suggested by geo-team.
-        ComponentName gmmCompName = new ComponentName(MAPS_PACKAGE_NAME, MAPS_CLASS_NAME);
-        String gmmUri = formatLatitudeLongitude("http://maps.google.com/maps?f=q&q=(%f,%f)",
-                latitude, longitude);
-        Intent gmmIntent = new Intent();
-        gmmIntent.setComponent(gmmCompName);
-        gmmIntent.setData(Uri.parse(gmmUri));
-        gmmIntent.setAction(Intent.ACTION_VIEW);
-        if (isIntentResolved(context, gmmIntent)) {
-            context.startActivity(gmmIntent);
-            return;
+        try {
+            // We don't use "geo:latitude,longitude" because it only centers
+            // the MapView to the specified location, but we need a marker
+            // for further operations (routing to/from).
+            // The q=(lat, lng) syntax is suggested by geo-team.
+            String uri = formatLatitudeLongitude("http://maps.google.com/maps?f=q&q=(%f,%f)",
+                    latitude, longitude);
+            ComponentName compName = new ComponentName(MAPS_PACKAGE_NAME,
+                    MAPS_CLASS_NAME);
+            Intent mapsIntent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse(uri)).setComponent(compName);
+            context.startActivity(mapsIntent);
+        } catch (ActivityNotFoundException e) {
+            // Use the "geo intent" if no GMM is installed
+            Log.e(TAG, "GMM activity not found!", e);
+            String url = formatLatitudeLongitude("geo:%f,%f", latitude, longitude);
+            Intent mapsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            context.startActivity(mapsIntent);
         }
-
-        // 2.- Geolocation content provider
-        Log.w(TAG, "GMM activity not found! Trying with geo scheme");
-        String geoUri = formatLatitudeLongitude("geo:%f,%f", latitude, longitude);
-        Intent geoIntent = new Intent();
-        geoIntent.setData(Uri.parse(geoUri));
-        geoIntent.setAction(Intent.ACTION_VIEW);
-        if (isIntentResolved(context, geoIntent)) {
-            context.startActivity(geoIntent);
-        }
-
-        // No maps. Why isGeolocationViewAvailable method not working?
-    }
-
-    public static boolean isGeolocationViewAvailable(Context context) {
-        // 1.- GMM with MapView
-        ComponentName gmmCompName = new ComponentName(MAPS_PACKAGE_NAME, MAPS_CLASS_NAME);
-        String gmmUri = formatLatitudeLongitude("http://maps.google.com/maps?f=q&q=(%f,%f)",
-                0.0d, 0.0d);
-        Intent gmmIntent = new Intent();
-        gmmIntent.setComponent(gmmCompName);
-        gmmIntent.setData(Uri.parse(gmmUri));
-        gmmIntent.setAction(Intent.ACTION_VIEW);
-
-        // 2.- Geolocation content provider
-        String geoUri = formatLatitudeLongitude("geo:%f,%f", 0.0d, 0.0d);
-        Intent geoIntent = new Intent();
-        geoIntent.setData(Uri.parse(geoUri));
-        geoIntent.setAction(Intent.ACTION_VIEW);
-
-        // Should be one of: gmm or geo content provider
-        return isIntentResolved(context, gmmIntent) || isIntentResolved(context, geoIntent);
-    }
-
-    private static boolean isIntentResolved(Context context, Intent intent) {
-        final PackageManager pckMgr = context.getPackageManager();
-        List<ResolveInfo> infos = pckMgr.queryIntentActivities (intent,
-                                       PackageManager.GET_RESOLVED_FILTER);
-        return infos != null && infos.size() > 0;
     }
 
     public static void setViewPointMatrix(
@@ -347,26 +318,6 @@ public class GalleryUtils {
 
     public static int getBucketId(String path) {
         return path.toLowerCase().hashCode();
-    }
-
-    // Return the local path that matches the given bucketId. If no match is
-    // found, return null
-    public static String searchDirForPath(File dir, int bucketId) {
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    String path = file.getAbsolutePath();
-                    if (GalleryUtils.getBucketId(path) == bucketId) {
-                        return path;
-                    } else {
-                        path = searchDirForPath(file, bucketId);
-                        if (path != null) return path;
-                    }
-                }
-            }
-        }
-        return null;
     }
 
     // Returns a (localized) string for the given duration (in seconds).

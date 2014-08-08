@@ -1,6 +1,4 @@
-/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
- * Not a Contribution.
- *
+/*
  * Copyright (C) 2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,8 +49,6 @@ static jmethodID method_onAtCops;
 static jmethodID method_onAtClcc;
 static jmethodID method_onUnknownAt;
 static jmethodID method_onKeyPressed;
-static jmethodID method_onCodecNegotiated;
-
 
 static const bthf_interface_t *sBluetoothHfpInterface = NULL;
 static jobject mCallbacksObj = NULL;
@@ -200,12 +196,6 @@ static void key_pressed_callback() {
     checkAndClearExceptionFromCallback(sCallbackEnv, __FUNCTION__);
 }
 
-static void codec_negotiated_callback(int codec_type) {
-    CHECK_CALLBACK_ENV
-    sCallbackEnv->CallVoidMethod(mCallbacksObj, method_onCodecNegotiated, (jint)codec_type);
-    checkAndClearExceptionFromCallback(sCallbackEnv, __FUNCTION__);
-}
-
 static bthf_callbacks_t sBluetoothHfpCallbacks = {
     sizeof(sBluetoothHfpCallbacks),
     connection_state_callback,
@@ -223,8 +213,7 @@ static bthf_callbacks_t sBluetoothHfpCallbacks = {
     at_cops_callback,
     at_clcc_callback,
     unknown_at_callback,
-    key_pressed_callback,
-    codec_negotiated_callback
+    key_pressed_callback
 };
 
 static void classInitNative(JNIEnv* env, jclass clazz) {
@@ -251,7 +240,6 @@ static void classInitNative(JNIEnv* env, jclass clazz) {
     method_onAtClcc = env->GetMethodID(clazz, "onAtClcc", "()V");
     method_onUnknownAt = env->GetMethodID(clazz, "onUnknownAt", "(Ljava/lang/String;)V");
     method_onKeyPressed = env->GetMethodID(clazz, "onKeyPressed", "()V");
-    method_onCodecNegotiated = env->GetMethodID(clazz, "onCodecNegotiated", "(I)V");
 
     /*
     if ( (btInf = getBluetoothInterface()) == NULL) {
@@ -311,23 +299,6 @@ static void initializeNative(JNIEnv *env, jobject object) {
     }
 
     mCallbacksObj = env->NewGlobalRef(object);
-}
-
-static void initializeFeaturesNative(JNIEnv *env, jobject object, jint feature_bitmask) {
-    const bt_interface_t* btInf;
-    bt_status_t status;
-
-    if ( (btInf = getBluetoothInterface()) == NULL) {
-        ALOGE("Bluetooth module is not loaded");
-        return;
-    }
-    if (!sBluetoothHfpInterface) return ;
-    if (feature_bitmask)
-        if ((status = sBluetoothHfpInterface->init_features(feature_bitmask))
-            != BT_STATUS_SUCCESS){
-            ALOGE("Failed sending feature bitmask, status: %d", status);
-        }
-    return;
 }
 
 static void cleanupNative(JNIEnv *env, jobject object) {
@@ -571,7 +542,6 @@ static jboolean phoneStateChangeNative(JNIEnv *env, jobject object, jint num_act
 static JNINativeMethod sMethods[] = {
     {"classInitNative", "()V", (void *) classInitNative},
     {"initializeNative", "()V", (void *) initializeNative},
-    {"initializeFeaturesNative", "(I)V", (void *) initializeFeaturesNative},
     {"cleanupNative", "()V", (void *) cleanupNative},
     {"connectHfpNative", "([B)Z", (void *) connectHfpNative},
     {"disconnectHfpNative", "([B)Z", (void *) disconnectHfpNative},

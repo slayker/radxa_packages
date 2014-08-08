@@ -36,17 +36,13 @@ import android.net.Uri;
 import android.os.PowerManager;
 import android.os.SystemProperties;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.provider.CallLog.Calls;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.PhoneLookup;
 import android.provider.Settings;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.ServiceState;
-import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
-import android.text.format.DateUtils;
-import android.text.style.RelativeSizeSpan;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -60,9 +56,7 @@ import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.PhoneBase;
 import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.telephony.TelephonyCapabilities;
-import com.android.internal.telephony.util.BlacklistUtils;
 
-import java.util.ArrayList;
 
 /**
  * NotificationManager-related utility code for the Phone app.
@@ -75,12 +69,12 @@ import java.util.ArrayList;
  */
 public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteListener{
     private static final String LOG_TAG = "NotificationMgr";
-    protected static final boolean DBG =
+    private static final boolean DBG =
             (PhoneGlobals.DBG_LEVEL >= 1) && (SystemProperties.getInt("ro.debuggable", 0) == 1);
     // Do not check in with VDBG = true, since that may write PII to the system log.
-    protected static final boolean VDBG = false;
+    private static final boolean VDBG = false;
 
-    protected static final String[] CALL_LOG_PROJECTION = new String[] {
+    private static final String[] CALL_LOG_PROJECTION = new String[] {
         Calls._ID,
         Calls.NUMBER,
         Calls.DATE,
@@ -97,34 +91,16 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
     static final int CALL_FORWARD_NOTIFICATION = 6;
     static final int DATA_DISCONNECTED_ROAMING_NOTIFICATION = 7;
     static final int SELECTED_OPERATOR_FAIL_NOTIFICATION = 8;
-    static final int BLACKLISTED_CALL_NOTIFICATION = 9;
-
-    // notification light Settings.System keys
-    private static final String NOTIFICATION_LIGHT_PULSE = "notification_light_pulse";
-    private static final String NOTIFICATION_LIGHT_PULSE_DEFAULT_COLOR = "notification_light_pulse_default_color";
-    private static final String NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_ON = "notification_light_pulse_default_led_on";
-    private static final String NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_OFF = "notification_light_pulse_default_led_off";
-    private static final String NOTIFICATION_LIGHT_PULSE_CUSTOM_ENABLE = "notification_light_pulse_custom_enable";
-    private static final String NOTIFICATION_LIGHT_PULSE_CALL_COLOR = "notification_light_pulse_call_color";
-    private static final String NOTIFICATION_LIGHT_PULSE_CALL_LED_ON = "notification_light_pulse_call_led_on";
-    private static final String NOTIFICATION_LIGHT_PULSE_CALL_LED_OFF = "notification_light_pulse_call_led_off";
-    private static final String NOTIFICATION_LIGHT_PULSE_VMAIL_COLOR = "notification_light_pulse_vmail_color";
-    private static final String NOTIFICATION_LIGHT_PULSE_VMAIL_LED_ON = "notification_light_pulse_vmail_led_on";
-    private static final String NOTIFICATION_LIGHT_PULSE_VMAIL_LED_OFF = "notification_light_pulse_vmail_led_off";
-
-    // notification light default constants
-    public static final int DEFAULT_COLOR = 0xFFFFFF; //White
-    public static final int DEFAULT_TIME = 1000; // 1 second
 
     /** The singleton NotificationMgr instance. */
-    protected static NotificationMgr sInstance;
+    private static NotificationMgr sInstance;
 
-    protected PhoneGlobals mApp;
+    private PhoneGlobals mApp;
     private Phone mPhone;
-    protected CallManager mCM;
+    private CallManager mCM;
 
-    protected Context mContext;
-    protected NotificationManager mNotificationManager;
+    private Context mContext;
+    private NotificationManager mNotificationManager;
     private StatusBarManager mStatusBarManager;
     private PowerManager mPowerManager;
     private Toast mToast;
@@ -133,57 +109,31 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
 
     public StatusBarHelper statusBarHelper;
 
-    // used to track missed calls
-    private static class MissedCallInfo {
-        String name;
-        String number;
-        long date;
-
-        MissedCallInfo(String name, String number, long date) {
-            this.name = name;
-            this.number = number;
-            this.date = date;
-        }
-    };
-    private ArrayList<MissedCallInfo> mMissedCalls = new ArrayList<MissedCallInfo>();
-
-    // used to track blacklisted calls
-    private static class BlacklistedCallInfo {
-        String number;
-        long date;
-        int matchType;
-
-        BlacklistedCallInfo(String number, long date, int matchType) {
-            this.number = number;
-            this.date = date;
-            this.matchType = matchType;
-        }
-    };
-    private ArrayList<BlacklistedCallInfo> mBlacklistedCalls =
-            new ArrayList<BlacklistedCallInfo>();
+    // used to track the missed call counter, default to 0.
+    private int mNumberMissedCalls = 0;
 
     // Currently-displayed resource IDs for some status bar icons (or zero
     // if no notification is active):
-    protected int mInCallResId;
+    private int mInCallResId;
 
     // used to track the notification of selected network unavailable
     private boolean mSelectedUnavailableNotify = false;
 
     // Retry params for the getVoiceMailNumber() call; see updateMwi().
-    protected static final int MAX_VM_NUMBER_RETRIES = 5;
-    protected static final int VM_NUMBER_RETRY_DELAY_MILLIS = 10000;
-    protected int mVmNumberRetriesRemaining = MAX_VM_NUMBER_RETRIES;
+    private static final int MAX_VM_NUMBER_RETRIES = 5;
+    private static final int VM_NUMBER_RETRY_DELAY_MILLIS = 10000;
+    private int mVmNumberRetriesRemaining = MAX_VM_NUMBER_RETRIES;
 
     // Query used to look up caller-id info for the "call log" notification.
-    protected QueryHandler mQueryHandler = null;
-    protected static final int CALL_LOG_TOKEN = -1;
+    private QueryHandler mQueryHandler = null;
+    private static final int CALL_LOG_TOKEN = -1;
     private static final int CONTACT_TOKEN = -2;
 
     /**
      * Private constructor (this is a singleton).
      * @see init()
      */
-    protected NotificationMgr(PhoneGlobals app) {
+    private NotificationMgr(PhoneGlobals app) {
         mApp = app;
         mContext = app;
         mNotificationManager =
@@ -316,7 +266,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
      * Makes sure phone-related notifications are up to date on a
      * freshly-booted device.
      */
-    protected void updateNotificationsAtStartup() {
+    private void updateNotificationsAtStartup() {
         if (DBG) log("updateNotificationsAtStartup()...");
 
         // instantiate query handler
@@ -355,7 +305,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
      *  2. For each call, run a query to retrieve the caller's name.
      *  3. For each caller, try obtaining photo.
      */
-    protected class QueryHandler extends AsyncQueryHandler
+    private class QueryHandler extends AsyncQueryHandler
             implements ContactsAsyncHelper.OnImageLoadCompleteListener {
 
         /**
@@ -503,40 +453,12 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
     }
 
     /**
-     * Configures a Notification to emit the blinky message-waiting/
+     * Configures a Notification to emit the blinky green message-waiting/
      * missed-call signal.
-     * @param notificationType
      */
-    protected static void configureLedNotification(Context context, int notificationType, Notification note) {
-
-        // get the default Notification light settings
-        ContentResolver resolver = context.getContentResolver();
-        boolean lightEnabled = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE, 0) == 1;
-        int color = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_DEFAULT_COLOR, DEFAULT_COLOR);
-        int timeOn = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_ON, DEFAULT_TIME);
-        int timeOff = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_OFF, DEFAULT_TIME);
-
-        // Get Missed call and Voice mail values if they are to be used
-        boolean customEnabled = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_CUSTOM_ENABLE, 0) == 1;
-        if (customEnabled) {
-            if (notificationType == MISSED_CALL_NOTIFICATION) {
-                color = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_CALL_COLOR, DEFAULT_COLOR);
-                timeOn = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_CALL_LED_ON, DEFAULT_TIME);
-                timeOff = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_CALL_LED_OFF, DEFAULT_TIME);
-            } else if (notificationType == VOICEMAIL_NOTIFICATION) {
-                color = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_VMAIL_COLOR, DEFAULT_COLOR);
-                timeOn = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_VMAIL_LED_ON, DEFAULT_TIME);
-                timeOff = Settings.System.getInt(resolver, NOTIFICATION_LIGHT_PULSE_VMAIL_LED_OFF, DEFAULT_TIME);
-            }
-        }
-
-        // Set the LED flags if notification light is enabled
-        if (lightEnabled) {
-            note.ledARGB = color;
-            note.ledOnMS = timeOn;
-            note.ledOffMS = timeOff;
-            note.flags |= Notification.FLAG_SHOW_LIGHTS;
-        }
+    private static void configureLedNotification(Notification note) {
+        note.flags |= Notification.FLAG_SHOW_LIGHTS;
+        note.defaults |= Notification.DEFAULT_LIGHTS;
     }
 
     /**
@@ -578,64 +500,53 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
                 + ", date: " + date);
         }
 
+        // title resource id
+        int titleResId;
+        // the text in the notification's line 1 and 2.
+        String expandedText, callName;
+
+        // increment number of missed calls.
+        mNumberMissedCalls++;
+
         // get the name for the ticker text
         // i.e. "Missed call from <caller name or number>"
-        String callName;
         if (name != null && TextUtils.isGraphic(name)) {
             callName = name;
-        } else if (!TextUtils.isEmpty(number)) {
+        } else if (!TextUtils.isEmpty(number)){
             callName = number;
         } else {
             // use "unknown" if the caller is unidentifiable.
             callName = mContext.getString(R.string.unknown);
         }
 
-        // keep track of the call, keeping list sorted from newest to oldest
-        mMissedCalls.add(0, new MissedCallInfo(callName, number, date));
+        // display the first line of the notification:
+        // 1 missed call: call name
+        // more than 1 missed call: <number of calls> + "missed calls"
+        if (mNumberMissedCalls == 1) {
+            titleResId = R.string.notification_missedCallTitle;
+            expandedText = callName;
+        } else {
+            titleResId = R.string.notification_missedCallsTitle;
+            expandedText = mContext.getString(R.string.notification_missedCallsMsg,
+                    mNumberMissedCalls);
+        }
 
         Notification.Builder builder = new Notification.Builder(mContext);
         builder.setSmallIcon(android.R.drawable.stat_notify_missed_call)
                 .setTicker(mContext.getString(R.string.notification_missedCallTicker, callName))
                 .setWhen(date)
+                .setContentTitle(mContext.getText(titleResId))
+                .setContentText(expandedText)
                 .setContentIntent(PendingIntent.getActivity(mContext, 0, callLogIntent, 0))
                 .setAutoCancel(true)
                 .setDeleteIntent(createClearMissedCallsIntent());
-
-        // display the first line of the notification:
-        // 1 missed call: call name
-        // more than 1 missed call: <number of calls> + "missed calls" (+ list of calls)
-        if (mMissedCalls.size() == 1) {
-            builder.setContentTitle(mContext.getText(R.string.notification_missedCallTitle));
-            builder.setContentText(callName);
-        } else {
-            String message = mContext.getString(R.string.notification_missedCallsMsg,
-                    mMissedCalls.size());
-
-            builder.setContentTitle(mContext.getText(R.string.notification_missedCallsTitle))
-                    .setContentText(message)
-                    .setNumber(mMissedCalls.size());
-
-            Notification.InboxStyle style = new Notification.InboxStyle(builder);
-
-            for (MissedCallInfo info : mMissedCalls) {
-                style.addLine(formatSingleCallLine(info.name, info.date));
-
-                // only keep number if equal for all calls in order to hide actions
-                // if the calls came from different numbers
-                if (!TextUtils.equals(number, info.number)) {
-                    number = null;
-                }
-            }
-            style.setBigContentTitle(message);
-            style.setSummaryText(" ");
-            builder.setStyle(style);
-        }
 
         // Simple workaround for issue 6476275; refrain having actions when the given number seems
         // not a real one but a non-number which was embedded by methods outside (like
         // PhoneUtils#modifyForSpecialCnapCases()).
         // TODO: consider removing equals() checks here, and modify callers of this method instead.
-        if (!TextUtils.isEmpty(number)
+        if (mNumberMissedCalls == 1
+                && !TextUtils.isEmpty(number)
                 && !TextUtils.equals(number, mContext.getString(R.string.private_num))
                 && !TextUtils.equals(number, mContext.getString(R.string.unknown))){
             if (DBG) log("Add actions with the number " + number);
@@ -655,32 +566,13 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
             }
         } else {
             if (DBG) {
-                log("Suppress actions. number: " + number + ", missedCalls: " + mMissedCalls.size());
+                log("Suppress actions. number: " + number + ", missedCalls: " + mNumberMissedCalls);
             }
         }
 
         Notification notification = builder.getNotification();
-        configureLedNotification(mContext, MISSED_CALL_NOTIFICATION, notification);
+        configureLedNotification(notification);
         mNotificationManager.notify(MISSED_CALL_NOTIFICATION, notification);
-    }
-
-    private static final RelativeSizeSpan TIME_SPAN = new RelativeSizeSpan(0.7f);
-
-    private CharSequence formatSingleCallLine(String caller, long date) {
-        int flags = DateUtils.FORMAT_SHOW_TIME;
-        if (!DateUtils.isToday(date)) {
-            flags |= DateUtils.FORMAT_SHOW_WEEKDAY;
-        }
-
-        SpannableStringBuilder lineBuilder = new SpannableStringBuilder();
-        lineBuilder.append(caller);
-        lineBuilder.append("  ");
-
-        int timeIndex = lineBuilder.length();
-        lineBuilder.append(DateUtils.formatDateTime(mContext, date, flags));
-        lineBuilder.setSpan(TIME_SPAN, timeIndex, lineBuilder.length(), 0);
-
-        return lineBuilder;
     }
 
     /** Returns an intent to be invoked when the missed call notification is cleared. */
@@ -696,105 +588,9 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
      * @see ITelephony.cancelMissedCallsNotification()
      */
     void cancelMissedCallNotification() {
-        // reset the list of missed calls
-        mMissedCalls.clear();
+        // reset the number of missed calls to 0.
+        mNumberMissedCalls = 0;
         mNotificationManager.cancel(MISSED_CALL_NOTIFICATION);
-    }
-
-    /* package */ void notifyBlacklistedCall(String number, long date, int matchType) {
-        if (!BlacklistUtils.isBlacklistNotifyEnabled(mContext)) {
-            return;
-        }
-
-        if (VDBG) {
-            log("notifyBlacklistedCall(). number: " + number
-                + ", match type: " + matchType + ", date: " + date);
-        }
-
-        // Keep track of the call, keeping list sorted from newest to oldest
-        mBlacklistedCalls.add(0, new BlacklistedCallInfo(number, date, matchType));
-
-        // Get the intent to open Blacklist settings if user taps on content ready
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName("com.android.settings", "com.android.settings.Settings$BlacklistSettingsActivity");
-        PendingIntent blSettingsIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
-
-        // Start building the notification
-        Notification.Builder builder = new Notification.Builder(mContext);
-        builder.setSmallIcon(R.drawable.ic_block_contact_holo_dark)
-                .setContentIntent(blSettingsIntent)
-                .setContentTitle(mContext.getString(R.string.blacklist_title))
-                .setWhen(date)
-                .setDeleteIntent(createClearMissedCallsIntent());
-
-        // Add the 'Remove block' notification action only for MATCH_LIST items since
-        // MATCH_REGEX and MATCH_PRIVATE items does not have an associated specific number
-        // to unblock, and MATCH_UNKNOWN unblock for a single number does not make sense.
-        boolean addUnblockAction = true;
-
-        if (mBlacklistedCalls.size() == 1) {
-            String message;
-            switch (matchType) {
-                case BlacklistUtils.MATCH_PRIVATE:
-                    message = mContext.getString(R.string.blacklist_notification_private_number);
-                    break;
-                case BlacklistUtils.MATCH_UNKNOWN:
-                    message = mContext.getString(R.string.blacklist_notification_unknown_number, number);
-                    break;
-                default:
-                    message = mContext.getString(R.string.blacklist_notification, number);
-            }
-            builder.setContentText(message);
-
-            if (matchType != BlacklistUtils.MATCH_LIST) {
-                addUnblockAction = false;
-            }
-        } else {
-            String message = mContext.getString(R.string.blacklist_notification_multiple,
-                    mBlacklistedCalls.size());
-
-            builder.setContentText(message)
-                    .setNumber(mBlacklistedCalls.size());
-
-            Notification.InboxStyle style = new Notification.InboxStyle(builder);
-
-            for (BlacklistedCallInfo info : mBlacklistedCalls) {
-                // Takes care of displaying "Private" instead of an empty string
-                String numberString = TextUtils.isEmpty(info.number)
-                        ? mContext.getString(R.string.blacklist_notification_list_private)
-                        : info.number;
-                style.addLine(formatSingleCallLine(numberString, info.date));
-
-                if (!TextUtils.equals(number, info.number)) {
-                    addUnblockAction = false;
-                } else if (info.matchType != BlacklistUtils.MATCH_LIST) {
-                    addUnblockAction = false;
-                }
-            }
-            style.setBigContentTitle(message);
-            style.setSummaryText(" ");
-            builder.setStyle(style);
-        }
-
-        if (addUnblockAction) {
-            CharSequence action = mContext.getText(R.string.unblock_number);
-            builder.addAction(R.drawable.ic_unblock_contact_holo_dark,
-                    mContext.getString(R.string.unblock_number),
-                    PhoneGlobals.getUnblockNumberFromNotificationPendingIntent(mContext, number));
-        }
-
-        mNotificationManager.notify(BLACKLISTED_CALL_NOTIFICATION, builder.getNotification());
-    }
-
-    private PendingIntent createClearBlacklistedCallsIntent() {
-        Intent intent = new Intent(mContext, ClearMissedCallsService.class);
-        intent.setAction(ClearMissedCallsService.ACTION_CLEAR_BLACKLISTED_CALLS);
-        return PendingIntent.getService(mContext, 0, intent, 0);
-    }
-
-    void cancelBlacklistedCallNotification() {
-        mBlacklistedCalls.clear();
-        mNotificationManager.cancel(BLACKLISTED_CALL_NOTIFICATION);
     }
 
     private void notifySpeakerphone() {
@@ -805,7 +601,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
         }
     }
 
-    protected void cancelSpeakerphone() {
+    private void cancelSpeakerphone() {
         if (mShowingSpeakerphoneIcon) {
             mStatusBarManager.removeIcon("speakerphone");
             mShowingSpeakerphoneIcon = false;
@@ -823,10 +619,10 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
      * (But note that the status bar icon is *never* shown while the in-call UI
      * is active; it only appears if you bail out to some other activity.)
      */
-    protected void updateSpeakerNotification() {
+    private void updateSpeakerNotification() {
         AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         boolean showNotification =
-                (mCM.getState() == PhoneConstants.State.OFFHOOK) && audioManager.isSpeakerphoneOn();
+                (mPhone.getState() == PhoneConstants.State.OFFHOOK) && audioManager.isSpeakerphoneOn();
 
         if (DBG) log(showNotification
                      ? "updateSpeakerNotification: speaker ON"
@@ -867,7 +663,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
         }
     }
 
-    protected void notifyMute() {
+    private void notifyMute() {
         if (!mShowingMuteIcon) {
             mStatusBarManager.setIcon("mute", android.R.drawable.stat_notify_call_mute, 0,
                     mContext.getString(R.string.accessibility_call_muted));
@@ -875,7 +671,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
         }
     }
 
-    protected void cancelMute() {
+    private void cancelMute() {
         if (mShowingMuteIcon) {
             mStatusBarManager.removeIcon("mute");
             mShowingMuteIcon = false;
@@ -973,7 +769,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
      *   handling the "new ringing connection" event from the telephony
      *   layer (see updateNotificationAndLaunchIncomingCallUi().)
      */
-    protected void updateInCallNotification(boolean allowFullScreenIntent) {
+    private void updateInCallNotification(boolean allowFullScreenIntent) {
         int resId;
         if (DBG) log("updateInCallNotification(allowFullScreenIntent = "
                      + allowFullScreenIntent + ")...");
@@ -1009,7 +805,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
         // call.  (The status bar icon is needed only if you navigate *away*
         // from the in-call UI.)
         boolean suppressNotification = mApp.isShowingCallScreen();
-        if (DBG) log("- suppressNotification: initial value: " + suppressNotification);
+        // if (DBG) log("- suppressNotification: initial value: " + suppressNotification);
 
         // ...except for a couple of cases where we *never* suppress the
         // notification:
@@ -1025,7 +821,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
         //   - If "voice privacy" mode is active: always show the notification,
         //     since that's the only "voice privacy" indication we have.
         boolean enhancedVoicePrivacy = mApp.notifier.getVoicePrivacyState();
-        if (DBG) log("updateInCallNotification: enhancedVoicePrivacy = " + enhancedVoicePrivacy);
+        // if (DBG) log("updateInCallNotification: enhancedVoicePrivacy = " + enhancedVoicePrivacy);
         if (enhancedVoicePrivacy) suppressNotification = false;
 
         if (suppressNotification) {
@@ -1096,8 +892,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
         // call (see the "fullScreenIntent" field below).
         PendingIntent inCallPendingIntent =
                 PendingIntent.getActivity(mContext, 0,
-                                          PhoneGlobals.getInstance().createInCallIntent(
-                                              currentCall.getPhone().getSubscription()), 0);
+                                          PhoneGlobals.createInCallIntent(), 0);
         builder.setContentIntent(inCallPendingIntent);
 
         // Update icon on the left of the notification.
@@ -1245,8 +1040,8 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
 
         // Activate a couple of special Notification features if an
         // incoming call is ringing:
-        if (hasRingingCall || hasActiveCall) {
-            if (DBG) log("- Using hi-pri notification for ringing/active call!");
+        if (hasRingingCall) {
+            if (DBG) log("- Using hi-pri notification for ringing call!");
 
             // This is a high-priority event that should be shown even if the
             // status bar is hidden or if an immersive activity is running.
@@ -1355,7 +1150,7 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
      * Take down the in-call notification.
      * @see updateInCallNotification()
      */
-    protected void cancelInCall() {
+    private void cancelInCall() {
         if (DBG) log("cancelInCall()...");
         mNotificationManager.cancel(IN_CALL_NOTIFICATION);
         mInCallResId = 0;
@@ -1488,7 +1283,8 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
             if (vibrate) {
                 notification.defaults |= Notification.DEFAULT_VIBRATE;
             }
-            configureLedNotification(mContext, VOICEMAIL_NOTIFICATION, notification);
+            notification.flags |= Notification.FLAG_NO_CLEAR;
+            configureLedNotification(notification);
             mNotificationManager.notify(VOICEMAIL_NOTIFICATION, notification);
         } else {
             mNotificationManager.cancel(VOICEMAIL_NOTIFICATION);
@@ -1559,20 +1355,22 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
         if (DBG) log("showDataDisconnectedRoaming()...");
 
         // "Mobile network settings" screen / dialog
-        Intent intent = new Intent(mContext, com.android.phone.MobileNetworkSettings.class);
+        Intent intent = new Intent(mContext,
+                com.android.phone.MobileNetworkSettings.class);
 
-        final CharSequence contentText = mContext.getText(R.string.roaming_reenable_message);
+        Notification notification = new Notification(
+                android.R.drawable.stat_sys_warning, // icon
+                null, // tickerText
+                System.currentTimeMillis());
+        notification.setLatestEventInfo(
+                mContext, // Context
+                mContext.getString(R.string.roaming), // expandedTitle
+                mContext.getString(R.string.roaming_reenable_message), // expandedText
+                PendingIntent.getActivity(mContext, 0, intent, 0)); // contentIntent
 
-        final Notification.Builder builder = new Notification.Builder(mContext);
-        builder.setSmallIcon(android.R.drawable.stat_sys_warning);
-        builder.setContentTitle(mContext.getText(R.string.roaming));
-        builder.setContentText(contentText);
-        builder.setContentIntent(PendingIntent.getActivity(mContext, 0, intent, 0));
-
-        final Notification notif = new Notification.BigTextStyle(builder).bigText(contentText)
-                .build();
-
-        mNotificationManager.notify(DATA_DISCONNECTED_ROAMING_NOTIFICATION, notif);
+        mNotificationManager.notify(
+                DATA_DISCONNECTED_ROAMING_NOTIFICATION,
+                notification);
     }
 
     /**
@@ -1628,8 +1426,8 @@ public class NotificationMgr implements CallerInfoAsyncQuery.OnQueryCompleteList
      *
      * @param serviceState Phone service state
      */
-    void updateNetworkSelection(int serviceState, Phone phone) {
-        if (TelephonyCapabilities.supportsNetworkSelection(phone)) {
+    void updateNetworkSelection(int serviceState) {
+        if (TelephonyCapabilities.supportsNetworkSelection(mPhone)) {
             // get the shared preference of network_selection.
             // empty is auto mode, otherwise it is the operator alpha name
             // in case there is no operator name, check the operator numeric

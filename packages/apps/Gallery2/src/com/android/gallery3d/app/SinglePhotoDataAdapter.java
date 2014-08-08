@@ -44,7 +44,7 @@ public class SinglePhotoDataAdapter extends TileImageViewAdapter
     private static final int MSG_UPDATE_IMAGE = 1;
 
     private MediaItem mItem;
-    private boolean mHasFullImage;
+    private boolean mHasFullImage = true;
     private Future<?> mTask;
     private Handler mHandler;
 
@@ -56,19 +56,20 @@ public class SinglePhotoDataAdapter extends TileImageViewAdapter
     public SinglePhotoDataAdapter(
             AbstractGalleryActivity activity, PhotoView view, MediaItem item) {
         mItem = Utils.checkNotNull(item);
-        mHasFullImage = (item.getSupportedOperations() &
-                MediaItem.SUPPORT_FULL_IMAGE) != 0;
+//        mHasFullImage = (item.getSupportedOperations() &
+//                MediaItem.SUPPORT_FULL_IMAGE) != 0;
         mPhotoView = Utils.checkNotNull(view);
         mHandler = new SynchronizedHandler(activity.getGLRoot()) {
             @Override
             @SuppressWarnings("unchecked")
             public void handleMessage(Message message) {
                 Utils.assertTrue(message.what == MSG_UPDATE_IMAGE);
-                if (mHasFullImage) {
+                /*if (mHasFullImage) {
                     onDecodeLargeComplete((ImageBundle) message.obj);
                 } else {
                     onDecodeThumbComplete((Future<Bitmap>) message.obj);
-                }
+                }*/
+                onDecodeComplete((Future<Bitmap>) message.obj);
             }
         };
         mThreadPool = activity.getThreadPool();
@@ -89,16 +90,7 @@ public class SinglePhotoDataAdapter extends TileImageViewAdapter
         @Override
         public void onFutureDone(Future<BitmapRegionDecoder> future) {
             BitmapRegionDecoder decoder = future.get();
-            // cannot get large bitmap, then try to get thumb bitmap
-            if (decoder == null) {
-                if (mTask != null && !mTask.isCancelled()) {
-                    Log.v(TAG, "fail to get region decoder, try to request thumb image");
-                    mHasFullImage = false;
-                    pause();
-                    resume();
-                }
-                return;
-            }
+            if (decoder == null) return;
             int width = decoder.getWidth();
             int height = decoder.getHeight();
             BitmapFactory.Options options = new BitmapFactory.Options();
@@ -140,7 +132,7 @@ public class SinglePhotoDataAdapter extends TileImageViewAdapter
         }
     }
 
-    private void onDecodeThumbComplete(Future<Bitmap> future) {
+    private void onDecodeComplete(Future<Bitmap> future) {
         try {
             Bitmap backup = future.get();
             if (backup == null) {
@@ -160,8 +152,11 @@ public class SinglePhotoDataAdapter extends TileImageViewAdapter
     public void resume() {
         if (mTask == null) {
             if (mHasFullImage) {
-                mTask = mThreadPool.submit(
-                        mItem.requestLargeImage(), mLargeListener);
+                //mTask = mThreadPool.submit(
+                //        mItem.requestLargeImage(), mLargeListener);
+            	mTask = mThreadPool.submit(
+            			mItem.requestImage(MediaItem.TYPE_DECODE),
+            			mThumbListener);
             } else {
                 mTask = mThreadPool.submit(
                         mItem.requestImage(MediaItem.TYPE_THUMBNAIL),
@@ -237,7 +232,7 @@ public class SinglePhotoDataAdapter extends TileImageViewAdapter
 
     @Override
     public boolean isDeletable(int offset) {
-        return false;
+        return (mItem.getSupportedOperations() & MediaItem.SUPPORT_DELETE) != 0;
     }
 
     @Override
@@ -269,4 +264,9 @@ public class SinglePhotoDataAdapter extends TileImageViewAdapter
     public int getLoadingState(int offset) {
         return mLoadingState;
     }
+    
+    @Override
+	public MediaItem getCurrentMediaItem() {
+		return mItem;
+	}
 }

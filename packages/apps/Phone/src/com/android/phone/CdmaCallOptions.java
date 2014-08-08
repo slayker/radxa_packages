@@ -1,8 +1,5 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
- * Copyright (c) 2011-2013 The Linux Foundation. All rights reserved.
- *
- * Not a Contribution.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +30,6 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
 import android.util.Log;
 
-import static com.android.internal.telephony.MSimConstants.SUBSCRIPTION_KEY;
-
 public class CdmaCallOptions extends PreferenceActivity {
     private static final String LOG_TAG = "CdmaCallOptions";
     private final boolean DBG = (PhoneGlobals.DBG_LEVEL >= 2);
@@ -47,15 +42,9 @@ public class CdmaCallOptions extends PreferenceActivity {
         super.onCreate(icicle);
 
         addPreferencesFromResource(R.xml.cdma_call_privacy);
-        // getting selected subscription
-        int subscription = getIntent().getIntExtra(SUBSCRIPTION_KEY,
-                PhoneGlobals.getInstance().getDefaultSubscription());
-
-        Log.d(LOG_TAG, "Getting CDMACallOptions subscription =" + subscription);
-        Phone phone = PhoneGlobals.getInstance().getPhone(subscription);
 
         mButtonVoicePrivacy = (CheckBoxPreference) findPreference(BUTTON_VP_KEY);
-        if (phone.getPhoneType() != PhoneConstants.PHONE_TYPE_CDMA
+        if (PhoneGlobals.getPhone().getPhoneType() != PhoneConstants.PHONE_TYPE_CDMA
                 || getResources().getBoolean(R.bool.config_voice_privacy_disable)) {
             //disable the entire screen
             getPreferenceScreen().setEnabled(false);

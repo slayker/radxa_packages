@@ -20,14 +20,16 @@ import android.content.ContentValues;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts.Photo;
 
+import com.android.contacts.model.RawContact;
+
 /**
  * Represents a photo data item, wrapping the columns in
  * {@link ContactsContract.Contacts.Photo}.
  */
 public class PhotoDataItem extends DataItem {
 
-    /* package */ PhotoDataItem(ContentValues values) {
-        super(values);
+    /* package */ PhotoDataItem(RawContact rawContact, ContentValues values) {
+        super(rawContact, values);
     }
 
     public long getPhotoFileId() {

@@ -16,7 +16,7 @@
 
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="permlab_bluetoothShareManager" msgid="311492132450338925">"Fikia kidhibiti cha vipakuliwa."</string>
+    <string name="permlab_bluetoothShareManager" msgid="311492132450338925">"Fikia kidhibiti cha vipakuzi"</string>
     <string name="permdesc_bluetoothShareManager" msgid="8930572979123190223">"Huruhusu programu kufikia kidhibiti cha BluetoothShare na kukitumia kuhamisha faili."</string>
     <string name="permlab_bluetoothWhitelist" msgid="7091552898592306386">"Ruhusu ufikiaji kifaa cha bluetooth."</string>
     <string name="permdesc_bluetoothWhitelist" msgid="5494513855192170109">"Huruhusu programu kuorodhesha kwa muda kifaa cha Bluetooth kwenye orodha ya vifaa maalum, ikiruhusu kifaa hicho kutuma faili kwa kifaa hiki bila uthibitishaji wa mtumiaji."</string>
@@ -73,7 +73,7 @@
     <string name="upload_fail_cancel" msgid="9118496285835687125">"Funga"</string>
     <string name="bt_error_btn_ok" msgid="5965151173011534240">"Sawa"</string>
     <string name="unknown_file" msgid="6092727753965095366">"Faili isiyojulikana"</string>
-    <string name="unknown_file_desc" msgid="480434281415453287">"Hakuna programu ya kushughulikia aina hii ya faili. "\n</string>
+    <string name="unknown_file_desc" msgid="480434281415453287">"Hakuna prog ya kushughulikia aina hii ya faili. "\n</string>
     <string name="not_exist_file" msgid="3489434189599716133">"Hakuna faili."</string>
     <string name="not_exist_file_desc" msgid="4059531573790529229">"Faili haipo. "\n</string>
     <string name="enabling_progress_title" msgid="436157952334723406">"Tafadhali subiri…"</string>

@@ -20,14 +20,16 @@ import android.content.ContentValues;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
 
+import com.android.contacts.model.RawContact;
+
 /**
  * Represents a structured postal data item, wrapping the columns in
  * {@link ContactsContract.CommonDataKinds.StructuredPostal}.
  */
 public class StructuredPostalDataItem extends DataItem {
 
-    /* package */ StructuredPostalDataItem(ContentValues values) {
-        super(values);
+    /* package */ StructuredPostalDataItem(RawContact rawContact, ContentValues values) {
+        super(rawContact, values);
     }
 
     public String getFormattedAddress() {

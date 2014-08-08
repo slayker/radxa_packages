@@ -120,7 +120,8 @@ public class AlbumDataLoader {
 
     public MediaItem get(int index) {
         if (!isActive(index)) {
-            return mSource.getMediaItem(index, 1).get(0);
+            throw new IllegalArgumentException(String.format(
+                    "%s not in (%s, %s)", index, mActiveStart, mActiveEnd));
         }
         return mData[index % mData.length];
     }

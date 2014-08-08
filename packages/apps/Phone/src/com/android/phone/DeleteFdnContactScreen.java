@@ -1,8 +1,5 @@
 /*
  * Copyright (C) 2006 The Android Open Source Project
- * Copyright (c) 2011-2013 The Linux Foundation. All rights reserved.
- *
- * Not a Contribution.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +31,6 @@ import android.widget.Toast;
 
 import static android.view.Window.PROGRESS_VISIBILITY_OFF;
 import static android.view.Window.PROGRESS_VISIBILITY_ON;
-import static com.android.internal.telephony.MSimConstants.SUBSCRIPTION_KEY;
 
 /**
  * Activity to let the user delete an FDN contact.
@@ -43,14 +39,14 @@ public class DeleteFdnContactScreen extends Activity {
     private static final String LOG_TAG = PhoneGlobals.LOG_TAG;
     private static final boolean DBG = false;
 
-    protected static final String INTENT_EXTRA_NAME = "name";
-    protected static final String INTENT_EXTRA_NUMBER = "number";
+    private static final String INTENT_EXTRA_NAME = "name";
+    private static final String INTENT_EXTRA_NUMBER = "number";
 
-    protected static final int PIN2_REQUEST_CODE = 100;
+    private static final int PIN2_REQUEST_CODE = 100;
 
-    protected String mName;
-    protected String mNumber;
-    protected String mPin2;
+    private String mName;
+    private String mNumber;
+    private String mPin2;
 
     protected QueryHandler mQueryHandler;
 
@@ -90,7 +86,7 @@ public class DeleteFdnContactScreen extends Activity {
         }
     }
 
-    protected void resolveIntent() {
+    private void resolveIntent() {
         Intent intent = getIntent();
 
         mName =  intent.getStringExtra(INTENT_EXTRA_NAME);
@@ -101,7 +97,7 @@ public class DeleteFdnContactScreen extends Activity {
         }
     }
 
-    protected void deleteContact() {
+    private void deleteContact() {
         StringBuilder buf = new StringBuilder();
         if (TextUtils.isEmpty(mName)) {
             buf.append("number='");
@@ -128,7 +124,7 @@ public class DeleteFdnContactScreen extends Activity {
         startActivityForResult(intent, PIN2_REQUEST_CODE);
     }
 
-    protected void displayProgress(boolean flag) {
+    private void displayProgress(boolean flag) {
         getWindow().setFeatureInt(
                 Window.FEATURE_INDETERMINATE_PROGRESS,
                 flag ? PROGRESS_VISIBILITY_ON : PROGRESS_VISIBILITY_OFF);
@@ -161,7 +157,7 @@ public class DeleteFdnContactScreen extends Activity {
 
     }
 
-    protected class QueryHandler extends AsyncQueryHandler {
+    private class QueryHandler extends AsyncQueryHandler {
         public QueryHandler(ContentResolver cr) {
             super(cr);
         }
@@ -187,7 +183,7 @@ public class DeleteFdnContactScreen extends Activity {
 
     }
 
-    protected void log(String msg) {
+    private void log(String msg) {
         Log.d(LOG_TAG, "[DeleteFdnContact] " + msg);
     }
 }

@@ -277,9 +277,6 @@ public class DreamBackend {
             Log.w(TAG, "Error parsing : " + resolveInfo.serviceInfo.packageName, caughtException);
             return null;
         }
-        if (cn != null && cn.indexOf('/') < 0) {
-            cn = resolveInfo.serviceInfo.packageName + "/" + cn;
-        }
         return cn == null ? null : ComponentName.unflattenFromString(cn);
     }
 

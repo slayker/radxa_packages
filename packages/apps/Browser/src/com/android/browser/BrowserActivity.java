@@ -17,11 +17,21 @@
 package com.android.browser;
 
 import android.app.Activity;
+import android.webkit.WebViewClassic;
 import android.app.KeyguardManager;
+import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.IPackageInstallObserver;
 import android.content.res.Configuration;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.ActionMode;
@@ -33,8 +43,13 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.widget.Toast;
 
 import com.android.browser.stub.NullController;
+import java.io.File;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import com.google.common.annotations.VisibleForTesting;
 
 public class BrowserActivity extends Activity {
@@ -44,12 +59,35 @@ public class BrowserActivity extends Activity {
     public static final String ACTION_RESTART = "--restart--";
     private static final String EXTRA_STATE = "state";
     public static final String EXTRA_DISABLE_URL_OVERRIDE = "disable_url_override";
-
+    private static final boolean DEBUG = true;
+    private static final String TAG = "BrowserActivity";
+    public void LOGD(String msg){
+    	if(DEBUG){
+    		Log.d(TAG,msg);
+    	}
+    }
     private final static String LOGTAG = "browser";
 
     private final static boolean LOGV_ENABLED = Browser.LOGV_ENABLED;
 
     private ActivityController mController = NullController.INSTANCE;
+    private IntentFilter mIntentFilter = null;
+    private MyBroadcastReceiver mReceiver = null;
+    private class MyBroadcastReceiver extends BroadcastReceiver{
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			// TODO Auto-generated method stub
+			LOGD("<-------------onReceived---------->");
+			Controller control = (Controller)mController;
+			
+			WebViewClassic.fromWebView(control.getCurrentTab().getWebView()).pauseHtml5Video();
+			WebViewClassic.fromWebView(control.getCurrentTab().getWebView()).pauseFlashPlugin();
+		}
+    	
+    }
+
+    private PowerManager.WakeLock mWakeLock = null;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -70,11 +108,63 @@ public class BrowserActivity extends Activity {
             finish();
             return;
         }
+		checkFlashPlayerInstalled();
+		
         mController = createController();
 
         Intent intent = (icicle == null) ? getIntent() : null;
         mController.start(intent);
+	mReceiver = new MyBroadcastReceiver();
+	mIntentFilter = new IntentFilter("com.android.browser.PAUSE_TAB");
     }
+	class PackageInstallObserver extends IPackageInstallObserver.Stub {
+        public void packageInstalled(String packageName, int returnCode) {
+        }
+    }
+
+    private void checkFlashPlayerInstalled() {
+        AsyncTask<Void, Void, String > task =
+            new AsyncTask<Void, Void, String >() {
+            protected String doInBackground(Void... unused) {
+                boolean flashPlayerInstalled = false;
+                String installationInfo = "Installing flash player";
+                Set<String> installedPackages = new HashSet<String>();
+                PackageManager pm = BrowserActivity.this.getPackageManager();
+                if (pm != null) {
+                    List<PackageInfo> packages = pm.getInstalledPackages(0);
+                    for (PackageInfo p : packages) {
+                        if ("com.adobe.flashplayer".equals(p.packageName)) {
+                            flashPlayerInstalled = true;
+                            Log.v("checkFlashPlayerInstalled","Adobe flash player installed.");
+                            return null;
+                        }    
+                    }    
+                }    
+
+                if(!flashPlayerInstalled && Boolean.parseBoolean(SystemProperties.get("app.autoinstall.flashplayer","true"))) {
+                    // Install flashplayer
+                    Log.v("checkFlashPlayerInstalled","Installing adobe flash player.");
+                    File file = new File("/system/app/flashplayer");
+                    String installerPackageName = getIntent().getStringExtra(
+                            Intent.EXTRA_INSTALLER_PACKAGE_NAME);
+                    Uri mPackageURI = Uri.fromFile(file);
+                    PackageInstallObserver observer = new PackageInstallObserver();
+                    pm.installPackage(mPackageURI, observer, 0, installerPackageName);
+                    return installationInfo;
+                }    
+
+                return null;
+            }    
+
+            // Executes on the UI thread
+            protected void onPostExecute(String installationInfo) {
+                if (installationInfo != null) {
+                    Toast.makeText(BrowserActivity.this, installationInfo, Toast.LENGTH_SHORT).show();
+                }    
+            }    
+        };   
+        task.execute();  
+    }    
 
     public static boolean isTablet(Context context) {
         return context.getResources().getBoolean(R.bool.isTablet);
@@ -136,10 +226,14 @@ public class BrowserActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        registerReceiver(mReceiver, mIntentFilter);
         if (LOGV_ENABLED) {
             Log.v(LOGTAG, "BrowserActivity.onResume: this=" + this);
         }
         mController.onResume();
+        //$_rbox_$_modify_$_chenxiao_$_begin
+        SystemProperties.set("sys.browser.use.overlay","1");
+        //$_rbox_$_modify_$_chenxiao_$_end
     }
 
     @Override
@@ -176,8 +270,12 @@ public class BrowserActivity extends Activity {
 
     @Override
     protected void onPause() {
+    	unregisterReceiver(mReceiver);
         mController.onPause();
         super.onPause();
+        //$_rbox_$_modify_$_chenxiao_$_begin
+        SystemProperties.set("sys.browser.use.overlay","0");
+        //$_rbox_$_modify_$_chenxiao_$_end
     }
 
     @Override
@@ -302,6 +400,21 @@ public class BrowserActivity extends Activity {
     public boolean dispatchGenericMotionEvent(MotionEvent ev) {
         return mController.dispatchGenericMotionEvent(ev) ||
                 super.dispatchGenericMotionEvent(ev);
+    }
+
+    public void acquireWakeLock() {
+        if (mWakeLock == null) {
+            PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+            mWakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "Browser wakelock");
+            mWakeLock.acquire();
+        }
+    }
+
+    public void releaseWakeLock() {
+        if (mWakeLock != null && mWakeLock.isHeld()) {
+            mWakeLock.release();
+            mWakeLock = null;
+        }
     }
 
 }

@@ -24,6 +24,5 @@
     android:textSize="20sp"
     android:textColor="?android:attr/textColorSecondary"
     android:layout_marginLeft="15dip"
-    android:layout_marginStart="15dip"
     android:paddingTop="10dip"
     android:lineSpacingMultiplier="0.92"/>

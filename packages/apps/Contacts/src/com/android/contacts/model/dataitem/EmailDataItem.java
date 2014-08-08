@@ -20,14 +20,16 @@ import android.content.ContentValues;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 
+import com.android.contacts.model.RawContact;
+
 /**
  * Represents an email data item, wrapping the columns in
  * {@link ContactsContract.CommonDataKinds.Email}.
  */
 public class EmailDataItem extends DataItem {
 
-    /* package */ EmailDataItem(ContentValues values) {
-        super(values);
+    /* package */ EmailDataItem(RawContact rawContact, ContentValues values) {
+        super(rawContact, values);
     }
 
     public String getAddress() {

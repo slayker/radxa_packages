@@ -22,7 +22,6 @@
         android:id="@+id/fragment_carousel"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginLeft="16dip"
-        android:layout_marginStart="16dip"/>
+        android:layout_marginLeft="16dip"/>
 
 </FrameLayout>

@@ -75,13 +75,6 @@
         <item name="android:textStyle">normal</item>
     </style>
 
-    <style name="TextAppearance.QuickSettings">
-        <item name="android:textSize">12sp</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:textAllCaps">true</item>
-        <item name="android:gravity">center</item>
-    </style>
-
     <style name="TallTitleBarTheme" parent="android:Theme.NoTitleBar">
         <item name="android:windowContentOverlay">@null</item>
     </style>
@@ -128,17 +121,9 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">14sp</item>
-        <item name="android:textAlignment">viewStart</item>
     </style>
 
     <style name="wifi_item_content">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:textSize">18sp</item>
-        <item name="android:textAlignment">viewStart</item>
-    </style>
-
-    <style name="wifi_item_edit_content">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">18sp</item>
@@ -210,10 +195,4 @@
     <style name="KeyguardAppWidgetItem">
         <item name="android:textSize">18sp</item>
     </style>
-
-    <style name="ProfilesPreferenceStyle">
-        <item name="android:layout">@layout/preference_profiles</item>
-        <item name="android:widgetLayout">@layout/preference_profiles_widget</item>
-    </style>
-
 </resources>

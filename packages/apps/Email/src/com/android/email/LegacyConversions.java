@@ -1,8 +1,5 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
- *
- * Not a Contribution.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,18 +134,10 @@ public class LegacyConversions {
             localMessage.mFrom = Address.pack(from);
         }
 
-        if (to != null && to.length > 0) {
-            localMessage.mTo = Address.pack(to);
-        }
-        if (cc != null && cc.length > 0) {
-            localMessage.mCc = Address.pack(cc);
-        }
-        if (bcc != null && bcc.length > 0) {
-            localMessage.mBcc = Address.pack(bcc);
-        }
-        if (replyTo != null && replyTo.length > 0) {
-            localMessage.mReplyTo = Address.pack(replyTo);
-        }
+        localMessage.mTo = Address.pack(to);
+        localMessage.mCc = Address.pack(cc);
+        localMessage.mBcc = Address.pack(bcc);
+        localMessage.mReplyTo = Address.pack(replyTo);
 
 //        public String mText;
 //        public String mHtml;
@@ -172,23 +161,8 @@ public class LegacyConversions {
     public static void updateAttachments(Context context, EmailContent.Message localMessage,
             ArrayList<Part> attachments) throws MessagingException, IOException {
         localMessage.mAttachments = null;
-        deleteSavedAttachments(context, localMessage.mId);
         for (Part attachmentPart : attachments) {
             addOneAttachment(context, localMessage, attachmentPart);
-        }
-    }
-
-    /**
-     * Delete all the saved attachments of this local message.
-     *
-     * @param context a context for file operations
-     * @param messageId the message id for these attachments
-     */
-    private static void deleteSavedAttachments(Context context, long messageId) {
-        String where = AttachmentColumns.MESSAGE_KEY + "=" + messageId;
-        int res = context.getContentResolver().delete(Attachment.CONTENT_URI, where, null);
-        if (DEBUG_ATTACHMENTS) {
-            Log.d(Logging.LOG_TAG, "Delete the saved attachments number: " + res);
         }
     }
 

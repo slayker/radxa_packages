@@ -234,8 +234,7 @@ public class VoiceDialerActivity extends Activity {
         mChoiceClient = new ChoiceRecognizerClient();
 
         mAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (BluetoothHeadset.isBluetoothVoiceDialingEnabled(this) && mAdapter != null
-                && mAdapter.isEnabled()) {
+        if (BluetoothHeadset.isBluetoothVoiceDialingEnabled(this) && mAdapter != null) {
            if (!mAdapter.getProfileProxy(this, mBluetoothHeadsetServiceListener,
                                          BluetoothProfile.HEADSET)) {
                Log.e(TAG, "Getting Headset Proxy failed");

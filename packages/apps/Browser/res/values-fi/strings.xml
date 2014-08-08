@@ -1,13 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2007 The Android Open Source Project
-     Copyright (c) 2011, 2012, Code Aurora Forum. All rights reserved.
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  Copyright (C) 2007 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
      You may obtain a copy of the License at
-
+  
           http://www.apache.org/licenses/LICENSE-2.0
-
+  
      Unless required by applicable law or agreed to in writing, software
      distributed under the License is distributed on an "AS IS" BASIS,
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +31,6 @@
     <string name="username" msgid="5057566336518215922">"Nimi"</string>
     <string name="password" msgid="1177138552305184404">"Salasana"</string>
     <string name="action" msgid="183105774472071343">"Kirjaudu sisään"</string>
-    <string name="bookmarks_add_page" msgid="3093456701072617702">"Tallenna kirjanmerkkeihin"</string>
     <string name="bookmarks_search" msgid="5229596268214362873">"Selain"</string>
     <string name="cancel" msgid="3017274947407233702">"Peruuta"</string>
     <string name="ok" msgid="1509280796718850364">"OK"</string>

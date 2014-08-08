@@ -23,7 +23,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.TreeSet;
 
 //BEGIN android-changed: Stubbing out logging
@@ -1024,13 +1023,13 @@ public class CharsetUtil {
         for (int i = 0; i < JAVA_CHARSETS.length; i++) {
             try {
                 String s = new String(dummy, JAVA_CHARSETS[i].canonical);
-                decodingSupported.add(JAVA_CHARSETS[i].canonical.toLowerCase(Locale.US));
+                decodingSupported.add(JAVA_CHARSETS[i].canonical.toLowerCase());
             } catch (UnsupportedOperationException e) {
             } catch (UnsupportedEncodingException e) {
             }
             try {
                 "dummy".getBytes(JAVA_CHARSETS[i].canonical);
-                encodingSupported.add(JAVA_CHARSETS[i].canonical.toLowerCase(Locale.US));
+                encodingSupported.add(JAVA_CHARSETS[i].canonical.toLowerCase());
             } catch (UnsupportedOperationException e) {
             } catch (UnsupportedEncodingException e) {
             }
@@ -1039,13 +1038,13 @@ public class CharsetUtil {
         charsetMap = new HashMap<String, Charset>();
         for (int i = 0; i < JAVA_CHARSETS.length; i++) {
             Charset c = JAVA_CHARSETS[i];
-            charsetMap.put(c.canonical.toLowerCase(Locale.US), c);
+            charsetMap.put(c.canonical.toLowerCase(), c);
             if (c.mime != null) {
-                charsetMap.put(c.mime.toLowerCase(Locale.US), c);
+                charsetMap.put(c.mime.toLowerCase(), c);
             }
             if (c.aliases != null) {
                 for (int j = 0; j < c.aliases.length; j++) {
-                    charsetMap.put(c.aliases[j].toLowerCase(Locale.US), c);
+                    charsetMap.put(c.aliases[j].toLowerCase(), c);
                 }
             }
         }
@@ -1137,7 +1136,7 @@ public class CharsetUtil {
      *         otherwise.
      */
     public static boolean isEncodingSupported(String charsetName) {
-        return encodingSupported.contains(charsetName.toLowerCase(Locale.US));
+        return encodingSupported.contains(charsetName.toLowerCase());
     }
 
     /**
@@ -1152,7 +1151,7 @@ public class CharsetUtil {
      *         otherwise.
      */
     public static boolean isDecodingSupported(String charsetName) {
-        return decodingSupported.contains(charsetName.toLowerCase(Locale.US));
+        return decodingSupported.contains(charsetName.toLowerCase());
     }
 
     /**
@@ -1163,7 +1162,7 @@ public class CharsetUtil {
      * @return the MIME preferred name or <code>null</code> if not known.
      */
     public static String toMimeCharset(String charsetName) {
-        Charset c = charsetMap.get(charsetName.toLowerCase(Locale.US));
+        Charset c = charsetMap.get(charsetName.toLowerCase());
         if (c != null) {
             return c.mime;
         }
@@ -1182,7 +1181,7 @@ public class CharsetUtil {
      * @return the canonical Java name or <code>null</code> if not known.
      */
     public static String toJavaCharset(String charsetName) {
-        Charset c = charsetMap.get(charsetName.toLowerCase(Locale.US));
+        Charset c = charsetMap.get(charsetName.toLowerCase());
         if (c != null) {
             return c.canonical;
         }

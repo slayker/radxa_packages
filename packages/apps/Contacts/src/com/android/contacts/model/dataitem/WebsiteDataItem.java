@@ -20,14 +20,16 @@ import android.content.ContentValues;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Website;
 
+import com.android.contacts.model.RawContact;
+
 /**
  * Represents a website data item, wrapping the columns in
  * {@link ContactsContract.CommonDataKinds.Website}.
  */
 public class WebsiteDataItem extends DataItem {
 
-    /* package */ WebsiteDataItem(ContentValues values) {
-        super(values);
+    /* package */ WebsiteDataItem(RawContact rawContact, ContentValues values) {
+        super(rawContact, values);
     }
 
     public String getUrl() {

@@ -19,9 +19,7 @@ package com.android.calendar.widget;
 
 import com.android.calendar.widget.CalendarAppWidgetModel.EventInfo;
 import com.android.calendar.widget.CalendarAppWidgetService.CalendarFactory;
-import com.android.calendar.Utils;
 
-import android.content.Context;
 import android.database.MatrixCursor;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -40,7 +38,8 @@ public class CalendarAppWidgetServiceTest extends AndroidTestCase {
     private static final String TAG = "CalendarAppWidgetService";
 
     private static final String DEFAULT_TIMEZONE = "America/Los_Angeles";
-    long now;
+
+    final long now = 1262340000000L; // Fri Jan 01 2010 02:00:00 GMT-0800 (PST)
     final long ONE_MINUTE = 60000;
     final long ONE_HOUR = 60 * ONE_MINUTE;
     final long HALF_HOUR = ONE_HOUR / 2;
@@ -76,15 +75,6 @@ public class CalendarAppWidgetServiceTest extends AndroidTestCase {
         super.setUp();
         // we want to run these tests in a predictable timezone
         TimeZone.setDefault(TimeZone.getTimeZone(DEFAULT_TIMEZONE));
-
-        // Set the "current time" to 2am tomorrow.
-        Time time = new Time();
-        time.setToNow();
-        time.monthDay += 1;
-        time.hour = 2;
-        time.minute = 0;
-        time.second = 0;
-        now = time.normalize(false);
     }
 
     @Override
@@ -110,8 +100,7 @@ public class CalendarAppWidgetServiceTest extends AndroidTestCase {
         eventInfo.visibWhen = View.VISIBLE;
         eventInfo.visibWhere = View.VISIBLE;
         eventInfo.visibTitle = View.VISIBLE;
-        eventInfo.when = Utils.formatDateRange(getContext(), now + ONE_HOUR, now + TWO_HOURS,
-                DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_ABBREV_ALL);
+        eventInfo.when = "3am";
         eventInfo.where = location;
         eventInfo.title = title;
         expected.mEventInfos.add(eventInfo);
@@ -123,9 +112,55 @@ public class CalendarAppWidgetServiceTest extends AndroidTestCase {
         assertEquals(expected.toString(), actual.toString());
     }
 
+ // TODO re-enable this test when our widget behavior is finalized
+    @Suppress @SmallTest
+    public void testGetAppWidgetModel_2StaggeredEvents() throws Exception {
+        CalendarAppWidgetModel expected = new CalendarAppWidgetModel(getContext(), Time
+                .getCurrentTimezone());
+        MatrixCursor cursor = new MatrixCursor(CalendarAppWidgetService.EVENT_PROJECTION, 0);
+
+        int i = 0;
+        long tomorrow = now + DateUtils.DAY_IN_MILLIS;
+        long sunday = tomorrow + DateUtils.DAY_IN_MILLIS;
+
+        // Expected Output
+        EventInfo eventInfo = new EventInfo();
+        eventInfo.visibWhen = View.VISIBLE;
+        eventInfo.visibWhere = View.VISIBLE;
+        eventInfo.visibTitle = View.VISIBLE;
+        eventInfo.when = "2am, Tomorrow";
+        eventInfo.where = location + i;
+        eventInfo.title = title + i;
+        expected.mEventInfos.add(eventInfo);
+
+        ++i;
+        eventInfo = new EventInfo();
+        eventInfo.visibWhen = View.VISIBLE;
+        eventInfo.visibWhere = View.VISIBLE;
+        eventInfo.visibTitle = View.VISIBLE;
+        eventInfo.when = "2am, Sun";
+        eventInfo.where = location + i;
+        eventInfo.title = title + i;
+        expected.mEventInfos.add(eventInfo);
+
+        // Input
+        // allDay, begin, end, title, location, eventId
+        i = 0;
+        cursor.addRow(getRow(0, tomorrow, tomorrow + TWO_HOURS, title + i, location + i, 0));
+        ++i;
+        cursor.addRow(getRow(0, sunday, sunday + TWO_HOURS, title + i, location + i, 0));
+        ++i;
+
+        // Test
+        CalendarAppWidgetModel actual = CalendarFactory.buildAppWidgetModel(
+                getContext(), cursor, Time.getCurrentTimezone());
+
+        assertEquals(expected.toString(), actual.toString());
+    }
+
     @SmallTest
-    public void testGetAppWidgetModel_AllDayEventLater() throws Exception {
-        Context context = getContext();
+    public void testGetAppWidgetModel_AllDayEventToday() throws Exception {
+        final long now = 1262340000000L; // Fri Jan 01 2010 01:00:00 GMT-0700 (PDT)
         CalendarAppWidgetModel expected = new CalendarAppWidgetModel(getContext(), Time
                 .getCurrentTimezone());
         MatrixCursor cursor = new MatrixCursor(CalendarAppWidgetService.EVENT_PROJECTION, 0);
@@ -137,38 +172,111 @@ public class CalendarAppWidgetServiceTest extends AndroidTestCase {
         eventInfo.visibWhen = View.VISIBLE;
         eventInfo.visibWhere = View.VISIBLE;
         eventInfo.visibTitle = View.VISIBLE;
-        eventInfo.when = Utils.formatDateRange(context, now + ONE_HOUR, now + TWO_HOURS,
-                DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_ABBREV_ALL);
+        eventInfo.when = "Today";
         eventInfo.where = location + i;
         eventInfo.title = title + i;
         expected.mEventInfos.add(eventInfo);
-        cursor.addRow(getRow(0, now + ONE_HOUR, now + TWO_HOURS, title + i, location + i, 0));
 
         i++;
-        // Set the start time to 5 days from now at midnight UTC.
-        Time time = new Time();
-        time.set(now);
-        time.monthDay += 5;
-        time.hour = 0;
-        time.timezone = Time.TIMEZONE_UTC;
-        long start = time.normalize(false);
-        time.monthDay += 1;
-        long end = time.normalize(false);
-
         eventInfo = new EventInfo();
         eventInfo.visibWhen = View.VISIBLE;
         eventInfo.visibWhere = View.VISIBLE;
         eventInfo.visibTitle = View.VISIBLE;
-        eventInfo.when = DateUtils.formatDateTime(context, end,
-                DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_ABBREV_ALL);
+        eventInfo.when = "3am";
         eventInfo.where = location + i;
         eventInfo.title = title + i;
         expected.mEventInfos.add(eventInfo);
-        cursor.addRow(getRow(1, start, end, title + i, location + i, 0));
+
+        i = 0;
+        cursor.addRow(getRow(1, 1262304000000L, 1262390400000L, title + i, location + i, 0));
+        ++i;
+        cursor.addRow(getRow(0, now + ONE_HOUR, now + TWO_HOURS, title + i, location + i, 0));
+
+        // Test
+        CalendarAppWidgetModel actual = CalendarFactory.buildAppWidgetModel(
+                getContext(), cursor, Time.getCurrentTimezone());
+
+        assertEquals(expected.toString(), actual.toString());
+    }
+
+    @SmallTest
+    public void testGetAppWidgetModel_AllDayEventTomorrow() throws Exception {
+        final long now = 1262340000000L; // Fri Jan 01 2010 01:00:00 GMT-0700 (PDT)
+        CalendarAppWidgetModel expected = new CalendarAppWidgetModel(getContext(), Time
+                .getCurrentTimezone());
+        MatrixCursor cursor = new MatrixCursor(CalendarAppWidgetService.EVENT_PROJECTION, 0);
+
+        int i = 0;
+
+        // Expected Output
+        EventInfo eventInfo = new EventInfo();
+        eventInfo.visibWhen = View.VISIBLE;
+        eventInfo.visibWhere = View.VISIBLE;
+        eventInfo.visibTitle = View.VISIBLE;
+        eventInfo.when = "3am";
+        eventInfo.where = location + i;
+        eventInfo.title = title + i;
+        expected.mEventInfos.add(eventInfo);
+
+        i++;
+        eventInfo = new EventInfo();
+        eventInfo.visibWhen = View.VISIBLE;
+        eventInfo.visibWhere = View.VISIBLE;
+        eventInfo.visibTitle = View.VISIBLE;
+        eventInfo.when = "Tomorrow";
+        eventInfo.where = location + i;
+        eventInfo.title = title + i;
+        expected.mEventInfos.add(eventInfo);
+
+        i = 0;
+        cursor.addRow(getRow(0, now + ONE_HOUR, now + TWO_HOURS, title + i, location + i, 0));
+        ++i;
+        cursor.addRow(getRow(1, 1262390400000L, 1262476800000L, title + i, location + i, 0));
+
+        // Test
+        CalendarAppWidgetModel actual = CalendarFactory.buildAppWidgetModel(
+                getContext(), cursor, Time.getCurrentTimezone());
+
+        assertEquals(expected.toString(), actual.toString());
+    }
+
+    @SmallTest
+    public void testGetAppWidgetModel_AllDayEventLater() throws Exception {
+        final long now = 1262340000000L; // Fri Jan 01 2010 01:00:00 GMT-0700 (PDT)
+        CalendarAppWidgetModel expected = new CalendarAppWidgetModel(getContext(), Time
+                .getCurrentTimezone());
+        MatrixCursor cursor = new MatrixCursor(CalendarAppWidgetService.EVENT_PROJECTION, 0);
+
+        int i = 0;
+
+        // Expected Output
+        EventInfo eventInfo = new EventInfo();
+        eventInfo.visibWhen = View.VISIBLE;
+        eventInfo.visibWhere = View.VISIBLE;
+        eventInfo.visibTitle = View.VISIBLE;
+        eventInfo.when = "3am";
+        eventInfo.where = location + i;
+        eventInfo.title = title + i;
+        expected.mEventInfos.add(eventInfo);
+
+        i++;
+        eventInfo = new EventInfo();
+        eventInfo.visibWhen = View.VISIBLE;
+        eventInfo.visibWhere = View.VISIBLE;
+        eventInfo.visibTitle = View.VISIBLE;
+        eventInfo.when = "Sun";
+        eventInfo.where = location + i;
+        eventInfo.title = title + i;
+        expected.mEventInfos.add(eventInfo);
+
+        i = 0;
+        cursor.addRow(getRow(0, now + ONE_HOUR, now + TWO_HOURS, title + i, location + i, 0));
+        ++i;
+        cursor.addRow(getRow(1, 1262476800000L, 1262563200000L, title + i, location + i, 0));
 
         // Test
         CalendarAppWidgetModel actual = CalendarAppWidgetService.CalendarFactory.buildAppWidgetModel(
-                context, cursor, Time.getCurrentTimezone());
+                getContext(), cursor, Time.getCurrentTimezone());
 
         assertEquals(expected.toString(), actual.toString());
     }

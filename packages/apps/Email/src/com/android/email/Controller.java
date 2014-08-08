@@ -438,44 +438,29 @@ public class Controller {
      * @param messageId the message to load
      * @param callback the Controller callback by which results will be reported
      */
-    public void loadMessageForView(final long messageId, final int flag) {
-        // update the message status as FLAG_LOADED_PARTIAL.
-        Uri uri = ContentUris.withAppendedId(Message.CONTENT_URI, messageId);
-        ContentValues cv = new ContentValues();
-        cv.put(MessageColumns.FLAG_LOADED, Message.FLAG_LOADED_PARTIAL);
-        mProviderContext.getContentResolver().update(uri, cv, null, null);
+    public void loadMessageForView(final long messageId) {
 
         // Split here for target type (Service or MessagingController)
         IEmailService service = getServiceForMessage(messageId);
         if (service != null) {
-            try {
-                /*
-                 * For the new feature, we implement the load more message action. so we change the
-                 * default behavior.
-                 * // The default behavior:
-                 * Uri uri = ContentUris.withAppendedId(Message.CONTENT_URI, messageId);
-                 * ContentValues cv = new ContentValues();
-                 * cv.put(MessageColumns.FLAG_LOADED, Message.FLAG_LOADED_COMPLETE);
-                 * mProviderContext.getContentResolver().update(uri, cv, null, null);
-                 */
-
-                service.loadMore(messageId);
-                Log.d(Logging.LOG_TAG, "loadMessageForView() for service-based message.");
-                final long accountId
-                          = Account.getAccountIdForMessageId(mProviderContext, messageId);
-                synchronized (mListeners) {
-                    for (Result listener : mListeners) {
-                        listener.loadMessageForViewCallback(null, accountId, messageId, 0);
-                    }
+            // There is no service implementation, so we'll just jam the value, log the error,
+            // and get out of here.
+            Uri uri = ContentUris.withAppendedId(Message.CONTENT_URI, messageId);
+            ContentValues cv = new ContentValues();
+            cv.put(MessageColumns.FLAG_LOADED, Message.FLAG_LOADED_COMPLETE);
+            mProviderContext.getContentResolver().update(uri, cv, null, null);
+            Log.d(Logging.LOG_TAG, "Unexpected loadMessageForView() for service-based message.");
+            final long accountId = Account.getAccountIdForMessageId(mProviderContext, messageId);
+            synchronized (mListeners) {
+                for (Result listener : mListeners) {
+                    listener.loadMessageForViewCallback(null, accountId, messageId, 100);
                 }
-            } catch (RemoteException e) {
-                e.printStackTrace();
             }
         } else {
             // MessagingController implementation
             Utility.runAsync(new Runnable() {
                 public void run() {
-                    mLegacyController.loadMessageForView(messageId, flag, mLegacyListener);
+                    mLegacyController.loadMessageForView(messageId, mLegacyListener);
                 }
             });
         }
@@ -1738,28 +1723,6 @@ public class Controller {
         @Override
         public void loadMessageStatus(long messageId, int statusCode, int progress)
                 throws RemoteException {
-            MessagingException result = mapStatusToException(statusCode);
-            switch (statusCode) {
-                case EmailServiceStatus.SUCCESS:
-                    progress = 100;
-                    break;
-                case EmailServiceStatus.IN_PROGRESS:
-                    if (DEBUG_FAIL_DOWNLOADS && progress > 75) {
-                        result = new MessagingException(
-                                String.valueOf(EmailServiceStatus.CONNECTION_ERROR));
-                    }
-                    // discard progress reports that look like sentinels
-                    if (progress < 0 || progress >= 100) {
-                        return;
-                    }
-                    break;
-            }
-            final long accountId = Account.getAccountIdForMessageId(mProviderContext, messageId);
-            synchronized (mListeners) {
-                for (Result listener : mListeners) {
-                    listener.loadMessageForViewCallback(result, accountId, messageId, progress);
-                }
-            }
         }
     }
 
@@ -1817,14 +1780,8 @@ public class Controller {
         }
 
         @Override
-        public void loadMessageStatus(final long messageId, final int statusCode,
-                final int progress) {
-            broadcastCallback(new ServiceCallbackWrapper() {
-                @Override
-                public void call(IEmailServiceCallback cb) throws RemoteException {
-                    cb.loadMessageStatus(messageId, statusCode, progress);
-                }
-            });
+        public void loadMessageStatus(long messageId, int statusCode, int progress)
+                throws RemoteException {
         }
     };
 

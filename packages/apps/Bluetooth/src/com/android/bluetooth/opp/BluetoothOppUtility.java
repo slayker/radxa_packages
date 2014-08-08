@@ -194,7 +194,7 @@ public class BluetoothOppUtility {
 
         if (isRecognizedFileType(context, path, mimetype)) {
             Intent activityIntent = new Intent(Intent.ACTION_VIEW);
-            activityIntent.setDataAndTypeAndNormalize(path, mimetype);
+            activityIntent.setDataAndType(path, mimetype);
 
             activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             try {
@@ -222,7 +222,7 @@ public class BluetoothOppUtility {
         if (D) Log.d(TAG, "RecognizedFileType() fileUri: " + fileUri + " mimetype: " + mimetype);
 
         Intent mimetypeIntent = new Intent(Intent.ACTION_VIEW);
-        mimetypeIntent.setDataAndTypeAndNormalize(fileUri, mimetype);
+        mimetypeIntent.setDataAndType(fileUri, mimetype);
         List<ResolveInfo> list = context.getPackageManager().queryIntentActivities(mimetypeIntent,
                 PackageManager.MATCH_DEFAULT_ONLY);
 
@@ -245,12 +245,15 @@ public class BluetoothOppUtility {
     /**
      * Helper function to build the progress text.
      */
-    public static String formatProgressText(Context context, long totalBytes, long currentBytes) {
+    public static String formatProgressText(long totalBytes, long currentBytes) {
         if (totalBytes <= 0) {
-            return context.getString(R.string.format_progress_text,0);
+            return "0%";
         }
         long progress = currentBytes * 100 / totalBytes;
-        return context.getString(R.string.format_progress_text, progress);
+        StringBuilder sb = new StringBuilder();
+        sb.append(progress);
+        sb.append('%');
+        return sb.toString();
     }
 
     /**
@@ -319,7 +322,7 @@ public class BluetoothOppUtility {
     static void closeSendFileInfo(Uri uri) {
         if (D) Log.d(TAG, "closeSendFileInfo: uri=" + uri);
         BluetoothOppSendFileInfo info = sSendFileMap.remove(uri);
-        if (info != null && info.mInputStream != null) {
+        if (info != null) {
             try {
                 info.mInputStream.close();
             } catch (IOException ignored) {

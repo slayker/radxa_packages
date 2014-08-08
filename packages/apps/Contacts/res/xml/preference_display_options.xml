@@ -15,13 +15,16 @@
 -->
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <com.android.contacts.preference.SortOrderPreference
-        android:key="sortOrder"
-        android:title="@string/display_options_sort_list_by"
-        android:dialogTitle="@string/display_options_sort_list_by" />
+    <PreferenceCategory
+        android:title="@string/preference_displayOptions">
+        <com.android.contacts.preference.SortOrderPreference
+            android:key="sortOrder"
+            android:title="@string/display_options_sort_list_by"
+            android:dialogTitle="@string/display_options_sort_list_by" />
 
-    <com.android.contacts.preference.DisplayOrderPreference
-        android:key="displayOrder"
-        android:title="@string/display_options_view_names_as"
-        android:dialogTitle="@string/display_options_view_names_as" />
+        <com.android.contacts.preference.DisplayOrderPreference
+            android:key="displayOrder"
+            android:title="@string/display_options_view_names_as"
+            android:dialogTitle="@string/display_options_view_names_as" />
+    </PreferenceCategory>
 </PreferenceScreen>

@@ -21,6 +21,8 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Contacts.Data;
 
+import com.android.contacts.model.RawContact;
+
 /**
  * Represents a structured name data item, wrapping the columns in
  * {@link ContactsContract.CommonDataKinds.StructuredName}.
@@ -28,12 +30,12 @@ import android.provider.ContactsContract.Contacts.Data;
 public class StructuredNameDataItem extends DataItem {
 
     public StructuredNameDataItem() {
-        super(new ContentValues());
+        super(null, new ContentValues());
         getContentValues().put(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE);
     }
 
-    /* package */ StructuredNameDataItem(ContentValues values) {
-        super(values);
+    /* package */ StructuredNameDataItem(RawContact rawContact, ContentValues values) {
+        super(rawContact, values);
     }
 
     public String getDisplayName() {

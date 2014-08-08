@@ -17,9 +17,6 @@
 package com.android.gallery3d.filtershow;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,8 +41,6 @@ public class HistoryAdapter extends ArrayAdapter<ImagePreset> {
     private MenuItem mUndoMenuItem = null;
     private MenuItem mRedoMenuItem = null;
     private MenuItem mResetMenuItem = null;
-
-    private Bitmap mOriginalBitmap = null;
 
     public HistoryAdapter(Context context, int resource, int textViewResourceId) {
         super(context, resource, textViewResourceId);
@@ -87,21 +82,13 @@ public class HistoryAdapter extends ArrayAdapter<ImagePreset> {
 
     public void updateMenuItems() {
         if (mUndoMenuItem != null) {
-            setEnabled(mUndoMenuItem, canUndo());
+            mUndoMenuItem.setEnabled(canUndo());
         }
         if (mRedoMenuItem != null) {
-            setEnabled(mRedoMenuItem, canRedo());
+            mRedoMenuItem.setEnabled(canRedo());
         }
         if (mResetMenuItem != null) {
-            setEnabled(mResetMenuItem, canReset());
-        }
-    }
-
-    private void setEnabled(MenuItem item, boolean enabled) {
-        item.setEnabled(enabled);
-        Drawable drawable = item.getIcon();
-        if (drawable != null) {
-            drawable.setAlpha(enabled ? 255 : 80);
+            mResetMenuItem.setEnabled(canReset());
         }
     }
 
@@ -128,13 +115,22 @@ public class HistoryAdapter extends ArrayAdapter<ImagePreset> {
         return getItem(0);
     }
 
-    public ImagePreset getCurrent() {
-        return getItem(mCurrentPresetPosition);
+    public void addHistoryItem(ImagePreset preset) {
+        if (canAddHistoryItem(preset)) {
+            insert(preset, 0);
+            updateMenuItems();
+        }
     }
 
-    public void addHistoryItem(ImagePreset preset) {
-        insert(preset, 0);
-        updateMenuItems();
+    public boolean canAddHistoryItem(ImagePreset preset) {
+        if (getCount() > 0 && getLast().same(preset)) {
+            // we may still want to insert if the previous
+            // history element isn't the same
+            if (getLast().historyName().equalsIgnoreCase(preset.historyName())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -151,6 +147,9 @@ public class HistoryAdapter extends ArrayAdapter<ImagePreset> {
             }
             mCurrentPresetPosition = position;
             this.notifyDataSetChanged();
+            if (!canAddHistoryItem(preset)) {
+                return;
+            }
         }
         super.insert(preset, position);
         mCurrentPresetPosition = position;
@@ -192,28 +191,34 @@ public class HistoryAdapter extends ArrayAdapter<ImagePreset> {
             if (itemView != null) {
                 itemView.setText(item.historyName());
             }
-            ImageView preview = (ImageView) view.findViewById(R.id.preview);
-            Bitmap bmp = item.getPreviewImage();
-            if (position == getCount()-1 && mOriginalBitmap != null) {
-                bmp = mOriginalBitmap;
-            }
-            if (bmp != null) {
-                preview.setImageBitmap(bmp);
-            } else {
-                preview.setImageResource(android.R.color.transparent);
-            }
+            ImageView markView = (ImageView) view.findViewById(R.id.selectedMark);
             if (position == mCurrentPresetPosition) {
-                view.setBackgroundColor(Color.WHITE);
+                markView.setVisibility(View.VISIBLE);
             } else {
-                view.setBackgroundResource(R.color.background_main_toolbar);
+                markView.setVisibility(View.INVISIBLE);
+            }
+            ImageView typeView = (ImageView) view.findViewById(R.id.typeMark);
+            // TODO: use type of last filter, not a string, to discriminate.
+            if (position == getCount() - 1) {
+                typeView.setImageResource(R.drawable.ic_photoeditor_effects);
+            } else if (item.historyName().equalsIgnoreCase(mBorders)) {
+                typeView.setImageResource(R.drawable.ic_photoeditor_border);
+            } else if (item.historyName().equalsIgnoreCase(mStraighten)) {
+                typeView.setImageResource(R.drawable.ic_photoeditor_fix);
+            } else if (item.historyName().equalsIgnoreCase(mCrop)) {
+                typeView.setImageResource(R.drawable.ic_photoeditor_fix);
+            } else if (item.historyName().equalsIgnoreCase(mRotate)) {
+                typeView.setImageResource(R.drawable.ic_photoeditor_fix);
+            } else if (item.historyName().equalsIgnoreCase(mMirror)) {
+                typeView.setImageResource(R.drawable.ic_photoeditor_fix);
+            } else if (item.isFx()) {
+                typeView.setImageResource(R.drawable.ic_photoeditor_effects);
+            } else {
+                typeView.setImageResource(R.drawable.ic_photoeditor_color);
             }
         }
 
         return view;
     }
 
-
-    public void setOriginalBitmap(Bitmap originalBitmap) {
-        mOriginalBitmap = originalBitmap;
-    }
 }

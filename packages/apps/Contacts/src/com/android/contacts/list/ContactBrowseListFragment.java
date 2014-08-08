@@ -35,12 +35,9 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.common.widget.CompositeCursorAdapter.Partition;
-import com.android.contacts.common.list.AutoScrollListView;
-import com.android.contacts.common.list.ContactEntryListFragment;
-import com.android.contacts.common.list.ContactListAdapter;
-import com.android.contacts.common.list.ContactListFilter;
-import com.android.contacts.common.list.DirectoryPartition;
+import com.android.contacts.R;
 import com.android.contacts.util.ContactLoaderUtils;
+import com.android.contacts.widget.AutoScrollListView;
 
 import java.util.List;
 
@@ -274,6 +271,25 @@ public abstract class ContactBrowseListFragment extends
         mSelectedContactUri = uri;
         parseSelectedContactUri();
         checkSelection();
+    }
+
+    @Override
+    protected void prepareEmptyView() {
+        if (isSearchMode()) {
+            return;
+        } else if (isSyncActive()) {
+            if (hasIccCard()) {
+                setEmptyText(R.string.noContactsHelpTextWithSync);
+            } else {
+                setEmptyText(R.string.noContactsNoSimHelpTextWithSync);
+            }
+        } else {
+            if (hasIccCard()) {
+                setEmptyText(R.string.noContactsHelpText);
+            } else {
+                setEmptyText(R.string.noContactsNoSimHelpText);
+            }
+        }
     }
 
     public Uri getSelectedContactUri() {
@@ -620,6 +636,14 @@ public abstract class ContactBrowseListFragment extends
 
     public void removeFromFavorites(Uri contactUri) {
         if (mListener != null) mListener.onRemoveFromFavoritesAction(contactUri);
+    }
+
+    public void callContact(Uri contactUri) {
+        if (mListener != null) mListener.onCallContactAction(contactUri);
+    }
+
+    public void smsContact(Uri contactUri) {
+        if (mListener != null) mListener.onSmsContactAction(contactUri);
     }
 
     private void notifyInvalidSelection() {

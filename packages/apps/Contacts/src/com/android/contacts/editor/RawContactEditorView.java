@@ -18,8 +18,6 @@ package com.android.contacts.editor;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.os.Bundle;
-import android.os.Parcelable;
 import android.provider.ContactsContract.CommonDataKinds.GroupMembership;
 import android.provider.ContactsContract.CommonDataKinds.Organization;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
@@ -40,13 +38,13 @@ import android.widget.TextView;
 
 import com.android.contacts.GroupMetaDataLoader;
 import com.android.contacts.R;
-import com.android.contacts.common.model.account.AccountType;
-import com.android.contacts.common.model.account.AccountType.EditType;
-import com.android.contacts.common.model.dataitem.DataKind;
 import com.android.contacts.model.RawContactDelta;
-import com.android.contacts.common.model.ValuesDelta;
+import com.android.contacts.model.RawContactDelta.ValuesDelta;
 import com.android.contacts.model.RawContactModifier;
-import com.google.common.base.Objects;
+import com.android.contacts.model.account.AccountType;
+import com.android.contacts.model.account.AccountType.EditType;
+import com.android.contacts.model.dataitem.DataKind;
+import com.android.internal.util.Objects;
 
 import java.util.ArrayList;
 
@@ -62,19 +60,11 @@ import java.util.ArrayList;
  * {@link RawContactModifier} to ensure that {@link AccountType} are enforced.
  */
 public class RawContactEditorView extends BaseRawContactEditorView {
-    private static final String KEY_ORGANIZATION_VIEW_EXPANDED = "organizationViewExpanded";
-    private static final String KEY_SUPER_INSTANCE_STATE = "superInstanceState";
-
     private LayoutInflater mInflater;
 
     private StructuredNameEditorView mName;
     private PhoneticNameEditorView mPhoneticName;
     private GroupMembershipView mGroupMembershipView;
-
-    private ViewGroup mOrganizationSectionViewContainer;
-    private View mAddOrganizationButton;
-    private View mOrganizationView;
-    private boolean mOrganizationViewExpanded = false;
 
     private ViewGroup mFields;
 
@@ -149,13 +139,6 @@ public class RawContactEditorView extends BaseRawContactEditorView {
         mAccountTypeTextView = (TextView) findViewById(R.id.account_type);
         mAccountNameTextView = (TextView) findViewById(R.id.account_name);
 
-        mOrganizationView = mInflater.inflate(
-                R.layout.organization_editor_view_switcher, mFields, false);
-        mAddOrganizationButton = mOrganizationView.findViewById(
-                R.id.add_organization_button);
-        mOrganizationSectionViewContainer =
-                (ViewGroup) mOrganizationView.findViewById(R.id.container);
-
         mAddFieldButton = (Button) findViewById(R.id.button_add_field);
         mAddFieldButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -163,35 +146,6 @@ public class RawContactEditorView extends BaseRawContactEditorView {
                 showAddInformationPopupWindow();
             }
         });
-    }
-
-    @Override
-    protected Parcelable onSaveInstanceState() {
-        Bundle bundle = new Bundle();
-        bundle.putBoolean(KEY_ORGANIZATION_VIEW_EXPANDED, mOrganizationViewExpanded);
-        // super implementation of onSaveInstanceState returns null
-        bundle.putParcelable(KEY_SUPER_INSTANCE_STATE, super.onSaveInstanceState());
-        return bundle;
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Parcelable state) {
-        if (state instanceof Bundle) {
-            Bundle bundle = (Bundle) state;
-            mOrganizationViewExpanded = bundle.getBoolean(KEY_ORGANIZATION_VIEW_EXPANDED);
-            if (mOrganizationViewExpanded) {
-                // we have to manually perform the expansion here because
-                // onRestoreInstanceState is called after setState. So at the point
-                // of the creation of the organization view, mOrganizationViewExpanded
-                // does not have the correct value yet.
-                mOrganizationSectionViewContainer.setVisibility(VISIBLE);
-                mAddOrganizationButton.setVisibility(GONE);
-            }
-            super.onRestoreInstanceState(bundle.getParcelable(KEY_SUPER_INSTANCE_STATE));
-            return;
-        }
-        super.onRestoreInstanceState(state);
-        return;
     }
 
     /**
@@ -308,22 +262,27 @@ public class RawContactEditorView extends BaseRawContactEditorView {
                 } else {
                     // Otherwise provide the user with an "add organization" button that shows the
                     // EditText fields only when clicked
-                    mOrganizationSectionViewContainer.removeAllViews();
-                    mOrganizationSectionViewContainer.addView(section);
+                    final View organizationView = mInflater.inflate(
+                            R.layout.organization_editor_view_switcher, mFields, false);
+                    final View addOrganizationButton = organizationView.findViewById(
+                            R.id.add_organization_button);
+                    final ViewGroup organizationSectionViewContainer =
+                            (ViewGroup) organizationView.findViewById(R.id.container);
+
+                    organizationSectionViewContainer.addView(section);
 
                     // Setup the click listener for the "add organization" button
-                    mAddOrganizationButton.setOnClickListener(new OnClickListener() {
+                    addOrganizationButton.setOnClickListener(new OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             // Once the user expands the organization field, the user cannot
                             // collapse them again.
-                            EditorAnimator.getInstance().expandOrganization(mAddOrganizationButton,
-                                    mOrganizationSectionViewContainer);
-                            mOrganizationViewExpanded = true;
+                            EditorAnimator.getInstance().expandOrganization(addOrganizationButton,
+                                    organizationSectionViewContainer);
                         }
                     });
 
-                    mFields.addView(mOrganizationView);
+                    mFields.addView(organizationView);
                 }
             } else {
                 // Otherwise use generic section-based editors
@@ -421,7 +380,7 @@ public class RawContactEditorView extends BaseRawContactEditorView {
         return -1;
     }
 
-    public StructuredNameEditorView getNameEditor() {
+    public TextFieldsEditorView getNameEditor() {
         return mName;
     }
 

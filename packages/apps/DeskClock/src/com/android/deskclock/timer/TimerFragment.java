@@ -56,7 +56,6 @@ import com.android.deskclock.Utils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 
 
 public class TimerFragment extends DeskClockFragment
@@ -419,25 +418,22 @@ public class TimerFragment extends DeskClockFragment
         mTimersList = (ListView)v.findViewById(R.id.timers_list);
 
         // Use light's out if this fragment is within the DeskClock
-        LayoutParams params;
-        float dividerHeight = getResources().getDimension(R.dimen.timer_divider_height);
         if (getActivity() instanceof DeskClock) {
+            float dividerHeight = getResources().getDimension(R.dimen.timer_divider_height);
             View footerView = inflater.inflate(R.layout.blank_footer_view, mTimersList, false);
-            params = footerView.getLayoutParams();
+            LayoutParams params = footerView.getLayoutParams();
             params.height -= dividerHeight;
             footerView.setLayoutParams(params);
             footerView.setBackgroundResource(R.color.blackish);
             mTimersList.addFooterView(footerView);
+            View headerView = inflater.inflate(R.layout.blank_header_view, mTimersList, false);
+            params = headerView.getLayoutParams();
+            params.height -= dividerHeight;
+            headerView.setLayoutParams(params);
+            mTimersList.addHeaderView(headerView);
         } else {
             mTimersList.setBackgroundColor(getResources().getColor(R.color.blackish));
         }
-        // Make the top transparent header always visible so that the transition
-        // from the DeskClock app to the alert screen will be more pleasing visually.
-        View headerView = inflater.inflate(R.layout.blank_header_view, mTimersList, false);
-        params = headerView.getLayoutParams();
-        params.height -= dividerHeight;
-        headerView.setLayoutParams(params);
-        mTimersList.addHeaderView(headerView);
 
         mNewTimerPage = v.findViewById(R.id.new_timer_page);
         mTimersListPage = v.findViewById(R.id.timers_list_page);
@@ -539,11 +535,6 @@ public class TimerFragment extends DeskClockFragment
         }
         mLastVisibleView = null;   // Force a non animation setting of the view
         setPage();
-        // View was hidden in onPause, make sure it is visible now.
-        View v = getView();
-        if (v != null) {
-            getView().setVisibility(View.VISIBLE);
-        }
     }
 
     @Override
@@ -557,13 +548,6 @@ public class TimerFragment extends DeskClockFragment
             mAdapter.saveGlobalState ();
         }
         mPrefs.unregisterOnSharedPreferenceChangeListener(this);
-        // This is called because the lock screen was activated, the window stay
-        // active under it and when we unlock the screen, we see the old time for
-        // a fraction of a second.
-        View v = getView();
-        if (v != null) {
-            getView().setVisibility(View.INVISIBLE);
-        }
     }
 
     @Override
@@ -608,23 +592,13 @@ public class TimerFragment extends DeskClockFragment
     }
 
     public void stopAllTimesUpTimers() {
-        boolean notifyChange = false;
-        //  To avoid race conditions where a timer was dismissed and it is still in the timers list
-        // and can be picked again, create a temporary list of timers to be removed first and
-        // then removed them one by one
-        LinkedList<TimerObj> timesupTimers = new LinkedList<TimerObj>();
-        for (int i = 0; i  < mAdapter.getCount(); i ++) {
-            TimerObj timerObj = (TimerObj) mAdapter.getItem(i);
+        boolean notifyChange = 0 < mAdapter.getCount();
+        while (0 < mAdapter.getCount()) {
+            TimerObj timerObj = (TimerObj) mAdapter.getItem(0);
             if (timerObj.mState == TimerObj.STATE_TIMESUP) {
-                timesupTimers.addFirst(timerObj);
-                notifyChange = true;
+                onStopButtonPressed(timerObj);
             }
         }
-
-        while (timesupTimers.size() > 0) {
-            onStopButtonPressed(timesupTimers.remove());
-        }
-
         if (notifyChange) {
             SharedPreferences.Editor editor = mPrefs.edit();
             editor.putBoolean(Timers.FROM_ALERT, true);
@@ -665,7 +639,8 @@ public class TimerFragment extends DeskClockFragment
             mSeperator.setVisibility(View.VISIBLE);
             mCancel.setVisibility(View.VISIBLE);
         }
-        mTimerSetup.updateButtons();
+        mTimerSetup.updateStartButton();
+        mTimerSetup.updateDeleteButton();
         mLastVisibleView = mNewTimerPage;
     }
     private void gotoTimersView() {
@@ -722,7 +697,7 @@ public class TimerFragment extends DeskClockFragment
                         b.setInterpolator(new AccelerateInterpolator());
                         b.setDuration(200);
                         b.addListener(new AnimatorListenerAdapter() {
-                            @Override
+                                @Override
                             public void onAnimationEnd(Animator animation) {
                                 mAdapter.deleteTimer(t.mTimerId);
                                 if (mAdapter.getCount() == 0) {
@@ -760,12 +735,12 @@ public class TimerFragment extends DeskClockFragment
     private void onPlusOneButtonPressed(TimerObj t) {
         switch(t.mState) {
             case TimerObj.STATE_RUNNING:
-                t.addTime(60000); //60 seconds in millis
-                long timeLeft = t.updateTimeLeft(false);
-                ((TimerListItem)(t.mView)).setTime(timeLeft, false);
-                ((TimerListItem)(t.mView)).setLength(timeLeft);
-                mAdapter.notifyDataSetChanged();
-                updateTimersState(t, Timers.TIMER_UPDATE);
+                 t.addTime(60000); //60 seconds in millis
+                 long timeLeft = t.updateTimeLeft(false);
+                 ((TimerListItem)(t.mView)).setTime(timeLeft, false);
+                 ((TimerListItem)(t.mView)).setLength(timeLeft);
+                 mAdapter.notifyDataSetChanged();
+                 updateTimersState(t, Timers.TIMER_UPDATE);
                 break;
             case TimerObj.STATE_TIMESUP:
                 // +1 min when the time is up will restart the timer with 1 minute left.

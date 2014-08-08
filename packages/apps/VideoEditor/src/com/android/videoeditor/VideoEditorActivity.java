@@ -18,7 +18,6 @@ package com.android.videoeditor;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -666,7 +665,7 @@ public class VideoEditorActivity extends VideoEditorBaseActivity
     private String getVideoOutputMediaFileTitle() {
         long dateTaken = System.currentTimeMillis();
         Date date = new Date(dateTaken);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("'VID'_yyyyMMdd_HHmmss", Locale.US);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("'VID'_yyyyMMdd_HHmmss");
 
         return dateFormat.format(date);
     }

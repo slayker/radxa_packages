@@ -138,7 +138,8 @@ public class Email extends Application {
         }
         pm.setComponentEnabledSetting(
                 new ComponentName(context, MessageCompose.class),
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                enabled ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED :
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                 PackageManager.DONT_KILL_APP);
         pm.setComponentEnabledSetting(
                 new ComponentName(context, ShortcutPicker.class),

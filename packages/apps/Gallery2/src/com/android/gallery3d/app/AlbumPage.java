@@ -1,4 +1,5 @@
 /*
+ *$_FOR_ROCKCHIP_RBOX_$
  * Copyright (C) 2010 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +25,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Vibrator;
 import android.provider.MediaStore;
-import android.view.HapticFeedbackConstants;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -38,16 +39,15 @@ import com.android.gallery3d.data.MediaDetails;
 import com.android.gallery3d.data.MediaItem;
 import com.android.gallery3d.data.MediaObject;
 import com.android.gallery3d.data.MediaSet;
+import com.android.gallery3d.data.MtpDevice;
 import com.android.gallery3d.data.Path;
-import com.android.gallery3d.filtershow.FilterShowActivity;
-import com.android.gallery3d.filtershow.crop.CropExtras;
-import com.android.gallery3d.glrenderer.FadeTexture;
-import com.android.gallery3d.glrenderer.GLCanvas;
 import com.android.gallery3d.ui.ActionModeHandler;
 import com.android.gallery3d.ui.ActionModeHandler.ActionModeListener;
 import com.android.gallery3d.ui.AlbumSlotRenderer;
 import com.android.gallery3d.ui.DetailsHelper;
 import com.android.gallery3d.ui.DetailsHelper.CloseListener;
+import com.android.gallery3d.ui.FadeTexture;
+import com.android.gallery3d.ui.GLCanvas;
 import com.android.gallery3d.ui.GLRoot;
 import com.android.gallery3d.ui.GLView;
 import com.android.gallery3d.ui.PhotoFallbackEffect;
@@ -59,7 +59,10 @@ import com.android.gallery3d.util.Future;
 import com.android.gallery3d.util.GalleryUtils;
 import com.android.gallery3d.util.MediaSetUtils;
 
-import java.util.ArrayList;
+// $_rbox_$_modify_$_chengmingchuan_$20121212
+// $_rbox_$_modify_$_begin
+import android.view.KeyEvent;
+// $_rbox_$_modify_$_end
 
 public class AlbumPage extends ActivityState implements GalleryActionBar.ClusterRunner,
         SelectionManager.SelectionListener, MediaSet.SyncListener, GalleryActionBar.OnAlbumModeSelectedListener {
@@ -92,6 +95,7 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
     private AlbumDataLoader mAlbumDataAdapter;
 
     protected SelectionManager mSelectionManager;
+    private Vibrator mVibrator;
 
     private boolean mGetContent;
     private boolean mShowClusterMenu;
@@ -116,8 +120,17 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
 
     private Handler mHandler;
     private static final int MSG_PICK_PHOTO = 0;
+	
+    //$_rbox_$_modify_$_chengmingchuan_$20121212
+    //$_rbox_$_modify_$_begin
+    private final int  FOCUS_UP=1;
+    private final int  FOCUS_DOWN=2;
+    private final int  FOCUS_LEFT = 3;
+    private final int  FOCUS_RIGHT = 4;
+    private int mCurrentFocus=0;
 
-    private Menu mActionMenu;
+    private int mOldFocusIndex = 0;
+	//$_rbox_$_modify_$_end
 
     private PhotoFallbackEffect mResumeEffect;
     private PhotoFallbackEffect.PositionProvider mPositionProvider =
@@ -306,12 +319,13 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
                     PhotoPage.MSG_ALBUMPAGE_STARTED);
             data.putBoolean(PhotoPage.KEY_START_IN_FILMSTRIP,
                     startInFilmstrip);
-            data.putBoolean(PhotoPage.KEY_IN_CAMERA_ROLL, mMediaSet.isCameraRoll());
+//           data.putBoolean(PhotoPage.KEY_IN_CAMERA_ROLL, mMediaSet.isCameraRoll());
+            data.putBoolean(PhotoPage.KEY_IN_CAMERA_ROLL, false);
             if (startInFilmstrip) {
-                mActivity.getStateManager().switchState(this, FilmstripPage.class, data);
+                mActivity.getStateManager().switchState(this, PhotoPage.class, data);
             } else {
                 mActivity.getStateManager().startStateForResult(
-                            SinglePhotoPage.class, REQUEST_PHOTO, data);
+                            PhotoPage.class, REQUEST_PHOTO, data);
             }
         }
     }
@@ -320,12 +334,13 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
         DataManager dm = mActivity.getDataManager();
         Activity activity = mActivity;
         if (mData.getString(Gallery.EXTRA_CROP) != null) {
+            // TODO: Handle MtpImagew
             Uri uri = dm.getContentUri(item.getPath());
-            Intent intent = new Intent(FilterShowActivity.CROP_ACTION, uri)
+            Intent intent = new Intent(CropImage.ACTION_CROP, uri)
                     .addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
                     .putExtras(getData());
             if (mData.getParcelable(MediaStore.EXTRA_OUTPUT) == null) {
-                intent.putExtra(CropExtras.KEY_RETURN_DATA, true);
+                intent.putExtra(CropImage.KEY_RETURN_DATA, true);
             }
             activity.startActivity(intent);
             activity.finish();
@@ -374,13 +389,15 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
         mShowClusterMenu = data.getBoolean(KEY_SHOW_CLUSTER_MENU, false);
         mDetailsSource = new MyDetailsSource();
         Context context = mActivity.getAndroidContext();
+        mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
+        // Enable auto-select-all for mtp album
         if (data.getBoolean(KEY_AUTO_SELECT_ALL)) {
             mSelectionManager.selectAll();
         }
 
         mLaunchedFromPhotoPage =
-                mActivity.getStateManager().hasStateClass(FilmstripPage.class);
+                mActivity.getStateManager().hasStateClass(PhotoPage.class);
         mInCameraApp = data.getBoolean(PhotoPage.KEY_APP_BRIDGE, false);
 
         mHandler = new SynchronizedHandler(mActivity.getGLRoot()) {
@@ -444,7 +461,7 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
             mSelectionManager.leaveSelectionMode();
         }
         mAlbumView.setSlotFilter(null);
-        mActionModeHandler.pause();
+
         mAlbumDataAdapter.pause();
         mAlbumView.pause();
         DetailsHelper.pause();
@@ -457,6 +474,7 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
             mSyncTask = null;
             clearLoadingBit(BIT_LOADING_SYNC);
         }
+        mActionModeHandler.pause();
     }
 
     @Override
@@ -465,7 +483,6 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
         if (mAlbumDataAdapter != null) {
             mAlbumDataAdapter.setLoadingListener(null);
         }
-        mActionModeHandler.destroy();
     }
 
     private void initializeViews() {
@@ -543,7 +560,6 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
 
     @Override
     protected boolean onCreateActionBar(Menu menu) {
-        mActionMenu = menu;
         GalleryActionBar actionBar = mActivity.getGalleryActionBar();
         MenuInflater inflator = getSupportMenuInflater();
         if (mGetContent) {
@@ -555,6 +571,9 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
             inflator.inflate(R.menu.album, menu);
             actionBar.setTitle(mMediaSet.getName());
 
+            menu.findItem(R.id.action_slideshow)
+                    .setVisible(!(mMediaSet instanceof MtpDevice));
+
             FilterUtils.setupMenuItems(actionBar, mMediaSetPath, true);
 
             menu.findItem(R.id.action_group_by).setVisible(mShowClusterMenu);
@@ -564,26 +583,6 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
 
         }
         actionBar.setSubtitle(null);
-        // remove slideshow if all are videos
-        if (!mGetContent && allVideoFiles()) {
-            menu.findItem(R.id.action_slideshow).setVisible(false);
-        }
-        return true;
-    }
-
-    private boolean allVideoFiles() {
-        if (mMediaSet == null)
-            return false;
-        int count = mMediaSet.getMediaItemCount();
-        MediaItem item;
-        for (int i = 0; i < count; i++) {
-            item = mMediaSet.getMediaItem(i, 1).get(0);
-            if (item == null) {
-                continue;
-            }
-            if (item.getMimeType().trim().startsWith("image/"))
-                return false;
-        }
         return true;
     }
 
@@ -607,6 +606,111 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
             pickPhoto(targetPhoto, true);
         }
     }
+	
+
+	
+    //$_rbox_$_modify_$_chengmingchuan_$20121212
+    //$_rbox_$_modify_$_begin
+    private boolean moveFocus(int focus){
+	 if(-1 == mOldFocusIndex){
+	 	int value = mCurrentFocus%2;
+		 switch(focus){
+		 	case FOCUS_UP:
+				if(1 == value){mCurrentFocus--;}
+				else{
+					mOldFocusIndex=mCurrentFocus;
+					return false;
+				}
+				break;
+			case FOCUS_RIGHT:
+				mCurrentFocus += 2;
+				break;
+			case FOCUS_DOWN:
+				if(0 == value){mCurrentFocus++;}
+				else{
+					mOldFocusIndex=mCurrentFocus;
+					return false;
+				}
+				break;
+			case FOCUS_LEFT:
+				mCurrentFocus -= 2;
+				break;
+			default:
+				return false;
+		 }
+		 if(!mAlbumDataAdapter.isActive(mCurrentFocus) ){
+			if(mCurrentFocus<0){mCurrentFocus=0;}
+			if(focus == FOCUS_RIGHT){mCurrentFocus-=2;}
+			if(focus == FOCUS_DOWN){mCurrentFocus-=1;}
+			mOldFocusIndex=mCurrentFocus;
+			return false;
+		 }
+	 }
+	 if(-1 != mOldFocusIndex){
+	 	switch(focus){
+			case FOCUS_LEFT:
+			case FOCUS_RIGHT:
+				return false;
+			case FOCUS_UP:
+			case FOCUS_DOWN:
+				int value = mOldFocusIndex%2;
+				if(1==value){mOldFocusIndex-=1;}
+				break;
+			default:
+				return false;
+		 }
+	 	mCurrentFocus=mOldFocusIndex;
+	 }
+        MediaItem item = mAlbumDataAdapter.get(mCurrentFocus);
+        Path path = (item == null) ? null : item.getPath();
+	 mAlbumView.setHighlightItemPath(path);
+        mAlbumView.setPressedIndex(mCurrentFocus);
+	 mSlotView.setCenterIndex(mCurrentFocus);
+	 mSlotView.invalidate();
+	 mOldFocusIndex = -1;
+	 return true;
+    }
+	//$_rbox_$_modify_$_end
+
+    //$_rbox_$_modify_$_chengmingchuan_$20121212
+    //$_rbox_$_modify_$_begin
+    private boolean gotoPhotoPage(){
+	int slotIndex = mCurrentFocus;
+	if(!mAlbumDataAdapter.isActive(slotIndex)){
+	     return false;
+	}
+
+	this.onSingleTapUp(slotIndex);
+	return true;
+    }
+    //$_rbox_$_modify_$_end
+
+    //$_rbox_$_modify_$_chengmingchuan_$20121212
+    //$_rbox_$_modify_$_begin
+    @Override
+    protected boolean onKeyDown(int keyCode, KeyEvent event) {
+        /*cancel slotview heightlight*/
+        mAlbumView.setHighlightItemPath(null);
+	 mAlbumView.setPressedUp();
+    	 Log.d(TAG, "=========================================KeyCode="+ keyCode);
+	 switch(keyCode){
+	 	case KeyEvent.KEYCODE_DPAD_LEFT:
+			return this.moveFocus(FOCUS_LEFT);
+		case KeyEvent.KEYCODE_DPAD_RIGHT:
+			return this.moveFocus(FOCUS_RIGHT);
+		case KeyEvent.KEYCODE_DPAD_UP:
+			return this.moveFocus(FOCUS_UP);
+		case KeyEvent.KEYCODE_DPAD_DOWN:
+			return this.moveFocus(FOCUS_DOWN);
+		case KeyEvent.KEYCODE_DPAD_CENTER: 		
+		case KeyEvent.KEYCODE_ENTER:
+			return this.gotoPhotoPage(); 
+		default:
+			break;
+		}	 
+		return false;
+  }
+//$_rbox_$_modify_$_end
 
     @Override
     protected boolean onItemSelected(MenuItem item) {
@@ -676,32 +780,20 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
         }
     }
 
-    private void updateMenuItem() {
-        if (!mGetContent && allVideoFiles()) {
-            mActionMenu.findItem(R.id.action_slideshow).setVisible(false);
-        }
-    }
-
     @Override
     public void onSelectionModeChange(int mode) {
         switch (mode) {
             case SelectionManager.ENTER_SELECTION_MODE: {
                 mActionModeHandler.startActionMode();
-                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                if (mHapticsEnabled) mVibrator.vibrate(100);
                 break;
             }
             case SelectionManager.LEAVE_SELECTION_MODE: {
                 mActionModeHandler.finishActionMode();
                 mRootPane.invalidate();
-                updateMenuItem();
                 break;
             }
             case SelectionManager.SELECT_ALL_MODE: {
-                mActionModeHandler.updateSupportedOperation();
-                mRootPane.invalidate();
-                break;
-            }
-            case SelectionManager.DESELECT_ALL_MODE: {
                 mActionModeHandler.updateSupportedOperation();
                 mRootPane.invalidate();
                 break;

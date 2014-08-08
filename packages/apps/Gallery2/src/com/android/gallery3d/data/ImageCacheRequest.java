@@ -32,13 +32,15 @@ abstract class ImageCacheRequest implements Job<Bitmap> {
     private Path mPath;
     private int mType;
     private int mTargetSize;
+    private String mLocalFilePath;
 
     public ImageCacheRequest(GalleryApp application,
-            Path path, int type, int targetSize) {
+            Path path, int type, int targetSize,String localFilePath) {
         mApplication = application;
         mPath = path;
         mType = type;
         mTargetSize = targetSize;
+        mLocalFilePath = localFilePath;
     }
 
     private String debugTag() {
@@ -53,18 +55,20 @@ abstract class ImageCacheRequest implements Job<Bitmap> {
 
         BytesBuffer buffer = MediaItem.getBytesBufferPool().get();
         try {
-            boolean found = cacheService.getImageData(mPath, mType, buffer);
+            boolean found = cacheService.getImageData(mPath,mLocalFilePath, mType, buffer);
             if (jc.isCancelled()) return null;
             if (found) {
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                 Bitmap bitmap;
                 if (mType == MediaItem.TYPE_MICROTHUMBNAIL) {
-                    bitmap = DecodeUtils.decodeUsingPool(jc,
-                            buffer.data, buffer.offset, buffer.length, options);
+                    bitmap = DecodeUtils.decode(jc,
+                            buffer.data, buffer.offset, buffer.length, options,
+                            MediaItem.getMicroThumbPool());
                 } else {
-                    bitmap = DecodeUtils.decodeUsingPool(jc,
-                            buffer.data, buffer.offset, buffer.length, options);
+                    bitmap = DecodeUtils.decode(jc,
+                            buffer.data, buffer.offset, buffer.length, options,
+                            MediaItem.getThumbPool());
                 }
                 if (bitmap == null && !jc.isCancelled()) {
                     Log.w(TAG, "decode cached failed " + debugTag());
@@ -92,7 +96,7 @@ abstract class ImageCacheRequest implements Job<Bitmap> {
         byte[] array = BitmapUtils.compressToBytes(bitmap);
         if (jc.isCancelled()) return null;
 
-        cacheService.putImageData(mPath, mType, array);
+        cacheService.putImageData(mPath,mLocalFilePath, mType, array);
         return bitmap;
     }
 

@@ -13,8 +13,6 @@
 # limitations under the License.
 
 LOCAL_PATH:= $(call my-dir)
-
-ifeq (0,1)
 include $(CLEAR_VARS)
 
 #
@@ -22,6 +20,8 @@ include $(CLEAR_VARS)
 #
 
 LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := android-common com.android.emailcommon
 LOCAL_STATIC_JAVA_LIBRARIES += calendar-common
@@ -34,7 +34,8 @@ LOCAL_EMMA_COVERAGE_FILTER += +com.android.exchange.*
 
 #include $(BUILD_PACKAGE)
 
-endif
+include $(CLEAR_VARS)
+
 
 ##################################################
 # Build all sub-directories

@@ -1,4 +1,5 @@
 /*
+ * $_FOR_ROCKCHIP_RBOX_$
  * Copyright (C) 2010 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,14 +36,8 @@ import com.android.gallery3d.common.Utils;
 import com.android.gallery3d.data.MediaItem;
 import com.android.gallery3d.data.MediaObject;
 import com.android.gallery3d.data.Path;
-import com.android.gallery3d.glrenderer.GLCanvas;
-import com.android.gallery3d.glrenderer.RawTexture;
-import com.android.gallery3d.glrenderer.ResourceTexture;
-import com.android.gallery3d.glrenderer.StringTexture;
-import com.android.gallery3d.glrenderer.Texture;
 import com.android.gallery3d.util.GalleryUtils;
 import com.android.gallery3d.util.RangeArray;
-import com.android.gallery3d.util.UsageStatistics;
 
 public class PhotoView extends GLView {
     @SuppressWarnings("unused")
@@ -58,7 +53,7 @@ public class PhotoView extends GLView {
         public int height;
     }
 
-    public interface Model extends TileImageView.TileSource {
+    public interface Model extends TileImageView.Model {
         public int getCurrentIndex();
         public void moveTo(int index);
 
@@ -163,6 +158,15 @@ public class PhotoView extends GLView {
     private static float TRANSITION_SCALE_FACTOR = 0.74f;
     private static final int ICON_RATIO = 6;
 
+    //$_rbox_$_modify_$_chengmingchuan_$_20121212_$_[Info: Handle Keycode]
+    // $_rbox_$_modify_$_begin
+    private static final int TRANS_NONE = 0;
+    private static final int TRANS_SWITCH_NEXT = 3;
+    private static final int TRANS_SWITCH_PREVIOUS = 4;
+    private int mTransitionMode = TRANS_NONE;
+    // $_rbox_$_modify_$_end
+
+
     // whether we want to apply card deck effect in page mode.
     private static final boolean CARD_EFFECT = true;
 
@@ -180,9 +184,8 @@ public class PhotoView extends GLView {
     public static final int SCREEN_NAIL_MAX = 3;
 
     // These are constants for the delete gesture.
-    private static final int SWIPE_ESCAPE_VELOCITY = 500; // dp/sec
-    private static final int MAX_DISMISS_VELOCITY = 2500; // dp/sec
-    private static final int SWIPE_ESCAPE_DISTANCE = 150; // dp
+    private static final int SWIPE_ESCAPE_VELOCITY = 2500; // dp/sec
+    private static final int MAX_DISMISS_VELOCITY = 4000; // dp/sec
 
     // The picture entries, the valid index is from -SCREEN_NAIL_MAX to
     // SCREEN_NAIL_MAX.
@@ -228,6 +231,18 @@ public class PhotoView extends GLView {
     private static final int HOLD_TOUCH_DOWN = 1;
     private static final int HOLD_CAPTURE_ANIMATION = 2;
     private static final int HOLD_DELETE = 4;
+
+    //$_rbox_$_modify_$_chengmingchuan_$_20121212_$_[Info: Handle Keycode]
+    // $_rbox_$_modify_$_begin 
+    public final int ZOOMIN    = 0;
+    public final int ZOOMOUT = 1;
+    public int mZoomCount = 0;
+    public final int  SLIDE_LEFT=1;
+    public final int  SLIDE_RIGHT=2;
+
+    private final int ZOOMMAX=3;
+    private float mScale = 1.0f;
+     // $_rbox_$_modify_$_end
 
     // mTouchBoxIndex is the index of the box that is touched by the down
     // gesture in film mode. The value Integer.MAX_VALUE means no box was
@@ -505,6 +520,8 @@ public class PhotoView extends GLView {
         }
 
         updateCameraRect();
+        mTileView.isGifStream();
+        mTileView.decodePhoto();
         mPositionController.setConstrainedFrame(mCameraRect);
         if (changeSize) {
             mPositionController.setViewSize(getWidth(), getHeight());
@@ -574,6 +591,49 @@ public class PhotoView extends GLView {
         }
         return mCompensation;
     }
+
+    //$_rbox_$_modify_$_chengmingchuan_$_20121212_$_[Info: Handle Keycode]
+    // $_rbox_$_modify_$_begin
+    public boolean scalingImage(int zoom){
+	     if (mTransitionMode != TRANS_NONE) return false;
+            PositionController controller = mPositionController;
+	     if(controller.isAtMinimalScale()){mZoomCount=0;}
+	     if(mZoomCount==0){mScale= controller.getCurrentScale();}
+	     if(zoom == ZOOMOUT && (mZoomCount<ZOOMMAX)){
+		     mZoomCount++;
+	            controller.zoomIn(getWidth()/2, getHeight()/2, Math.max((1.0f+mZoomCount*0.3f), mScale * (1.0f+mZoomCount*0.3f)));
+		     return true;
+	     }
+	     if((zoom == ZOOMIN) && (mZoomCount>0)){
+		  mZoomCount--;
+		  if(0==mZoomCount){controller.resetToFullView();return true;}
+		  controller.zoomIn(getWidth()/2, getHeight()/2, Math.max((1.0f+mZoomCount*0.3f), mScale * (1.0f+mZoomCount*0.3f)));
+		  return true;
+            }
+	     return false;
+    }
+    // $_rbox_$_modify_$_end
+
+    //$_rbox_$_modify_$_chengmingchuan_$_20121212_$_[Info: Handle Keycode]
+    // $_rbox_$_modify_$_begin
+    public boolean slideShowImage(int dir, boolean showbar){
+        if (mTransitionMode != TRANS_NONE) return false;
+	 if (true == showbar) return false;
+
+	 if(dir==SLIDE_RIGHT){
+	 	slideToNextPicture();
+		Log.d(TAG, "SlideShowImage(SLIDE_RIGHT) OK!");
+		return true;
+	 }
+	 if(dir==SLIDE_LEFT){
+	 	slideToPrevPicture();
+		Log.d(TAG, "SlideShowImage(SLIDE_LEFT) OK!");
+		return true;
+	 }
+	 return false;
+    }
+    // $_rbox_$_modify_$_end
+
 
     ////////////////////////////////////////////////////////////////////////////
     //  Pictures
@@ -1077,19 +1137,19 @@ public class PhotoView extends GLView {
         }
 
         @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        public boolean onFling(float velocityX, float velocityY) {
             if (mIgnoreSwipingGesture) return true;
             if (mModeChanged) return true;
             if (swipeImages(velocityX, velocityY)) {
                 mIgnoreUpEvent = true;
             } else {
-                flingImages(velocityX, velocityY, Math.abs(e2.getY() - e1.getY()));
+                flingImages(velocityX, velocityY);
             }
             mHadFling = true;
             return true;
         }
 
-        private boolean flingImages(float velocityX, float velocityY, float dY) {
+        private boolean flingImages(float velocityX, float velocityY) {
             int vx = (int) (velocityX + 0.5f);
             int vy = (int) (velocityY + 0.5f);
             if (!mFilmMode) {
@@ -1106,14 +1166,16 @@ public class PhotoView extends GLView {
             }
             int maxVelocity = GalleryUtils.dpToPixel(MAX_DISMISS_VELOCITY);
             int escapeVelocity = GalleryUtils.dpToPixel(SWIPE_ESCAPE_VELOCITY);
-            int escapeDistance = GalleryUtils.dpToPixel(SWIPE_ESCAPE_DISTANCE);
             int centerY = mPositionController.getPosition(mTouchBoxIndex)
                     .centerY();
             boolean fastEnough = (Math.abs(vy) > escapeVelocity)
                     && (Math.abs(vy) > Math.abs(vx))
-                    && ((vy > 0) == (centerY > getHeight() / 2))
-                    && dY >= escapeDistance;
+                    && ((vy > 0) == (centerY > getHeight() / 2));
             if (fastEnough) {
+            	if(mModel.getMediaItem(mTouchBoxIndex).getContentUri().equals(mTileView.mUri)){
+            		switchToNextImage();
+            	    mTileView.setGifPic(false);
+            	}
                 vy = Math.min(vy, maxVelocity);
                 int duration = mPositionController.flingFilmY(mTouchBoxIndex, vy);
                 if (duration >= 0) {
@@ -1181,15 +1243,7 @@ public class PhotoView extends GLView {
                     // Removing the touch down flag allows snapback to happen
                     // for film mode change.
                     mHolding &= ~HOLD_TOUCH_DOWN;
-                    if (mFilmMode) {
-                        UsageStatistics.setPendingTransitionCause(
-                                UsageStatistics.TRANSITION_PINCH_OUT);
-                    } else {
-                        UsageStatistics.setPendingTransitionCause(
-                                UsageStatistics.TRANSITION_PINCH_IN);
-                    }
                     setFilmMode(!mFilmMode);
-
 
                     // We need to call onScaleEnd() before setting mModeChanged
                     // to true.
@@ -1254,10 +1308,7 @@ public class PhotoView extends GLView {
             if (mFilmMode) {
                 int xi = (int) (x + 0.5f);
                 int yi = (int) (y + 0.5f);
-                // We only care about being within the x bounds, necessary for
-                // handling very wide images which are otherwise very hard to fling
-                mTouchBoxIndex = mPositionController.hitTest(xi, getHeight() / 2);
-
+                mTouchBoxIndex = mPositionController.hitTest(xi, yi);
                 if (mTouchBoxIndex < mPrevBound || mTouchBoxIndex > mNextBound) {
                     mTouchBoxIndex = Integer.MAX_VALUE;
                 } else {
@@ -1352,6 +1403,7 @@ public class PhotoView extends GLView {
     }
 
     public void resume() {
+    	mTileView.isGifStream();
         mTileView.prepareTextures();
         mPositionController.skipToFinalPosition();
     }
@@ -1423,11 +1475,6 @@ public class PhotoView extends GLView {
 
     @Override
     protected void render(GLCanvas canvas) {
-        if (mFirst) {
-            // Make sure the fields are properly initialized before checking
-            // whether isCamera()
-            mPictures.get(0).reload();
-        }
         // Check if the camera preview occupies the full screen.
         boolean full = !mFilmMode && mPictures.get(0).isCamera()
                 && mPositionController.isCenter()
@@ -1623,18 +1670,26 @@ public class PhotoView extends GLView {
 
     public void switchToImage(int index) {
         mModel.moveTo(index);
+        mTileView.isGifStream();
+        mTileView.decodePhoto();
     }
 
     private void switchToNextImage() {
         mModel.moveTo(mModel.getCurrentIndex() + 1);
+        mTileView.isGifStream();
+        mTileView.decodePhoto();
     }
 
     private void switchToPrevImage() {
         mModel.moveTo(mModel.getCurrentIndex() - 1);
+        mTileView.isGifStream();
+        mTileView.decodePhoto();
     }
 
     private void switchToFirstImage() {
         mModel.moveTo(0);
+        mTileView.isGifStream();
+        mTileView.decodePhoto();
     }
 
     ////////////////////////////////////////////////////////////////////////////

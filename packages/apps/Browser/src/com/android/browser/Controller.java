@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.DownloadManager;
 import android.app.ProgressDialog;
+import android.app.NotificationManager;
 import android.content.ClipboardManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -98,7 +99,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -108,6 +108,12 @@ public class Controller
         implements WebViewController, UiController, ActivityController {
 
     private static final String LOGTAG = "Controller";
+    private static final boolean DEBUG = true;
+    private void LOGD(String msg){
+    	if(DEBUG){
+    		Log.d(LOGTAG,msg);
+    	}
+    }
     private static final String SEND_APP_ID_EXTRA =
         "android.speech.extras.SEND_APPLICATION_ID_EXTRA";
     private static final String INCOGNITO_URI = "browser:incognito";
@@ -260,7 +266,7 @@ public class Controller
 
     @Override
     public void start(final Intent intent) {
-        if (BrowserWebView.isClassic()) WebViewClassic.setShouldMonitorWebCoreThread();
+        WebViewClassic.setShouldMonitorWebCoreThread();
         // mCrashRecoverHandler has any previously saved state.
         mCrashRecoveryHandler.startRecovery(intent);
     }
@@ -356,7 +362,7 @@ public class Controller
         }
         // Read JavaScript flags if it exists.
         String jsFlags = getSettings().getJsEngineFlags();
-        if (jsFlags.trim().length() != 0 && BrowserWebView.isClassic()) {
+        if (jsFlags.trim().length() != 0) {
             WebViewClassic.fromWebView(getCurrentWebView()).setJsFlags(jsFlags);
         }
         if (intent != null
@@ -505,9 +511,8 @@ public class Controller
                                 break;
                             case R.id.open_newtab_context_menu_id:
                                 final Tab parent = mTabControl.getCurrentTab();
-                                boolean privateBrowsing = msg.arg2 == 1;
-                                openTab(url, parent != null && privateBrowsing,
-                                        !mSettings.openInBackground(), true, parent);
+                                openTab(url, parent,
+                                        !mSettings.openInBackground(), true);
                                 break;
                             case R.id.copy_link_context_menu_id:
                                 copy(url);
@@ -637,6 +642,11 @@ public class Controller
             Log.e(LOGTAG, "BrowserActivity is already paused.");
             return;
         }
+
+        if (mSettings.isNeverSleepEnabled()) {
+            ((BrowserActivity)mActivity).releaseWakeLock();
+        }
+
         mActivityPaused = true;
         Tab tab = mTabControl.getCurrentTab();
         if (tab != null) {
@@ -694,6 +704,10 @@ public class Controller
             Log.e(LOGTAG, "BrowserActivity is already resumed.");
             return;
         }
+        if (mSettings.isNeverSleepEnabled()) {
+            ((BrowserActivity)mActivity).acquireWakeLock();
+        }
+
         mSettings.setLastRunPaused(false);
         mActivityPaused = false;
         Tab current = mTabControl.getCurrentTab();
@@ -1197,12 +1211,7 @@ public class Controller
                     long id = intent.getLongExtra(
                             ComboViewActivity.EXTRA_OPEN_SNAPSHOT, -1);
                     if (id >= 0) {
-                        if (BrowserWebView.isClassic()) {
-                            createNewSnapshotTab(id, true);
-                        } else {
-                            Toast.makeText(mActivity, "Snapshot Tab requires WebViewClassic",
-                                Toast.LENGTH_LONG).show();
-                        }
+                        createNewSnapshotTab(id, true);
                     }
                 }
                 break;
@@ -1413,42 +1422,6 @@ public class Controller
                                 });
                     }
                 }
-                newTabItem = menu.findItem(R.id.open_newtab_incognito_context_menu_id);
-                newTabItem.setTitle(getSettings().openInBackground()
-                        ? R.string.contextmenu_openlink_incognito_newwindow_background
-                                : R.string.contextmenu_openlink_incognito_newwindow);
-                newTabItem.setVisible(showNewTab);
-                newTabItem.setVisible(!mTabControl.getCurrentTab().isPrivateBrowsingEnabled());
-                if (showNewTab) {
-                    if (WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE == type) {
-                        newTabItem.setOnMenuItemClickListener(
-                                new MenuItem.OnMenuItemClickListener() {
-                                    @Override
-                                    public boolean onMenuItemClick(MenuItem item) {
-                                        final HashMap<String, WebView> hrefMap =
-                                            new HashMap<String, WebView>();
-                                        hrefMap.put("webview", webview);
-                                        final Message msg = mHandler.obtainMessage(
-                                                FOCUS_NODE_HREF,
-                                                R.id.open_newtab_context_menu_id,
-                                                1, hrefMap);
-                                        webview.requestFocusNodeHref(msg);
-                                        return true;
-                                    }
-                                });
-                    } else {
-                        newTabItem.setOnMenuItemClickListener(
-                                new MenuItem.OnMenuItemClickListener() {
-                                    @Override
-                                    public boolean onMenuItemClick(MenuItem item) {
-                                        final Tab parent = mTabControl.getCurrentTab();
-                                        openTab(extra, parent != null,
-                                                !mSettings.openInBackground(), true, parent);
-                                        return true;
-                                    }
-                                });
-                    }
-                }
                 if (type == WebView.HitTestResult.SRC_ANCHOR_TYPE) {
                     break;
                 }
@@ -1549,12 +1522,14 @@ public class Controller
         boolean isHome = false;
         boolean isDesktopUa = false;
         boolean isLive = false;
+        boolean isNeverSleep = false;
         if (tab != null) {
             canGoBack = tab.canGoBack();
             canGoForward = tab.canGoForward();
             isHome = mSettings.getHomePage().equals(tab.getUrl());
             isDesktopUa = mSettings.hasDesktopUseragent(tab.getWebView());
             isLive = !tab.isSnapshot();
+            isNeverSleep = mSettings.isNeverSleepEnabled();
         }
         final MenuItem back = menu.findItem(R.id.back_menu_id);
         back.setEnabled(canGoBack);
@@ -1591,8 +1566,8 @@ public class Controller
         final MenuItem uaSwitcher = menu.findItem(R.id.ua_desktop_menu_id);
         uaSwitcher.setChecked(isDesktopUa);
 
-        final MenuItem fullscreen = menu.findItem(R.id.fullscreen_menu_id);
-        fullscreen.setChecked(mUi.isFullscreen());
+        final MenuItem neverSleep = menu.findItem(R.id.never_sleep_menu_id);
+        neverSleep.setChecked(isNeverSleep);
 
         menu.setGroupVisible(R.id.LIVE_MENU, isLive);
         menu.setGroupVisible(R.id.SNAPSHOT_MENU, !isLive);
@@ -1731,8 +1706,15 @@ public class Controller
                 toggleUserAgent();
                 break;
 
-            case R.id.fullscreen_menu_id:
-                toggleFullscreen();
+            case R.id.never_sleep_menu_id:
+                if (mSettings.isNeverSleepEnabled()) {
+                    mSettings.setNeverSleepEnabled(false);
+                    ((BrowserActivity)mActivity).releaseWakeLock();
+                } else {
+                    mSettings.setNeverSleepEnabled(true);
+                    ((BrowserActivity)mActivity).acquireWakeLock();
+                }
+                break;
 
             case R.id.window_one_menu_id:
             case R.id.window_two_menu_id:
@@ -1831,11 +1813,6 @@ public class Controller
         WebView web = getCurrentWebView();
         mSettings.toggleDesktopUseragent(web);
         web.loadUrl(web.getOriginalUrl());
-    }
-
-    @Override
-    public void toggleFullscreen() {
-        mUi.setFullscreen(!mUi.isFullscreen());
     }
 
     @Override
@@ -2284,7 +2261,7 @@ public class Controller
          */
         private File getTarget(DataUri uri) throws IOException {
             File dir = mActivity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-            DateFormat format = new SimpleDateFormat(IMAGE_BASE_FORMAT, Locale.US);
+            DateFormat format = new SimpleDateFormat(IMAGE_BASE_FORMAT);
             String nameBase = format.format(new Date());
             String mimeType = uri.getMimeType();
             MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
@@ -2311,9 +2288,7 @@ public class Controller
         }
 
         public SelectText(WebView webView) {
-          if (BrowserWebView.isClassic()) {
-              mWebView = WebViewClassic.fromWebView(webView);
-          }
+            mWebView = WebViewClassic.fromWebView(webView);
         }
 
     }
@@ -2544,6 +2519,10 @@ public class Controller
 
     protected void closeCurrentTab(boolean andQuit) {
         if (mTabControl.getTabCount() == 1) {
+        	//we clear the notification
+        	
+        	NotificationManager mNotificationManager = (NotificationManager)mActivity.getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.cancel(com.android.browser.Browser.NOTIFICATIONID);
             mCrashRecoveryHandler.clearState();
             mTabControl.removeTab(getCurrentTab());
             mActivity.finish();
@@ -2601,7 +2580,7 @@ public class Controller
         // In case the user enters nothing.
         if (url != null && url.length() != 0 && tab != null && view != null) {
             url = UrlUtils.smartUrlFilter(url);
-            if (!((BrowserWebView) view).getWebViewClient().
+            if (!WebViewClassic.fromWebView(view).getWebViewClient().
                     shouldOverrideUrlLoading(view, url)) {
                 loadUrl(tab, url);
             }
@@ -2794,14 +2773,14 @@ public class Controller
                 }
                 break;
             case KeyEvent.KEYCODE_A:
-                if (ctrl && BrowserWebView.isClassic()) {
+                if (ctrl) {
                     WebViewClassic.fromWebView(webView).selectAll();
                     return true;
                 }
                 break;
 //          case KeyEvent.KEYCODE_B:    // menu
             case KeyEvent.KEYCODE_C:
-                if (ctrl && BrowserWebView.isClassic()) {
+                if (ctrl) {
                     WebViewClassic.fromWebView(webView).copySelection();
                     return true;
                 }
@@ -2916,18 +2895,11 @@ public class Controller
 
     @Override
     public void startVoiceRecognizer() {
-        try{
-            Intent voice = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-            voice.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-            voice.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-            mActivity.startActivityForResult(voice, VOICE_RESULT);
-        }
-        catch(android.content.ActivityNotFoundException ex)
-        {
-            //if could not find the Activity
-            Log.e(LOGTAG, "Could not start voice recognizer activity");
-        }
+        Intent voice = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        voice.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, 
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        voice.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        mActivity.startActivityForResult(voice, VOICE_RESULT);
     }
 
     @Override
@@ -2960,4 +2932,10 @@ public class Controller
         return mBlockEvents;
     }
 
+	@Override
+	public void onUpdatePlayWindowVisible(Tab tab) {
+		// TODO Auto-generated method stub
+		
+		mUi.updatePlayWindowVisible(tab);
+	}
 }

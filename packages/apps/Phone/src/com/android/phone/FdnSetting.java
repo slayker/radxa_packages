@@ -1,8 +1,5 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
- * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
- *
- * Not a Contribution.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +26,12 @@ import android.os.Message;
 import android.util.Log;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
-import android.telephony.MSimTelephonyManager;
-import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.android.internal.telephony.CommandException;
 import com.android.internal.telephony.Phone;
-
-import static com.android.internal.telephony.MSimConstants.SUBSCRIPTION_KEY;
 
 /**
  * FDN settings UI for the Phone app.
@@ -65,11 +57,9 @@ public class FdnSetting extends PreferenceActivity
     // Preference is handled solely in xml.
     private static final String BUTTON_FDN_ENABLE_KEY = "button_fdn_enable_key";
     private static final String BUTTON_CHANGE_PIN2_KEY = "button_change_pin2_key";
-    private static final String BUTTON_FDN_KEY = "button_fdn_list_key";
 
     private EditPinPreference mButtonEnableFDN;
     private EditPinPreference mButtonChangePin2;
-    private PreferenceScreen mSubscriptionPrefFDN;
 
     // State variables
     private String mOldPin;
@@ -94,8 +84,6 @@ public class FdnSetting extends PreferenceActivity
     // size limits for the pin.
     private static final int MIN_PIN_LENGTH = 4;
     private static final int MAX_PIN_LENGTH = 8;
-
-    private int mSubscription = 0;
 
     /**
      * Delegate to the respective handlers.
@@ -255,23 +243,16 @@ public class FdnSetting extends PreferenceActivity
                 // a toast, or just update the UI.
                 case EVENT_PIN2_ENTRY_COMPLETE: {
                         AsyncResult ar = (AsyncResult) msg.obj;
-                        if (ar.exception != null && ar.exception instanceof CommandException) {
+                        if (ar.exception != null) {
                             // see if PUK2 is requested and alert the user accordingly.
-                            CommandException.Error e =
-                                    ((CommandException) ar.exception).getCommandError();
-                            switch (e) {
-                                case SIM_PUK2:
-                                    // make sure we set the PUK2 state so that we can skip
-                                    // some redundant behaviour.
-                                    displayMessage(R.string.fdn_enable_puk2_requested);
-                                    resetPinChangeStateForPUK2();
-                                    break;
-                                case PASSWORD_INCORRECT:
-                                    displayMessage(R.string.pin2_invalid);
-                                    break;
-                                default:
-                                    displayMessage(R.string.fdn_failed);
-                                    break;
+                            CommandException ce = (CommandException) ar.exception;
+                            if (ce.getCommandError() == CommandException.Error.SIM_PUK2) {
+                                // make sure we set the PUK2 state so that we can skip
+                                // some redundant behaviour.
+                                displayMessage(R.string.fdn_enable_puk2_requested);
+                                resetPinChangeStateForPUK2();
+                            } else {
+                                displayMessage(R.string.pin2_invalid);
                             }
                         }
                         updateEnableFDN();
@@ -285,7 +266,7 @@ public class FdnSetting extends PreferenceActivity
                         if (DBG)
                             log("Handle EVENT_PIN2_CHANGE_COMPLETE");
                         AsyncResult ar = (AsyncResult) msg.obj;
-                        if (ar.exception != null && ar.exception instanceof CommandException) {
+                        if (ar.exception != null) {
                             CommandException ce = (CommandException) ar.exception;
                             if (ce.getCommandError() == CommandException.Error.SIM_PUK2) {
                                 // throw an alert dialog on the screen, displaying the
@@ -311,13 +292,8 @@ public class FdnSetting extends PreferenceActivity
                                 }
                             }
                         } else {
-                            if (mPinChangeState == PIN_CHANGE_PUK) {
-                                displayMessage(R.string.pin2_unblocked);
-                            } else {
-                                displayMessage(R.string.pin2_changed);
-                            }
-
                             // reset to normal behaviour on successful change.
+                            displayMessage(R.string.pin2_changed);
                             resetPinChangeState();
                         }
                     }
@@ -340,17 +316,8 @@ public class FdnSetting extends PreferenceActivity
      * Display a toast for message, like the rest of the settings.
      */
     private final void displayMessage(int strId) {
-        String msg = getString(strId);
-        if ((strId == R.string.badPin2) || (strId == R.string.badPuk2) ||
-                (strId == R.string.pin2_invalid)) {
-            int attemptsRemaining = mPhone.getIccCard().getIccPin2RetryCount();
-            if (attemptsRemaining >= 0) {
-                msg = getString(strId) + getString(R.string.pin2_attempts) + attemptsRemaining;
-            }
-        }
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).
-                show();
-
+        Toast.makeText(this, getString(strId), Toast.LENGTH_SHORT)
+            .show();
     }
 
     /**
@@ -454,20 +421,9 @@ public class FdnSetting extends PreferenceActivity
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
-        if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
-            addPreferencesFromResource(R.xml.msim_fdn_setting);
-        } else {
-            addPreferencesFromResource(R.xml.fdn_setting);
-        }
+        addPreferencesFromResource(R.xml.fdn_setting);
 
-        // getting selected subscription
-        mSubscription = getIntent().getIntExtra(SUBSCRIPTION_KEY,
-                PhoneGlobals.getInstance().getDefaultSubscription());
-        Log.d(LOG_TAG, "Getting FDNSetting subscription =" + mSubscription);
-        mPhone = PhoneGlobals.getInstance().getPhone(mSubscription);
-
-        mSubscriptionPrefFDN  = (PreferenceScreen) findPreference(BUTTON_FDN_KEY);
-        mSubscriptionPrefFDN.getIntent().putExtra(SUBSCRIPTION_KEY, mSubscription);
+        mPhone = PhoneGlobals.getPhone();
 
         //get UI object references
         PreferenceScreen prefSet = getPreferenceScreen();
@@ -502,7 +458,7 @@ public class FdnSetting extends PreferenceActivity
     @Override
     protected void onResume() {
         super.onResume();
-        mPhone = PhoneGlobals.getInstance().getPhone(mSubscription);
+        mPhone = PhoneGlobals.getPhone();
         updateEnableFDN();
     }
 

@@ -14,26 +14,27 @@
      limitations under the License.
 -->
 
-<view
-    class="com.android.contacts.widget.TransitionAnimationView"
-    android:id="@+id/people_view"
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ex="http://schemas.android.com/apk/res-auto"
+    xmlns:ex="http://schemas.android.com/apk/res/com.android.contacts"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <com.android.contacts.widget.InterpolatingLayout
         android:id="@+id/main_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
         android:splitMotionEvents="true">
 
         <FrameLayout
             android:id="@+id/browse_view"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:minWidth="100dip"
+            ex:layout_narrowParentWidth="1000dip"
+            ex:layout_narrowWidth="276dip"
+            ex:layout_wideParentWidth="1280dip"
+            ex:layout_wideWidth="376dip"
             android:background="@drawable/list_background_holo"
             android:visibility="gone">
 
@@ -55,9 +56,14 @@
         <view
             class="com.android.contacts.widget.TransitionAnimationView"
             android:id="@+id/contact_details_view"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="2"
+            ex:layout_narrowParentWidth="800dip"
+            ex:layout_narrowMarginLeft="0dip"
+            ex:layout_narrowMarginRight="0dip"
+            ex:layout_wideParentWidth="1280dip"
+            ex:layout_wideMarginLeft="0dip"
+            ex:layout_wideMarginRight="0dip"
             android:visibility="gone">
 
             <!-- This layout includes all possible views needed for a contact detail page -->
@@ -79,9 +85,14 @@
         <view
             class="com.android.contacts.widget.TransitionAnimationView"
             android:id="@+id/group_details_view"
-            android:layout_width="0dip"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="2"
+            ex:layout_narrowParentWidth="800dip"
+            ex:layout_narrowMarginLeft="0dip"
+            ex:layout_narrowMarginRight="0dip"
+            ex:layout_wideParentWidth="1280dip"
+            ex:layout_wideMarginLeft="0dip"
+            ex:layout_wideMarginRight="0dip"
             android:visibility="gone">
 
             <!-- This is the group detail page -->
@@ -112,10 +123,8 @@
                     class="com.android.contacts.list.ContactTileListFragment"
                     android:layout_height="match_parent"
                     android:layout_width="match_parent"
-                    android:layout_marginLeft="32dip"
                     android:layout_marginRight="32dip"
-                    android:layout_marginStart="32dip"
-                    android:layout_marginEnd="32dip"/>
+                    android:layout_marginLeft="32dip"/>
 
             </FrameLayout>
 
@@ -127,18 +136,16 @@
                 android:layout_height="match_parent"
                 android:layout_weight="3"
                 android:layout_marginTop="32dip"
-                android:layout_marginRight="16dip"
-                android:layout_marginEnd="16dip"/>
+                android:layout_marginRight="16dip"/>
 
         </LinearLayout>
 
-    </LinearLayout>
+    </com.android.contacts.widget.InterpolatingLayout>
 
     <com.android.contacts.widget.InterpolatingLayout
         android:id="@+id/contacts_unavailable_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/background_holo_light"
         android:visibility="gone">
 
         <FrameLayout
@@ -154,4 +161,4 @@
             android:paddingBottom="20dip" />
 
     </com.android.contacts.widget.InterpolatingLayout>
-</view>
+</FrameLayout>

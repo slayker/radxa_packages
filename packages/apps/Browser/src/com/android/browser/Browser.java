@@ -29,6 +29,8 @@ public class Browser extends Application {
 
     // Set to true to enable extra debug logging.
     final static boolean LOGD_ENABLED = true;
+    
+    final static int NOTIFICATIONID = R.layout.add_new_bookmark;
 
     @Override
     public void onCreate() {

@@ -27,8 +27,8 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 
 import com.android.gallery3d.R;
+import com.android.gallery3d.data.BitmapPool;
 import com.android.gallery3d.data.DataSourceType;
-import com.android.photos.data.GalleryBitmapPool;
 import com.android.gallery3d.util.ThreadPool;
 import com.android.gallery3d.util.ThreadPool.JobContext;
 
@@ -41,12 +41,12 @@ public class AlbumLabelMaker {
     private final Context mContext;
 
     private int mLabelWidth;
-    private int mBitmapWidth;
-    private int mBitmapHeight;
+    private BitmapPool mBitmapPool;
 
     private final LazyLoadedBitmap mLocalSetIcon;
     private final LazyLoadedBitmap mPicasaIcon;
     private final LazyLoadedBitmap mCameraIcon;
+    private final LazyLoadedBitmap mMtpIcon;
 
     public AlbumLabelMaker(Context context, AlbumSetSlotRenderer.LabelSpec spec) {
         mContext = context;
@@ -57,6 +57,7 @@ public class AlbumLabelMaker {
         mLocalSetIcon = new LazyLoadedBitmap(R.drawable.frame_overlay_gallery_folder);
         mPicasaIcon = new LazyLoadedBitmap(R.drawable.frame_overlay_gallery_picasa);
         mCameraIcon = new LazyLoadedBitmap(R.drawable.frame_overlay_gallery_camera);
+        mMtpIcon = new LazyLoadedBitmap(R.drawable.frame_overlay_gallery_ptp);
     }
 
     public static int getBorderSize() {
@@ -69,6 +70,8 @@ public class AlbumLabelMaker {
                 return mCameraIcon.get();
             case DataSourceType.TYPE_LOCAL:
                 return mLocalSetIcon.get();
+            case DataSourceType.TYPE_MTP:
+                return mMtpIcon.get();
             case DataSourceType.TYPE_PICASA:
                 return mPicasaIcon.get();
         }
@@ -110,8 +113,8 @@ public class AlbumLabelMaker {
         if (mLabelWidth == width) return;
         mLabelWidth = width;
         int borders = 2 * BORDER_SIZE;
-        mBitmapWidth = width + borders;
-        mBitmapHeight = mSpec.labelBackgroundHeight + borders;
+        mBitmapPool = new BitmapPool(
+                width + borders, mSpec.labelBackgroundHeight + borders, 16);
     }
 
     public ThreadPool.Job<Bitmap> requestLabel(
@@ -153,7 +156,7 @@ public class AlbumLabelMaker {
 
             synchronized (this) {
                 labelWidth = mLabelWidth;
-                bitmap = GalleryBitmapPool.getInstance().get(mBitmapWidth, mBitmapHeight);
+                bitmap = mBitmapPool.getBitmap();
             }
 
             if (bitmap == null) {
@@ -201,6 +204,10 @@ public class AlbumLabelMaker {
     }
 
     public void recycleLabel(Bitmap label) {
-        GalleryBitmapPool.getInstance().put(label);
+        mBitmapPool.recycle(label);
+    }
+
+    public void clearRecycledLabels() {
+        if (mBitmapPool != null) mBitmapPool.clear();
     }
 }

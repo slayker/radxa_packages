@@ -20,14 +20,16 @@ import android.content.ContentValues;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.GroupMembership;
 
+import com.android.contacts.model.RawContact;
+
 /**
  * Represents a group memebership data item, wrapping the columns in
  * {@link ContactsContract.CommonDataKinds.GroupMembership}.
  */
 public class GroupMembershipDataItem extends DataItem {
 
-    /* package */ GroupMembershipDataItem(ContentValues values) {
-        super(values);
+    /* package */ GroupMembershipDataItem(RawContact rawContact, ContentValues values) {
+        super(rawContact, values);
     }
 
     public long getGroupRowId() {

@@ -187,10 +187,6 @@ public class BluetoothOppBatch {
         return (mShares.size() == 0);
     }
 
-    public int getNumShares() {
-        return mShares.size();
-    }
-
     /**
      * Get the running status of the batch
      * @return

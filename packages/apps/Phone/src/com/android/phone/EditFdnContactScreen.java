@@ -47,11 +47,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.internal.telephony.Phone;
-import com.android.internal.telephony.PhoneFactory;
-
-import static com.android.internal.telephony.MSimConstants.SUBSCRIPTION_KEY;
-
 /**
  * Activity to let the user add or edit an FDN contact.
  */
@@ -63,16 +58,16 @@ public class EditFdnContactScreen extends Activity {
     private static final int MENU_IMPORT = 1;
     private static final int MENU_DELETE = 2;
 
-    protected static final String INTENT_EXTRA_NAME = "name";
-    protected static final String INTENT_EXTRA_NUMBER = "number";
+    private static final String INTENT_EXTRA_NAME = "name";
+    private static final String INTENT_EXTRA_NUMBER = "number";
 
     private static final int PIN2_REQUEST_CODE = 100;
 
-    protected String mName;
-    protected String mNumber;
-    protected String mPin2;
-    protected boolean mAddContact;
-    protected QueryHandler mQueryHandler;
+    private String mName;
+    private String mNumber;
+    private String mPin2;
+    private boolean mAddContact;
+    private QueryHandler mQueryHandler;
 
     private EditText mNameField;
     private EditText mNumberField;
@@ -148,21 +143,14 @@ public class EditFdnContactScreen extends Activity {
                     if (DBG) log("onActivityResult: cancelled.");
                     return;
                 }
-                Cursor cursor = null;
-                try {
-                    cursor = getContentResolver().query(intent.getData(),
+                Cursor cursor = getContentResolver().query(intent.getData(),
                         NUM_PROJECTION, null, null, null);
-                    if ((cursor == null) || (!cursor.moveToFirst())) {
-                        Log.w(LOG_TAG,"onActivityResult: bad contact data, no results found.");
-                        return;
-                    }
-                    mNameField.setText(cursor.getString(0));
-                    mNumberField.setText(cursor.getString(1));
-                } finally {
-                    if (cursor != null) {
-                        cursor.close();
-                    }
+                if ((cursor == null) || (!cursor.moveToFirst())) {
+                    Log.w(LOG_TAG,"onActivityResult: bad contact data, no results found.");
+                    return;
                 }
+                mNameField.setText(cursor.getString(0));
+                mNumberField.setText(cursor.getString(1));
                 break;
         }
     }
@@ -211,7 +199,7 @@ public class EditFdnContactScreen extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    protected void resolveIntent() {
+    private void resolveIntent() {
         Intent intent = getIntent();
 
         mName =  intent.getStringExtra(INTENT_EXTRA_NAME);
@@ -258,15 +246,15 @@ public class EditFdnContactScreen extends Activity {
 
     }
 
-    protected String getNameFromTextField() {
+    private String getNameFromTextField() {
         return mNameField.getText().toString();
     }
 
-    protected String getNumberFromTextField() {
+    private String getNumberFromTextField() {
         return mNumberField.getText().toString();
     }
 
-    protected Uri getContentURI() {
+    private Uri getContentURI() {
         return Uri.parse("content://icc/fdn");
     }
 
@@ -276,12 +264,12 @@ public class EditFdnContactScreen extends Activity {
       *
       * TODO: Fix this logic.
       */
-     protected boolean isValidNumber(String number) {
+     private boolean isValidNumber(String number) {
          return (number.length() <= 20);
      }
 
 
-    protected void addContact() {
+    private void addContact() {
         if (DBG) log("addContact");
 
         final String number = PhoneNumberUtils.convertAndStrip(getNumberFromTextField());
@@ -304,7 +292,7 @@ public class EditFdnContactScreen extends Activity {
         showStatus(getResources().getText(R.string.adding_fdn_contact));
     }
 
-    protected void updateContact() {
+    private void updateContact() {
         if (DBG) log("updateContact");
 
         final String name = getNameFromTextField();
@@ -332,7 +320,7 @@ public class EditFdnContactScreen extends Activity {
     /**
      * Handle the delete command, based upon the state of the Activity.
      */
-    protected void deleteSelected() {
+    private void deleteSelected() {
         // delete ONLY if this is NOT a new contact.
         if (!mAddContact) {
             Intent intent = new Intent();
@@ -350,7 +338,7 @@ public class EditFdnContactScreen extends Activity {
         startActivityForResult(intent, PIN2_REQUEST_CODE);
     }
 
-    protected void displayProgress(boolean flag) {
+    private void displayProgress(boolean flag) {
         // indicate we are busy.
         mDataBusy = flag;
         getWindow().setFeatureInt(
@@ -365,14 +353,14 @@ public class EditFdnContactScreen extends Activity {
      * Removed the status field, with preference to displaying a toast
      * to match the rest of settings UI.
      */
-    protected void showStatus(CharSequence statusMsg) {
+    private void showStatus(CharSequence statusMsg) {
         if (statusMsg != null) {
             Toast.makeText(this, statusMsg, Toast.LENGTH_LONG)
                     .show();
         }
     }
 
-    protected void handleResult(boolean success, boolean invalidNumber) {
+    private void handleResult(boolean success, boolean invalidNumber) {
         if (success) {
             if (DBG) log("handleResult: success!");
             showStatus(getResources().getText(mAddContact ?
@@ -382,15 +370,9 @@ public class EditFdnContactScreen extends Activity {
             if (invalidNumber) {
                 showStatus(getResources().getText(R.string.fdn_invalid_number));
             } else {
-               if (PhoneFactory.getDefaultPhone().getIccCard().getIccPin2Blocked()) {
-                    showStatus(getResources().getText(R.string.fdn_enable_puk2_requested));
-                } else if (PhoneFactory.getDefaultPhone().getIccCard().getIccPuk2Blocked()) {
-                    showStatus(getResources().getText(R.string.puk2_blocked));
-                } else {
-                    // There's no way to know whether the failure is due to incorrect PIN2 or
-                    // an inappropriate phone number.
-                    showStatus(getResources().getText(R.string.pin2_or_fdn_invalid));
-                }
+                // There's no way to know whether the failure is due to incorrect PIN2 or
+                // an inappropriate phone number.
+                showStatus(getResources().getText(R.string.pin2_or_fdn_invalid));
             }
         }
 
@@ -435,7 +417,7 @@ public class EditFdnContactScreen extends Activity {
         }
     };
 
-    protected class QueryHandler extends AsyncQueryHandler {
+    private class QueryHandler extends AsyncQueryHandler {
         public QueryHandler(ContentResolver cr) {
             super(cr);
         }
@@ -463,7 +445,7 @@ public class EditFdnContactScreen extends Activity {
         }
     }
 
-    protected void log(String msg) {
+    private void log(String msg) {
         Log.d(LOG_TAG, "[EditFdnContact] " + msg);
     }
 }

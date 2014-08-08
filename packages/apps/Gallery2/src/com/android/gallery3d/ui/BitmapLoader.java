@@ -18,7 +18,6 @@ package com.android.gallery3d.ui;
 
 import android.graphics.Bitmap;
 
-import com.android.photos.data.GalleryBitmapPool;
 import com.android.gallery3d.util.Future;
 import com.android.gallery3d.util.FutureListener;
 
@@ -52,7 +51,7 @@ public abstract class BitmapLoader implements FutureListener<Bitmap> {
             mBitmap = future.get();
             if (mState == STATE_RECYCLED) {
                 if (mBitmap != null) {
-                    GalleryBitmapPool.getInstance().put(mBitmap);
+                    recycleBitmap(mBitmap);
                     mBitmap = null;
                 }
                 return; // don't call callback
@@ -85,7 +84,7 @@ public abstract class BitmapLoader implements FutureListener<Bitmap> {
     public synchronized void recycle() {
         mState = STATE_RECYCLED;
         if (mBitmap != null) {
-            GalleryBitmapPool.getInstance().put(mBitmap);
+            recycleBitmap(mBitmap);
             mBitmap = null;
         }
         if (mTask != null) mTask.cancel();
@@ -104,5 +103,6 @@ public abstract class BitmapLoader implements FutureListener<Bitmap> {
     }
 
     abstract protected Future<Bitmap> submitBitmapTask(FutureListener<Bitmap> l);
+    abstract protected void recycleBitmap(Bitmap bitmap);
     abstract protected void onLoadComplete(Bitmap bitmap);
 }

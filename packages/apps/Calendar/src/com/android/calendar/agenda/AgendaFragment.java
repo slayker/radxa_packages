@@ -44,8 +44,6 @@ import com.android.calendar.R;
 import com.android.calendar.StickyHeaderListView;
 import com.android.calendar.Utils;
 
-import java.util.Date;
-
 public class AgendaFragment extends Fragment implements CalendarController.EventHandler,
         OnScrollListener {
 
@@ -258,9 +256,9 @@ public class AgendaFragment extends Fragment implements CalendarController.Event
             outState.putLong(BUNDLE_KEY_RESTORE_TIME, timeToSave);
             mController.setTime(timeToSave);
         } else {
-            AgendaWindowAdapter.AgendaItem item = mAgendaListView.getFirstVisibleAgendaItem();
-            if (item != null) {
-                long firstVisibleTime = mAgendaListView.getFirstVisibleTime(item);
+            AgendaWindowAdapter.EventInfo e = mAgendaListView.getFirstVisibleEvent();
+            if (e != null) {
+                long firstVisibleTime = mAgendaListView.getFirstVisibleTime(e);
                 if (firstVisibleTime > 0) {
                     mTime.set(firstVisibleTime);
                     mController.setTime(firstVisibleTime);
@@ -269,7 +267,7 @@ public class AgendaFragment extends Fragment implements CalendarController.Event
                 // Tell AllInOne the event id of the first visible event in the list. The id will be
                 // used in the GOTO when AllInOne is restored so that Agenda Fragment can select a
                 // specific event and not just the time.
-                mLastShownEventId = item.id;
+                mLastShownEventId = e.id;
             }
         }
         if (DEBUG) {
@@ -290,6 +288,7 @@ public class AgendaFragment extends Fragment implements CalendarController.Event
      * @param fragmentManager
      */
     public void removeFragments(FragmentManager fragmentManager) {
+        mController.deregisterEventHandler(R.id.agenda_event_info);
         if (getActivity().isFinishing()) {
             return;
         }
@@ -330,7 +329,6 @@ public class AgendaFragment extends Fragment implements CalendarController.Event
                         mShowEventDetailsWithAgenda) ? true : false);
         AgendaAdapter.ViewHolder vh = mAgendaListView.getSelectedViewHolder();
         // Make sure that on the first time the event info is shown to recreate it
-        Log.d(TAG, "selected viewholder is null: " + (vh == null));
         showEventInfo(event, vh != null ? vh.allDay : false, mForceReplace);
         mForceReplace = false;
     }
@@ -410,14 +408,6 @@ public class AgendaFragment extends Fragment implements CalendarController.Event
                 event.endTime.timezone = Time.TIMEZONE_UTC;
             }
 
-            if (DEBUG) {
-                Log.d(TAG, "***");
-                Log.d(TAG, "showEventInfo: start: " + new Date(event.startTime.toMillis(true)));
-                Log.d(TAG, "showEventInfo: end: " + new Date(event.endTime.toMillis(true)));
-                Log.d(TAG, "showEventInfo: all day: " + allDay);
-                Log.d(TAG, "***");
-            }
-
             long startMillis = event.startTime.toMillis(true);
             long endMillis = event.endTime.toMillis(true);
             EventInfoFragment fOld =
@@ -425,10 +415,12 @@ public class AgendaFragment extends Fragment implements CalendarController.Event
             if (fOld == null || replaceFragment || fOld.getStartMillis() != startMillis ||
                     fOld.getEndMillis() != endMillis || fOld.getEventId() != event.id) {
                 mEventFragment = new EventInfoFragment(mActivity, event.id,
-                        startMillis, endMillis,
+                        event.startTime.toMillis(true), event.endTime.toMillis(true),
                         Attendees.ATTENDEE_STATUS_NONE, false,
-                        EventInfoFragment.DIALOG_WINDOW_STYLE, null);
+                        EventInfoFragment.DIALOG_WINDOW_STYLE);
                 ft.replace(R.id.agenda_event_info, mEventFragment);
+                mController.registerEventHandler(R.id.agenda_event_info,
+                        mEventFragment);
                 ft.commit();
             } else {
                 fOld.reloadEvents();

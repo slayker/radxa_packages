@@ -35,15 +35,13 @@ import com.android.contacts.ContactsActivity;
 import com.android.contacts.ContactsUtils;
 import com.android.contacts.model.Contact;
 import com.android.contacts.model.ContactLoader;
+import com.android.contacts.model.RawContactModifier;
 import com.android.contacts.model.RawContactDelta;
 import com.android.contacts.model.RawContactDeltaList;
-import com.android.contacts.model.RawContactModifier;
-import com.android.contacts.common.model.account.AccountType;
-import com.android.contacts.common.model.ValuesDelta;
+import com.android.contacts.model.account.AccountType;
 import com.android.contacts.util.ContactPhotoUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
 /**
  * Provides an external interface for other applications to attach images
@@ -60,6 +58,7 @@ public class AttachPhotoActivity extends ContactsActivity {
     private static final String KEY_CONTACT_URI = "contact_uri";
     private static final String KEY_TEMP_PHOTO_URI = "temp_photo_uri";
 
+    private File mTempPhotoFile;
     private Uri mTempPhotoUri;
 
     private ContentResolver mContentResolver;
@@ -76,9 +75,13 @@ public class AttachPhotoActivity extends ContactsActivity {
         if (icicle != null) {
             final String uri = icicle.getString(KEY_CONTACT_URI);
             mContactUri = (uri == null) ? null : Uri.parse(uri);
+
             mTempPhotoUri = Uri.parse(icicle.getString(KEY_TEMP_PHOTO_URI));
+            mTempPhotoFile = new File(mTempPhotoUri.getPath());
         } else {
-            mTempPhotoUri = ContactPhotoUtils.generateTempImageUri(this);
+            mTempPhotoFile = ContactPhotoUtils.generateTempPhotoFile(this);
+            mTempPhotoUri = Uri.fromFile(mTempPhotoFile);
+
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType(Contacts.CONTENT_TYPE);
             startActivityForResult(intent, REQUEST_PICK_CONTACT);
@@ -100,12 +103,8 @@ public class AttachPhotoActivity extends ContactsActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (mContactUri != null) {
-            outState.putString(KEY_CONTACT_URI, mContactUri.toString());
-        }
-        if (mTempPhotoUri != null) {
-            outState.putString(KEY_TEMP_PHOTO_URI, mTempPhotoUri.toString());
-        }
+        if (mContactUri != null) outState.putString(KEY_CONTACT_URI, mContactUri.toString());
+        outState.putString(KEY_TEMP_PHOTO_URI, mTempPhotoUri.toString());
     }
 
     @Override
@@ -123,9 +122,7 @@ public class AttachPhotoActivity extends ContactsActivity {
             if (myIntent.getStringExtra("mimeType") != null) {
                 intent.setDataAndType(myIntent.getData(), myIntent.getStringExtra("mimeType"));
             }
-
-            ContactPhotoUtils.addPhotoPickerExtras(intent, mTempPhotoUri);
-            ContactPhotoUtils.addCropExtras(intent, mPhotoDim);
+            ContactPhotoUtils.addGalleryIntentExtras(intent, mTempPhotoUri, mPhotoDim);
 
             startActivityForResult(intent, REQUEST_CROP_PHOTO);
 
@@ -185,26 +182,20 @@ public class AttachPhotoActivity extends ContactsActivity {
 
         // Create a scaled, compressed bitmap to add to the entity-delta list.
         final int size = ContactsUtils.getThumbnailSize(this);
-        Bitmap bitmap;
-        try {
-            bitmap = ContactPhotoUtils.getBitmapFromUri(this, mTempPhotoUri);
-        } catch (FileNotFoundException e) {
-            Log.w(TAG, "Could not find bitmap");
-            return;
-        }
-
+        final Bitmap bitmap = BitmapFactory.decodeFile(mTempPhotoFile.getAbsolutePath());
         final Bitmap scaled = Bitmap.createScaledBitmap(bitmap, size, size, false);
         final byte[] compressed = ContactPhotoUtils.compressBitmap(scaled);
         if (compressed == null) {
             Log.w(TAG, "could not create scaled and compressed Bitmap");
             return;
         }
+
         // Add compressed bitmap to entity-delta... this allows us to save to
         // a new contact; otherwise the entity-delta-list would be empty, and
         // the ContactSaveService would not create the new contact, and the
         // full-res photo would fail to be saved to the non-existent contact.
         AccountType account = raw.getRawContactAccountType(this);
-        ValuesDelta values =
+        RawContactDelta.ValuesDelta values =
                 RawContactModifier.ensureKindExists(raw, account, Photo.CONTENT_ITEM_TYPE);
         if (values == null) {
             Log.w(TAG, "cannot attach photo to this account type");
@@ -221,8 +212,7 @@ public class AttachPhotoActivity extends ContactsActivity {
                 contact.isUserProfile(),
                 null, null,
                 raw.getRawContactId(),
-                mTempPhotoUri
-                );
+                mTempPhotoFile.getAbsolutePath());
         startService(intent);
         finish();
     }

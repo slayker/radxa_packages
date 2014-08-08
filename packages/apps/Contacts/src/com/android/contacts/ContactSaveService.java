@@ -46,15 +46,12 @@ import android.provider.ContactsContract.RawContactsEntity;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.contacts.common.database.ContactUpdateUtils;
-import com.android.contacts.common.model.AccountTypeManager;
+import com.android.contacts.model.AccountTypeManager;
+import com.android.contacts.model.RawContactModifier;
 import com.android.contacts.model.RawContactDelta;
 import com.android.contacts.model.RawContactDeltaList;
-import com.android.contacts.model.RawContactModifier;
-import com.android.contacts.common.model.account.AccountWithDataSet;
+import com.android.contacts.model.account.AccountWithDataSet;
 import com.android.contacts.util.CallerInfoCacheUtils;
-import com.android.contacts.util.ContactPhotoUtils;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -62,7 +59,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -296,9 +292,9 @@ public class ContactSaveService extends IntentService {
     public static Intent createSaveContactIntent(Context context, RawContactDeltaList state,
             String saveModeExtraKey, int saveMode, boolean isProfile,
             Class<? extends Activity> callbackActivity, String callbackAction, long rawContactId,
-            Uri updatedPhotoPath) {
+            String updatedPhotoPath) {
         Bundle bundle = new Bundle();
-        bundle.putParcelable(String.valueOf(rawContactId), updatedPhotoPath);
+        bundle.putString(String.valueOf(rawContactId), updatedPhotoPath);
         return createSaveContactIntent(context, state, saveModeExtraKey, saveMode, isProfile,
                 callbackActivity, callbackAction, bundle);
     }
@@ -451,7 +447,7 @@ public class ContactSaveService extends IntentService {
         // the ContactProvider already knows about newly-created contacts.
         if (updatedPhotos != null) {
             for (String key : updatedPhotos.keySet()) {
-                Uri photoUri = updatedPhotos.getParcelable(key);
+                String photoFilePath = updatedPhotos.getString(key);
                 long rawContactId = Long.parseLong(key);
 
                 // If the raw-contact ID is negative, we are saving a new raw-contact;
@@ -464,7 +460,8 @@ public class ContactSaveService extends IntentService {
                     }
                 }
 
-                if (!saveUpdatedPhoto(rawContactId, photoUri)) succeeded = false;
+                File photoFile = new File(photoFilePath);
+                if (!saveUpdatedPhoto(rawContactId, photoFile)) succeeded = false;
             }
         }
 
@@ -485,12 +482,37 @@ public class ContactSaveService extends IntentService {
      * Save updated photo for the specified raw-contact.
      * @return true for success, false for failure
      */
-    private boolean saveUpdatedPhoto(long rawContactId, Uri photoUri) {
+    private boolean saveUpdatedPhoto(long rawContactId, File photoFile) {
         final Uri outputUri = Uri.withAppendedPath(
                 ContentUris.withAppendedId(RawContacts.CONTENT_URI, rawContactId),
                 RawContacts.DisplayPhoto.CONTENT_DIRECTORY);
 
-        return ContactPhotoUtils.savePhotoFromUriToUri(this, photoUri, outputUri, true);
+        try {
+            final FileOutputStream outputStream = getContentResolver()
+                    .openAssetFileDescriptor(outputUri, "rw").createOutputStream();
+            try {
+                final FileInputStream inputStream = new FileInputStream(photoFile);
+                try {
+                    final byte[] buffer = new byte[16 * 1024];
+                    int length;
+                    int totalLength = 0;
+                    while ((length = inputStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, length);
+                        totalLength += length;
+                    }
+                    Log.v(TAG, "Wrote " + totalLength + " bytes for photo " + photoFile.toString());
+                } finally {
+                    inputStream.close();
+                }
+            } finally {
+                outputStream.close();
+                photoFile.delete();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to write photo: " + photoFile.toString() + " because: " + e);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -881,7 +903,13 @@ public class ContactSaveService extends IntentService {
             return;
         }
 
-        ContactUpdateUtils.setSuperPrimary(this, dataId);
+        // Update the primary values in the data record.
+        ContentValues values = new ContentValues(1);
+        values.put(Data.IS_SUPER_PRIMARY, 1);
+        values.put(Data.IS_PRIMARY, 1);
+
+        getContentResolver().update(ContentUris.withAppendedId(Data.CONTENT_URI, dataId),
+                values, null, null);
     }
 
     /**
@@ -990,9 +1018,6 @@ public class ContactSaveService extends IntentService {
         long rawContactIds[];
         long verifiedNameRawContactId = -1;
         try {
-            if (c.getCount() == 0) {
-                return;
-            }
             int maxDisplayNameSource = -1;
             rawContactIds = new long[c.getCount()];
             for (int i = 0; i < rawContactIds.length; i++) {

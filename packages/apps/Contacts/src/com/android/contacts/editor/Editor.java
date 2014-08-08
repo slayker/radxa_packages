@@ -19,8 +19,8 @@ package com.android.contacts.editor;
 import android.provider.ContactsContract.Data;
 
 import com.android.contacts.model.RawContactDelta;
-import com.android.contacts.common.model.ValuesDelta;
-import com.android.contacts.common.model.dataitem.DataKind;
+import com.android.contacts.model.RawContactDelta.ValuesDelta;
+import com.android.contacts.model.dataitem.DataKind;
 
 /**
  * Generic definition of something that edits a {@link Data} row through an
@@ -39,11 +39,6 @@ public interface Editor {
          * wants to select a photo.
          */
         public void onRequest(int request);
-
-        /**
-         * Called when requested to be dismiss.
-         */
-        public void onDismissPopup();
 
         public static final int REQUEST_PICK_PHOTO = 1;
         public static final int FIELD_CHANGED = 2;

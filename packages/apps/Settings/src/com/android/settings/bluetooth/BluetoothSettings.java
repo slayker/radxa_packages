@@ -16,8 +16,6 @@
 
 package com.android.settings.bluetooth;
 
-import static android.os.UserManager.DISALLOW_CONFIG_BLUETOOTH;
-
 import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -27,21 +25,24 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.UserManager;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
+import android.preference.CheckBoxPreference;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.android.settings.ProgressCategory;
 import com.android.settings.R;
 
 /**
@@ -74,7 +75,7 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
 
     private final IntentFilter mIntentFilter;
 
-    private UserManager mUserManager;
+    private CheckBoxPreference mBluetoothCheckBox;
 
     // accessed from inner class (not private to avoid thunks)
     Preference mMyDevicePreference;
@@ -98,15 +99,49 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
     public BluetoothSettings() {
         mIntentFilter = new IntentFilter(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED);
     }
+    private void insertCheckbox(){//add by ljh for adding a checkbox switch
+        if (mBluetoothCheckBox== null) {
+            mBluetoothCheckBox = new CheckBoxPreference(getActivity());
+            mBluetoothCheckBox.setKey("switch");
+            mBluetoothCheckBox.setTitle(R.string.bluetooth_empty_list_bluetooth_off);
+            mBluetoothCheckBox.setSummaryOn(R.string.bluetooth_enabled);
+            mBluetoothCheckBox.setSummaryOff(R.string.bluetooth_disabled);
+            mBluetoothCheckBox.setPersistent(false);
+            mBluetoothCheckBox.setEnabled(true);
+        }
+        //if (getPreferenceScreen() != null)
+        {
+		if(getPreferenceScreen().findPreference("switch")==null){
+            		getPreferenceScreen().addPreference(mBluetoothCheckBox);
+        	}
+        }
+        if(mLocalAdapter != null)
+	{
+		 mBluetoothCheckBox.setChecked(mLocalAdapter.isEnabled());
+	}
 
+    }
+
+    private void removeAllPreferences(){//add by ljh for adding a checkbox switch
+        getPreferenceScreen().removeAll();
+        insertCheckbox();
+    }
+
+//    @Override
+    void onOtherPreferenceClick(PreferenceScreen preferenceScreen,
+            Preference preference){//add by ljh for adding a checkbox switch
+        if(preference == mBluetoothCheckBox){//sync wifi switch ,add by ljh
+            mLocalAdapter.setBluetoothEnabled(mBluetoothCheckBox.isChecked());
+        }
+    }
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mUserManager = (UserManager) getSystemService(Context.USER_SERVICE);
         mActivityStarted = (savedInstanceState == null);    // don't auto start scan after rotation
 
         mEmptyView = (TextView) getView().findViewById(android.R.id.empty);
         getListView().setEmptyView(mEmptyView);
+        insertCheckbox();
     }
 
     @Override
@@ -122,7 +157,7 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
             if (preferenceActivity.onIsHidingHeaders() || !preferenceActivity.onIsMultiPane()) {
                 final int padding = activity.getResources().getDimensionPixelSize(
                         R.dimen.action_bar_switch_padding);
-                actionBarSwitch.setPaddingRelative(0, 0, padding, 0);
+                actionBarSwitch.setPadding(0, 0, padding, 0);
                 activity.getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM,
                         ActionBar.DISPLAY_SHOW_CUSTOM);
                 activity.getActionBar().setCustomView(actionBarSwitch, new ActionBar.LayoutParams(
@@ -170,9 +205,6 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         if (mLocalAdapter == null) return;
-        // If the user is not allowed to configure bluetooth, do not show the menu.
-        if (mUserManager.hasUserRestriction(DISALLOW_CONFIG_BLUETOOTH)) return;
-
         boolean bluetoothIsEnabled = mLocalAdapter.getBluetoothState() == BluetoothAdapter.STATE_ON;
         boolean isDiscovering = mLocalAdapter.isDiscovering();
         int textId = isDiscovering ? R.string.bluetooth_searching_for_devices :
@@ -219,7 +251,6 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
     }
 
     private void startScanning() {
-        if (mUserManager.hasUserRestriction(DISALLOW_CONFIG_BLUETOOTH)) return;
         if (!mAvailableDevicesCategoryIsPresent) {
             getPreferenceScreen().addPreference(mAvailableDevicesCategory);
         }
@@ -248,7 +279,12 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
 
         switch (bluetoothState) {
             case BluetoothAdapter.STATE_ON:
-                preferenceScreen.removeAll();
+                //preferenceScreen.removeAll();
+                //change by ljh for adding a checkbox switch
+                messageId = R.string.bluetooth_on;
+                if(mBluetoothCheckBox!=null)mBluetoothCheckBox.setTitle(messageId);
+                removeAllPreferences();
+                //end
                 preferenceScreen.setOrderingAsAdded(true);
                 mDevicePreferenceMap.clear();
 
@@ -266,14 +302,12 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
                 mMyDevicePreference.setEnabled(true);
                 preferenceScreen.addPreference(mMyDevicePreference);
 
-                if (! mUserManager.hasUserRestriction(DISALLOW_CONFIG_BLUETOOTH)) {
-                    if (mDiscoverableEnabler == null) {
-                        mDiscoverableEnabler = new BluetoothDiscoverableEnabler(getActivity(),
-                                mLocalAdapter, mMyDevicePreference);
-                        mDiscoverableEnabler.resume();
-                        LocalBluetoothManager.getInstance(getActivity()).setDiscoverableEnabler(
-                                mDiscoverableEnabler);
-                    }
+                if (mDiscoverableEnabler == null) {
+                    mDiscoverableEnabler = new BluetoothDiscoverableEnabler(getActivity(),
+                            mLocalAdapter, mMyDevicePreference);
+                    mDiscoverableEnabler.resume();
+                    LocalBluetoothManager.getInstance(getActivity()).setDiscoverableEnabler(
+                            mDiscoverableEnabler);
                 }
 
                 // Paired devices category
@@ -287,9 +321,7 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
                         BluetoothDeviceFilter.BONDED_DEVICE_FILTER);
                 int numberOfPairedDevices = mPairedDevicesCategory.getPreferenceCount();
 
-                if (mDiscoverableEnabler != null) {
-                    mDiscoverableEnabler.setNumberOfPairedDevices(numberOfPairedDevices);
-                }
+                mDiscoverableEnabler.setNumberOfPairedDevices(numberOfPairedDevices);
 
                 // Available devices category
                 if (mAvailableDevicesCategory == null) {
@@ -297,11 +329,9 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
                 } else {
                     mAvailableDevicesCategory.removeAll();
                 }
-                if (! mUserManager.hasUserRestriction(DISALLOW_CONFIG_BLUETOOTH)) {
-                    addDeviceCategory(mAvailableDevicesCategory,
-                            R.string.bluetooth_preference_found_devices,
-                            BluetoothDeviceFilter.UNBONDED_DEVICE_FILTER);
-                }
+                addDeviceCategory(mAvailableDevicesCategory,
+                        R.string.bluetooth_preference_found_devices,
+                        BluetoothDeviceFilter.UNBONDED_DEVICE_FILTER);
                 int numberOfAvailableDevices = mAvailableDevicesCategory.getPreferenceCount();
                 mAvailableDevicesCategoryIsPresent = true;
 
@@ -339,7 +369,11 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
 
         setDeviceListGroup(preferenceScreen);
         removeAllDevices();
-        mEmptyView.setText(messageId);
+        //mEmptyView.setText(messageId);
+        //change by ljh for adding a checkbox switch
+        insertCheckbox();
+        if(mBluetoothCheckBox!=null)mBluetoothCheckBox.setTitle(messageId);
+        //end
         getActivity().invalidateOptionsMenu();
     }
 
@@ -366,8 +400,6 @@ public final class BluetoothSettings extends DeviceListPreferenceFragment {
         public void onClick(View v) {
             // User clicked on advanced options icon for a device in the list
             if (v.getTag() instanceof CachedBluetoothDevice) {
-                if (mUserManager.hasUserRestriction(DISALLOW_CONFIG_BLUETOOTH)) return;
-
                 CachedBluetoothDevice device = (CachedBluetoothDevice) v.getTag();
 
                 Bundle args = new Bundle(1);

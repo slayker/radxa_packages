@@ -30,8 +30,8 @@ import com.android.contacts.R;
 import com.android.contacts.editor.Editor.EditorListener;
 import com.android.contacts.model.RawContactModifier;
 import com.android.contacts.model.RawContactDelta;
-import com.android.contacts.common.model.ValuesDelta;
-import com.android.contacts.common.model.dataitem.DataKind;
+import com.android.contacts.model.RawContactDelta.ValuesDelta;
+import com.android.contacts.model.dataitem.DataKind;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,16 +113,12 @@ public class KindSectionView extends LinearLayout implements EditorListener {
     public void onDeleteRequested(Editor editor) {
         // If there is only 1 editor in the section, then don't allow the user to delete it.
         // Just clear the fields in the editor.
-        final boolean animate;
         if (getEditorCount() == 1) {
             editor.clearAllFields();
-            animate = true;
         } else {
             // Otherwise it's okay to delete this {@link Editor}
             editor.deleteEditor();
-            animate = false;
         }
-        updateAddFooterVisible(animate);
     }
 
     @Override
@@ -132,11 +128,6 @@ public class KindSectionView extends LinearLayout implements EditorListener {
         if (request == FIELD_TURNED_EMPTY || request == FIELD_TURNED_NON_EMPTY) {
             updateAddFooterVisible(true);
         }
-    }
-
-    @Override
-    public void onDismissPopup() {
-        // Nothing to do.
     }
 
     public void setState(DataKind kind, RawContactDelta state, boolean readOnly, ViewIdGenerator vig) {
@@ -195,13 +186,12 @@ public class KindSectionView extends LinearLayout implements EditorListener {
      */
     private View createEditorView(ValuesDelta entry) {
         final View view;
-        final int layoutResId = EditorUiUtils.getLayoutResourceId(mKind.mimeType);
         try {
-            view = mInflater.inflate(layoutResId, mEditors, false);
+            view = mInflater.inflate(mKind.editorLayoutResourceId, mEditors, false);
         } catch (Exception e) {
             throw new RuntimeException(
                     "Cannot allocate editor with layout resource ID " +
-                    layoutResId + " for MIME type " + mKind.mimeType +
+                    mKind.editorLayoutResourceId + " for MIME type " + mKind.mimeType +
                     " with error " + e.toString());
         }
 

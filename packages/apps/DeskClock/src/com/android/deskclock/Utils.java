@@ -48,18 +48,11 @@ import android.widget.TextView;
 import com.android.deskclock.stopwatch.Stopwatches;
 import com.android.deskclock.timer.Timers;
 import com.android.deskclock.worldclock.CityObj;
-import com.android.deskclock.worldclock.db.DbCities;
-import com.android.deskclock.worldclock.db.DbCity;
 
 import java.text.Collator;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 
@@ -418,27 +411,22 @@ public class Utils {
     /** Clock views can call this to refresh their date. **/
     public static void updateDate(
             String dateFormat, String dateFormatForAccessibility, View clock) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(System.currentTimeMillis());
 
-        Date now = new Date();
+        CharSequence newDate = DateFormat.format(dateFormat, cal);
         TextView dateDisplay;
         dateDisplay = (TextView) clock.findViewById(R.id.date);
         if (dateDisplay != null) {
-            final Locale l = Locale.getDefault();
-            String fmt = DateFormat.getBestDateTimePattern(l, dateFormat);
-            SimpleDateFormat sdf = new SimpleDateFormat(fmt, l);
-            dateDisplay.setText(sdf.format(now));
             dateDisplay.setVisibility(View.VISIBLE);
-            fmt = DateFormat.getBestDateTimePattern(l, dateFormatForAccessibility);
-            sdf = new SimpleDateFormat(fmt, l);
-            dateDisplay.setContentDescription(sdf.format(now));
+            dateDisplay.setText(newDate);
+            dateDisplay.setContentDescription(DateFormat.format(dateFormatForAccessibility, cal));
         }
     }
 
     public static CityObj[] loadCitiesDataBase(Context c) {
         final Collator collator = Collator.getInstance();
         Resources r = c.getResources();
-
-        // Get list of cities defined by the app (App-defined has the prefix C)
         // Read strings array of name,timezone, id
         // make sure the list are the same length
         String[] cities = r.getStringArray(R.array.cities_names);
@@ -448,28 +436,19 @@ public class Utils {
             Log.wtf("City lists sizes are not the same, cannot use the data");
             return null;
         }
-        List<CityObj> tempList = new ArrayList<CityObj>(cities.length);
+        CityObj[] tempList = new CityObj[cities.length];
         for (int i = 0; i < cities.length; i++) {
-            tempList.add(new CityObj(cities[i], timezones[i], ids[i]));
+            tempList[i] = new CityObj(cities[i], timezones[i], ids[i]);
         }
-
-        // Get the list of user-defined cities (User-defined has the prefix UD)
-        List<DbCity> dbcities = DbCities.getCities(c.getContentResolver());
-        for (int i = 0; i < dbcities.size(); i++) {
-            DbCity dbCity = dbcities.get(i);
-            CityObj city = new CityObj(dbCity.name, dbCity.tz, "UD" + dbCity.id);
-            city.mUserDefined = true;
-            tempList.add(city);
-        }
-
         // Sort alphabetically
-        Collections.sort(tempList, new Comparator<CityObj> () {
+        Arrays.sort(tempList, new Comparator<CityObj> () {
             @Override
             public int compare(CityObj c1, CityObj c2) {
+                Comparator<CityObj> mCollator;
                 return collator.compare(c1.mCityName, c2.mCityName);
             }
         });
-        return tempList.toArray(new CityObj[tempList.size()]);
+        return tempList;
     }
 
     public static String getCityName(CityObj city, CityObj dbCity) {

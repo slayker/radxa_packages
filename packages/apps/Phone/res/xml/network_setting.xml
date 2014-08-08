@@ -35,11 +35,15 @@
         android:summaryOn="@string/roaming_enable"
         android:summaryOff="@string/roaming_disable"/>
 
-    <CheckBoxPreference
-        android:key="button_national_roaming_key"
-        android:title="@string/national_roaming"
-        android:persistent="false"
-        android:summary="@string/national_roaming_summary" />
+    <PreferenceScreen
+        android:key="button_data_usage_key"
+        android:title="@string/throttle_data_usage"
+        android:persistent="false">
+
+        <intent android:action="android.intent.action.MAIN"
+            android:targetPackage="com.android.phone"
+            android:targetClass="com.android.phone.DataUsage" />
+    </PreferenceScreen>
 
     <ListPreference
         android:key="preferred_network_mode_key"

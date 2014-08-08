@@ -41,6 +41,7 @@ public class LocalMergeAlbum extends MediaSet implements ContentListener {
     private final Comparator<MediaItem> mComparator;
     private final MediaSet[] mSources;
 
+    private String mName;
     private FetchCache[] mFetcher;
     private int mSupportedOperation;
     private int mBucketId;
@@ -53,6 +54,7 @@ public class LocalMergeAlbum extends MediaSet implements ContentListener {
         super(path, INVALID_DATA_VERSION);
         mComparator = comparator;
         mSources = sources;
+        mName = sources.length == 0 ? "" : sources[0].getName();
         mBucketId = bucketId;
         for (MediaSet set : mSources) {
             set.addContentListener(this);
@@ -80,6 +82,7 @@ public class LocalMergeAlbum extends MediaSet implements ContentListener {
         mSupportedOperation = supported;
         mIndex.clear();
         mIndex.put(0, new int[mSources.length]);
+        mName = mSources.length == 0 ? "" : mSources[0].getName();
     }
 
     private void invalidateCache() {
@@ -108,7 +111,7 @@ public class LocalMergeAlbum extends MediaSet implements ContentListener {
 
     @Override
     public String getName() {
-        return mSources.length == 0 ? "" : mSources[0].getName();
+        return mName;
     }
 
     @Override

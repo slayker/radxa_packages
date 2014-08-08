@@ -33,8 +33,5 @@ public class CalendarApplication extends Application {
         // moved to that implementation.
         Utils.setSharedPreference(this, GeneralPreferences.KEY_VERSION,
                 Utils.getVersionCode(this));
-
-        // Initialize the registry mapping some custom behavior.
-        ExtensionsFactory.init(getAssets());
     }
 }

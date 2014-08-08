@@ -25,14 +25,6 @@
             android:summary="@string/pref_content_search_engine_summary"
             android:dialogTitle="@string/pref_content_search_engine" />
 
-    <ListPreference
-            android:key="user_agent"
-            android:title="@string/pref_content_ua"
-            android:summary="@string/pref_content_ua_summary"
-            android:entries="@array/pref_content_ua_choices"
-            android:entryValues="@array/pref_content_ua_values"
-            android:defaultValue="0"/>
-
     <CheckBoxPreference
             android:key="open_in_background"
             android:defaultValue="false"
@@ -88,7 +80,12 @@
                 android:key="block_popup_windows"
                 android:defaultValue="true"
                 android:title="@string/pref_content_block_popups" />
-
+		<CheckBoxPreference
+                android:key="popup_video"
+                android:defaultValue="false"
+                android:title="@string/pref_popup_video" 
+                android:summary="@string/pre_popup_video_summary"/>
+		
         <ListPreference
                 android:key="default_text_encoding"
                 android:title="@string/pref_default_text_encoding"
@@ -96,6 +93,20 @@
                 android:entries="@array/pref_default_text_encoding_choices"
                 android:entryValues="@array/pref_default_text_encoding_values"
                 android:dialogTitle="@string/pref_default_text_encoding_dialogtitle" />
+                
+        <ListPreference
+                android:key="user_agent_rel"
+                android:title="@string/pref_development_uastring"
+                android:entries="@array/pref_development_ua_choices"
+                android:entryValues="@array/pref_development_ua_values"
+                android:defaultValue="0"/>
+        
+        <ListPreference
+                android:key="adblock_policy"
+                android:title="@string/pref_adblock_policy"
+                android:entries="@array/pref_adblock_policy_choices"
+                android:entryValues="@array/pref_adblock_policy_values"
+                android:defaultValue="0"/>
 
     </PreferenceCategory>
 

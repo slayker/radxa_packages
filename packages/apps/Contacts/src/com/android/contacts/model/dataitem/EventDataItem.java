@@ -20,14 +20,16 @@ import android.content.ContentValues;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Event;
 
+import com.android.contacts.model.RawContact;
+
 /**
  * Represents an event data item, wrapping the columns in
  * {@link ContactsContract.CommonDataKinds.Event}.
  */
 public class EventDataItem extends DataItem {
 
-    /* package */ EventDataItem(ContentValues values) {
-        super(values);
+    /* package */ EventDataItem(RawContact rawContact, ContentValues values) {
+        super(rawContact, values);
     }
 
     public String getStartDate() {

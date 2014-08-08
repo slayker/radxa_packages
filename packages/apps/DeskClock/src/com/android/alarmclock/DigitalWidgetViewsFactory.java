@@ -50,6 +50,7 @@ public class DigitalWidgetViewsFactory extends BroadcastReceiver implements Remo
     private boolean mReloadCitiesList = true;
     private boolean mReloadCitiesDb = true;
     private float mFontScale = 1;
+    private float mListScale = 1;
     private PendingIntent mQuarterlyIntent;
     private String mLastTimeZone;
 
@@ -57,12 +58,10 @@ public class DigitalWidgetViewsFactory extends BroadcastReceiver implements Remo
     // An adapter to provide the view for the list of cities in the world clock.
     private class RemoteWorldClockAdapter extends WorldClockAdapter {
         private final float mFontSize;
-        private final float mFont24Size;
 
         public RemoteWorldClockAdapter(Context context) {
             super(context);
             mFontSize = context.getResources().getDimension(R.dimen.widget_medium_font_size);
-            mFont24Size = context.getResources().getDimension(R.dimen.widget_24_medium_font_size);
         }
 
         public RemoteViews getViewAt(int position) {
@@ -101,10 +100,9 @@ public class DigitalWidgetViewsFactory extends BroadcastReceiver implements Remo
             now.setTimeZone(TimeZone.getTimeZone(cityTZ));
             int cityDayOfWeek = now.get(Calendar.DAY_OF_WEEK);
 
-            float fontSize = mFontScale * (DateFormat.is24HourFormat(mContext)
-                    ? mFont24Size : mFontSize);
-            clock.setTextViewTextSize(clockId1, TypedValue.COMPLEX_UNIT_PX, fontSize * mFontScale);
-            clock.setTextViewTextSize(clockId2, TypedValue.COMPLEX_UNIT_PX, fontSize * mFontScale);
+            float scale = Math.min(mFontScale, mListScale);
+            clock.setTextViewTextSize(clockId1, TypedValue.COMPLEX_UNIT_PX, mFontSize * scale);
+            clock.setTextViewTextSize(clockId2, TypedValue.COMPLEX_UNIT_PX, mFontSize * scale);
             clock.setString(clockId1, "setTimeZone", cityObj.mTimeZone);
             clock.setString(clockId2, "setTimeZone", cityObj.mTimeZone);
 
@@ -208,11 +206,12 @@ public class DigitalWidgetViewsFactory extends BroadcastReceiver implements Remo
         }
         if (mReloadCitiesDb) {
             mAdapter.loadCitiesDb(mContext);
-            mAdapter.updateHomeLabel(mContext);
             mReloadCitiesDb = false;
         }
 
         mFontScale = WidgetUtils.getScaleRatio(mContext, null, mId);
+        mListScale = WidgetUtils.getHeightScaleRatio(mContext, null, mId);
+
     }
 
     @Override
@@ -286,10 +285,8 @@ public class DigitalWidgetViewsFactory extends BroadcastReceiver implements Remo
             widget.setTextViewText(R.id.nextAlarm,
                     c.getString(R.string.control_set_alarm_with_existing, nextAlarm));
             widget.setViewVisibility(R.id.nextAlarm, View.VISIBLE);
-            Log.v(TAG, "DigitalWidget sets next alarm string to " + nextAlarm);
         } else  {
             widget.setViewVisibility(R.id.nextAlarm, View.GONE);
-            Log.v(TAG, "DigitalWidget sets next alarm string to null");
         }
     }
 }

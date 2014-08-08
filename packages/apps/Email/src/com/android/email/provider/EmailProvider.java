@@ -1024,8 +1024,8 @@ public class EmailProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        checkDatabases();
         Email.setServicesEnabledAsync(getContext());
+        checkDatabases();
         return false;
     }
 
@@ -1035,7 +1035,7 @@ public class EmailProvider extends ContentProvider {
      * any "orphan" database, so that both will be created together.  Note that an "orphan" database
      * will exist after either of the individual databases is deleted due to data corruption.
      */
-    public synchronized void checkDatabases() {
+    public void checkDatabases() {
         // Uncache the databases
         if (mDatabase != null) {
             mDatabase = null;

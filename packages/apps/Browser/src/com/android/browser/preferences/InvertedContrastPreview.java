@@ -23,7 +23,6 @@ import android.webkit.WebSettingsClassic;
 import android.webkit.WebViewClassic;
 
 import com.android.browser.BrowserSettings;
-import com.android.browser.BrowserWebView;
 import com.android.browser.WebViewProperties;
 
 public class InvertedContrastPreview extends WebViewPreview {
@@ -76,7 +75,7 @@ public class InvertedContrastPreview extends WebViewPreview {
 
     @Override
     protected void updatePreview(boolean forceReload) {
-        if (mWebView == null || !BrowserWebView.isClassic()) return;
+        if (mWebView == null) return;
 
         WebSettingsClassic ws = WebViewClassic.fromWebView(mWebView).getSettings();
         BrowserSettings bs = BrowserSettings.getInstance();

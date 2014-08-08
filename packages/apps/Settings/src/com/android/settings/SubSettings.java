@@ -16,9 +16,6 @@
 
 package com.android.settings;
 
-import android.app.FragmentManager;
-import android.view.MenuItem;
-
 /**
  * Stub class for showing sub-settings; we can't use the main Settings class
  * since for our app it is a special singleTask class.
@@ -29,26 +26,5 @@ public class SubSettings extends Settings {
     public boolean onNavigateUp() {
         finish();
         return true;
-    }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                if (popFragment()) {
-                    return true;
-                }
-                break;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    private boolean popFragment() {
-        FragmentManager fm = getFragmentManager();
-        if (fm.getBackStackEntryCount() > 0) {
-            fm.popBackStack();
-            return true;
-        }
-        return false;
     }
 }

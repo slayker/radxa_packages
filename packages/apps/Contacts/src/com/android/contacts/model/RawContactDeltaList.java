@@ -30,7 +30,7 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.RawContacts;
 import android.util.Log;
 
-import com.android.contacts.common.model.ValuesDelta;
+import com.android.contacts.model.RawContactDelta.ValuesDelta;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
@@ -49,7 +49,17 @@ public class RawContactDeltaList extends ArrayList<RawContactDelta> implements P
     private boolean mSplitRawContacts;
     private long[] mJoinWithRawContactIds;
 
-    public RawContactDeltaList() {
+    private RawContactDeltaList() {
+    }
+
+    /**
+     * Create an {@link RawContactDeltaList} that contains the given {@link RawContactDelta},
+     * usually when inserting a new {@link Contacts} entry.
+     */
+    public static RawContactDeltaList fromSingle(RawContactDelta delta) {
+        final RawContactDeltaList state = new RawContactDeltaList();
+        state.add(delta);
+        return state;
     }
 
     /**
@@ -75,11 +85,6 @@ public class RawContactDeltaList extends ArrayList<RawContactDelta> implements P
      */
     public static RawContactDeltaList fromIterator(Iterator<?> iterator) {
         final RawContactDeltaList state = new RawContactDeltaList();
-        state.addAll(iterator);
-        return state;
-    }
-
-    public void addAll(Iterator<?> iterator) {
         // Perform background query to pull contact details
         while (iterator.hasNext()) {
             // Read all contacts into local deltas to prepare for edits
@@ -88,8 +93,9 @@ public class RawContactDeltaList extends ArrayList<RawContactDelta> implements P
                     ? RawContact.createFrom((Entity) nextObject)
                     : (RawContact) nextObject;
             final RawContactDelta rawContactDelta = RawContactDelta.fromBefore(before);
-            add(rawContactDelta);
+            state.add(rawContactDelta);
         }
+        return state;
     }
 
     /**
@@ -157,11 +163,8 @@ public class RawContactDeltaList extends ArrayList<RawContactDelta> implements P
                 for (Long joinedRawContactId : mJoinWithRawContactIds) {
                     final Builder builder = beginKeepTogether();
                     builder.withValue(AggregationExceptions.RAW_CONTACT_ID1, joinedRawContactId);
-                    // we should use each delta's raw contact id, so we can update all the
-                    // aggregation exceptions for each pair of raw contacts.
-                    if (delta.getRawContactId() != -1) {
-                        builder.withValue(AggregationExceptions.RAW_CONTACT_ID2,
-                                delta.getRawContactId());
+                    if (rawContactId != -1) {
+                        builder.withValue(AggregationExceptions.RAW_CONTACT_ID2, rawContactId);
                     } else {
                         builder.withValueBackReference(
                                 AggregationExceptions.RAW_CONTACT_ID2, firstBatch);

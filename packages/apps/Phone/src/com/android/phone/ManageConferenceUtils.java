@@ -1,7 +1,4 @@
 /*
- * Copyright (c) 2013 The Linux Foundation. All rights reserved.
- * Not a Contribution
- *
  * Copyright (C) 2009 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,15 +77,15 @@ public class ManageConferenceUtils {
         }
     }
 
-    protected InCallScreen mInCallScreen;
-    protected CallManager mCM;
+    private InCallScreen mInCallScreen;
+    private CallManager mCM;
 
     // "Manage conference" UI elements and state
-    protected ViewGroup mManageConferencePanel;
-    protected View mButtonManageConferenceDone;
-    protected ViewGroup[] mConferenceCallList;
-    protected int mNumCallersInConference;
-    protected Chronometer mConferenceTime;
+    private ViewGroup mManageConferencePanel;
+    private View mButtonManageConferenceDone;
+    private ViewGroup[] mConferenceCallList;
+    private int mNumCallersInConference;
+    private Chronometer mConferenceTime;
 
     // See CallTracker.MAX_CONNECTIONS_PER_CALL
     private static final int MAX_CALLERS_IN_CONFERENCE = 5;

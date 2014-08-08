@@ -37,14 +37,13 @@ import android.widget.TextView;
 
 import com.android.contacts.GroupMetaDataLoader;
 import com.android.contacts.R;
-import com.android.contacts.common.model.dataitem.DataKind;
 import com.android.contacts.interactions.GroupCreationDialogFragment;
 import com.android.contacts.interactions.GroupCreationDialogFragment.OnGroupCreatedListener;
-import com.android.contacts.model.RawContactDelta;
-import com.android.contacts.common.model.ValuesDelta;
 import com.android.contacts.model.RawContactModifier;
-import com.android.contacts.util.UiClosables;
-import com.google.common.base.Objects;
+import com.android.contacts.model.RawContactDelta;
+import com.android.contacts.model.RawContactDelta.ValuesDelta;
+import com.android.contacts.model.dataitem.DataKind;
+import com.android.internal.util.Objects;
 
 import java.util.ArrayList;
 
@@ -281,7 +280,8 @@ public class GroupMembershipView extends LinearLayout
 
     @Override
     public void onClick(View v) {
-        if (UiClosables.closeQuietly(mPopup)) {
+        if (mPopup != null && mPopup.isShowing()) {
+            mPopup.dismiss();
             return;
         }
 
@@ -329,8 +329,10 @@ public class GroupMembershipView extends LinearLayout
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        UiClosables.closeQuietly(mPopup);
-        mPopup = null;
+        if (mPopup != null) {
+            mPopup.dismiss();
+            mPopup = null;
+        }
     }
 
     @Override
@@ -407,8 +409,10 @@ public class GroupMembershipView extends LinearLayout
     }
 
     private void createNewGroup() {
-        UiClosables.closeQuietly(mPopup);
-        mPopup = null;
+        if (mPopup != null) {
+            mPopup.dismiss();
+            mPopup = null;
+        }
 
         GroupCreationDialogFragment.show(
                 ((Activity) getContext()).getFragmentManager(),

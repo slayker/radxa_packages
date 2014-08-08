@@ -214,15 +214,13 @@ public class AccountSettingsEditQuickResponsesFragment extends Fragment
         // startPreferencePanel launches this fragment with the right title initially, but
         // if the device is rotate we must set the title ourselves
         if (savedInstanceState != null) {
-            getActivity().setTitle(savedInstanceState.getInt(BUNDLE_KEY_ACTIVITY_TITLE));
+            getActivity().setTitle(savedInstanceState.getString(BUNDLE_KEY_ACTIVITY_TITLE));
         }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        // save the resource id instead of the string.
-        outState.putInt(BUNDLE_KEY_ACTIVITY_TITLE,
-                R.string.account_settings_edit_quick_responses_label);
+        outState.putString(BUNDLE_KEY_ACTIVITY_TITLE, (String) getActivity().getTitle());
     }
 
     @Override

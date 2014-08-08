@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Android Open Source Project
+ * Copyright (C) 2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,63 +17,40 @@
 package com.android.gallery3d.filtershow.filters;
 
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
-import android.graphics.RectF;
-
-import java.util.Vector;
 
 public class ImageFilterRedEye extends ImageFilter {
-    private static final String LOGTAG = "ImageFilterRedEye";
-    FilterRedEyeRepresentation mParameters = new FilterRedEyeRepresentation();
+    private static final String TAG = "ImageFilterRedEye";
+
 
     public ImageFilterRedEye() {
-        mName = "Red Eye";
+        mName = "Redeye";
+
     }
 
     @Override
-    public FilterRepresentation getDefaultRepresentation() {
-        return new FilterRedEyeRepresentation();
+    public ImageFilter clone() throws CloneNotSupportedException {
+        ImageFilterRedEye filter = (ImageFilterRedEye) super.clone();
+
+        return filter;
     }
 
-    public boolean isNil() {
-        return mParameters.isNil();
-    }
-
-    public Vector<FilterPoint> getCandidates() {
-        return mParameters.getCandidates();
-    }
-
-    public void clear() {
-        mParameters.clearCandidates();
-    }
-
-    native protected void nativeApplyFilter(Bitmap bitmap, int w, int h, short[] matrix);
+    native protected void nativeApplyFilter(Bitmap bitmap, int w, int h, short []matrix);
 
     @Override
-    public void useRepresentation(FilterRepresentation representation) {
-        FilterRedEyeRepresentation parameters = (FilterRedEyeRepresentation) representation;
-        mParameters = parameters;
-    }
-
-    @Override
-    public Bitmap apply(Bitmap bitmap, float scaleFactor, int quality) {
+    public Bitmap apply(Bitmap bitmap, float scaleFactor, boolean highQuality) {
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
-        short[] rect = new short[4];
+        float p = mParameter;
+        float value = p;
+        int box = Math.min(w, h);
+        int sizex = Math.min((int)((p+100)*box/400),w/2);
+        int sizey = Math.min((int)((p+100)*box/800),h/2);
 
-        int size = mParameters.getNumberOfCandidates();
-        Matrix originalToScreen = getOriginalToScreenMatrix(w, h);
-        for (int i = 0; i < size; i++) {
-            RectF r = new RectF(((RedEyeCandidate) (mParameters.getCandidate(i))).mRect);
-            originalToScreen.mapRect(r);
-            if (r.intersect(0, 0, w, h)) {
-                rect[0] = (short) r.left;
-                rect[1] = (short) r.top;
-                rect[2] = (short) r.width();
-                rect[3] = (short) r.height();
-                nativeApplyFilter(bitmap, w, h, rect);
-            }
-        }
+        short [] rect = new short[]{
+                (short) (w/2-sizex),(short) (w/2-sizey),
+                (short) (2*sizex),(short) (2*sizey)};
+
+        nativeApplyFilter(bitmap, w, h, rect);
         return bitmap;
     }
 }

@@ -16,147 +16,119 @@
 
 package com.android.gallery3d.exif;
 
+import android.content.res.XmlResourceParser;
 import android.graphics.BitmapFactory;
 
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
 
 public class ExifReaderTest extends ExifXmlDataTestCase {
     private static final String TAG = "ExifReaderTest";
 
-    private ExifInterface mInterface;
-    private List<Map<Short, List<String>>> mGroundTruth;
+    private final HashMap<Short, String> mIfd0Value = new HashMap<Short, String>();
+    private final HashMap<Short, String> mIfd1Value = new HashMap<Short, String>();
+    private final HashMap<Short, String> mExifIfdValue = new HashMap<Short, String>();
+    private final HashMap<Short, String> mInteroperabilityIfdValue = new HashMap<Short, String>();
+
+    private InputStream mImageInputStream;
+
+    public ExifReaderTest(int imageResourceId, int xmlResourceId) {
+        super(imageResourceId, xmlResourceId);
+    }
 
     @Override
     public void setUp() throws Exception {
-        super.setUp();
-        mGroundTruth = ExifXmlReader.readXml(getXmlParser());
+        mImageInputStream = getInstrumentation()
+                .getContext().getResources().openRawResource(mImageResourceId);
+
+        XmlResourceParser parser =
+                getInstrumentation().getContext().getResources().getXml(mXmlResourceId);
+
+        ExifXmlReader.readXml(parser, mIfd0Value, mIfd1Value, mExifIfdValue
+                , mInteroperabilityIfdValue);
+        parser.close();
     }
 
-    public ExifReaderTest(int imgRes, int xmlRes) {
-        super(imgRes, xmlRes);
-        mInterface = new ExifInterface();
-    }
-
-    public ExifReaderTest(String imgPath, String xmlPath) {
-        super(imgPath, xmlPath);
-        mInterface = new ExifInterface();
-    }
-
-    public void testRead() throws Exception {
-        try {
-            ExifReader reader = new ExifReader(mInterface);
-            ExifData exifData = reader.read(getImageInputStream());
-            for (int i = 0; i < IfdId.TYPE_IFD_COUNT; i++) {
-                checkIfd(exifData.getIfdData(i), mGroundTruth.get(i));
-            }
-            checkThumbnail(exifData);
-        } catch (Exception e) {
-            throw new Exception(getImageTitle(), e);
-        }
+    public void testRead() throws ExifInvalidFormatException, IOException {
+        ExifReader reader = new ExifReader();
+        ExifData exifData = reader.read(mImageInputStream);
+        checkIfd(exifData.getIfdData(IfdId.TYPE_IFD_0), mIfd0Value);
+        checkIfd(exifData.getIfdData(IfdId.TYPE_IFD_1), mIfd1Value);
+        checkIfd(exifData.getIfdData(IfdId.TYPE_IFD_EXIF), mExifIfdValue);
+        checkIfd(exifData.getIfdData(IfdId.TYPE_IFD_INTEROPERABILITY),
+                mInteroperabilityIfdValue);
+        checkThumbnail(exifData);
     }
 
     private void checkThumbnail(ExifData exifData) {
-        Map<Short, List<String>> ifd1Truth = mGroundTruth.get(IfdId.TYPE_IFD_1);
-
-        List<String> typeTagValue = ifd1Truth.get(ExifInterface.TAG_COMPRESSION);
-        if (typeTagValue == null)
-            return;
-
         IfdData ifd1 = exifData.getIfdData(IfdId.TYPE_IFD_1);
-        if (ifd1 == null)
-            fail(getImageTitle() + ": failed to find IFD1");
-
-        String typeTagTruth = typeTagValue.get(0);
-
-        int type = (int) ifd1.getTag(ExifInterface.getTrueTagKey(ExifInterface.TAG_COMPRESSION))
-                .getValueAt(0);
-
-        if (String.valueOf(ExifInterface.Compression.JPEG).equals(typeTagTruth)) {
-            assertTrue(getImageTitle(), type == ExifInterface.Compression.JPEG);
-            assertTrue(getImageTitle(), exifData.hasCompressedThumbnail());
-            byte[] thumbnail = exifData.getCompressedThumbnail();
-            assertTrue(getImageTitle(),
-                    BitmapFactory.decodeByteArray(thumbnail, 0, thumbnail.length) != null);
-        } else if (String.valueOf(ExifInterface.Compression.UNCOMPRESSION).equals(typeTagTruth)) {
-            assertTrue(getImageTitle(), type == ExifInterface.Compression.UNCOMPRESSION);
-            // Try to check the strip count with the formula provided by EXIF spec.
-            int planarType = ExifInterface.PlanarConfiguration.CHUNKY;
-            ExifTag planarTag = ifd1.getTag(ExifInterface
-                    .getTrueTagKey(ExifInterface.TAG_PLANAR_CONFIGURATION));
-            if (planarTag != null) {
-                planarType = (int) planarTag.getValueAt(0);
-            }
-
-            if (!ifd1Truth.containsKey(ExifInterface.TAG_IMAGE_LENGTH) ||
-                    !ifd1Truth.containsKey(ExifInterface.TAG_ROWS_PER_STRIP)) {
-                return;
-            }
-
-            ExifTag heightTag = ifd1.getTag(ExifInterface
-                    .getTrueTagKey(ExifInterface.TAG_IMAGE_LENGTH));
-            ExifTag rowPerStripTag = ifd1.getTag(ExifInterface
-                    .getTrueTagKey(ExifInterface.TAG_ROWS_PER_STRIP));
-
-            // Fail the test if required tags are missing
-            if (heightTag == null || rowPerStripTag == null) {
-                fail(getImageTitle());
-            }
-
-            int imageLength = (int) heightTag.getValueAt(0);
-            int rowsPerStrip = (int) rowPerStripTag.getValueAt(0);
-            int stripCount = ifd1.getTag(
-                    ExifInterface.getTrueTagKey(ExifInterface.TAG_STRIP_OFFSETS))
-                    .getComponentCount();
-
-            if (planarType == ExifInterface.PlanarConfiguration.CHUNKY) {
-                assertTrue(getImageTitle(),
-                        stripCount == (imageLength + rowsPerStrip - 1) / rowsPerStrip);
+        if (ifd1 != null) {
+            if (ifd1.getTag(ExifTag.TAG_COMPRESSION).getUnsignedShort(0) ==
+                    ExifTag.Compression.JPEG) {
+                assertTrue(exifData.hasCompressedThumbnail());
+                byte[] thumbnail = exifData.getCompressedThumbnail();
+                assertTrue(BitmapFactory.decodeByteArray(thumbnail, 0, thumbnail.length) != null);
             } else {
-                if (!ifd1Truth.containsKey(ExifInterface.TAG_SAMPLES_PER_PIXEL)) {
-                    return;
+                // Try to check the strip count with the formula provided by EXIF spec.
+                int planarType = ExifTag.PlanarConfiguration.CHUNKY;
+                ExifTag planarTag = ifd1.getTag(ExifTag.TAG_PLANAR_CONFIGURATION);
+                if (planarTag != null) {
+                    planarType = planarTag.getUnsignedShort(0);
                 }
-                ExifTag samplePerPixelTag = ifd1.getTag(ExifInterface
-                        .getTrueTagKey(ExifInterface.TAG_SAMPLES_PER_PIXEL));
-                int samplePerPixel = (int) samplePerPixelTag.getValueAt(0);
-                assertTrue(getImageTitle(),
-                        stripCount ==
-                        (imageLength + rowsPerStrip - 1) / rowsPerStrip * samplePerPixel);
-            }
 
-            if (!ifd1Truth.containsKey(ExifInterface.TAG_STRIP_BYTE_COUNTS)) {
-                return;
-            }
-            ExifTag byteCountTag = ifd1.getTag(ExifInterface
-                    .getTrueTagKey(ExifInterface.TAG_STRIP_BYTE_COUNTS));
-            short byteCountDataType = byteCountTag.getDataType();
-            for (int i = 0; i < stripCount; i++) {
-                if (byteCountDataType == ExifTag.TYPE_UNSIGNED_SHORT) {
-                    assertEquals(getImageTitle(),
-                            byteCountTag.getValueAt(i), exifData.getStrip(i).length);
+                ExifTag heightTag = ifd1.getTag(ExifTag.TAG_IMAGE_LENGTH);
+                ExifTag rowPerStripTag = ifd1.getTag(ExifTag.TAG_ROWS_PER_STRIP);
+
+                int imageLength = getUnsignedIntOrShort(heightTag);
+                int rowsPerStrip = getUnsignedIntOrShort(rowPerStripTag);
+                int stripCount = ifd1.getTag(
+                        ExifTag.TAG_STRIP_OFFSETS).getComponentCount();
+
+                if (planarType == ExifTag.PlanarConfiguration.CHUNKY) {
+                    assertTrue(stripCount == (imageLength + rowsPerStrip - 1) / rowsPerStrip);
                 } else {
-                    assertEquals(getImageTitle(),
-                            byteCountTag.getValueAt(i), exifData.getStrip(i).length);
+                    ExifTag samplePerPixelTag = ifd1.getTag(ExifTag.TAG_SAMPLES_PER_PIXEL);
+                    int samplePerPixel = samplePerPixelTag.getUnsignedShort(0);
+                    assertTrue(stripCount ==
+                            (imageLength + rowsPerStrip - 1) / rowsPerStrip * samplePerPixel);
+                }
+
+                for (int i = 0; i < stripCount; i++) {
+                    ExifTag byteCountTag = ifd1.getTag(ExifTag.TAG_STRIP_BYTE_COUNTS);
+                    if (byteCountTag.getDataType() == ExifTag.TYPE_UNSIGNED_SHORT) {
+                        assertEquals(byteCountTag.getUnsignedShort(i), exifData.getStrip(i).length);
+                    } else {
+                        assertEquals(
+                                byteCountTag.getUnsignedLong(i), exifData.getStrip(i).length);
+                    }
                 }
             }
         }
     }
 
-    private void checkIfd(IfdData ifd, Map<Short, List<String>> ifdValue) {
+    private int getUnsignedIntOrShort(ExifTag tag) {
+        if (tag.getDataType() == ExifTag.TYPE_UNSIGNED_SHORT) {
+            return tag.getUnsignedShort(0);
+        } else {
+            return (int) tag.getUnsignedLong(0);
+        }
+    }
+
+    private void checkIfd(IfdData ifd, HashMap<Short, String> ifdValue) {
         if (ifd == null) {
-            assertEquals(getImageTitle(), 0, ifdValue.size());
+            assertEquals(0 ,ifdValue.size());
             return;
         }
         ExifTag[] tags = ifd.getAllTags();
         for (ExifTag tag : tags) {
-            List<String> truth = ifdValue.get(tag.getTagId());
-            assertNotNull(String.format("Tag %x, ", tag.getTagId()) + getImageTitle(), truth);
-            if (truth.contains(null)) {
-                continue;
-            }
-            assertTrue(String.format("Tag %x, ", tag.getTagId()) + getImageTitle(),
-                    truth.contains(Util.tagValueToString(tag).trim()));
+            assertEquals(ifdValue.get(tag.getTagId()), tag.valueToString().trim());
         }
-        assertEquals(getImageTitle(), ifdValue.size(), tags.length);
+        assertEquals(ifdValue.size(), tags.length);
+    }
+
+    @Override
+    public void tearDown() throws Exception {
+        mImageInputStream.close();
     }
 }

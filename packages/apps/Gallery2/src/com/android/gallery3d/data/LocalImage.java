@@ -23,6 +23,9 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
+import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory.Options;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore.Images;
@@ -35,19 +38,13 @@ import com.android.gallery3d.app.PanoramaMetadataSupport;
 import com.android.gallery3d.app.StitchingProgressManager;
 import com.android.gallery3d.common.ApiHelper;
 import com.android.gallery3d.common.BitmapUtils;
-import com.android.gallery3d.common.Utils;
-import com.android.gallery3d.exif.ExifInterface;
-import com.android.gallery3d.exif.ExifTag;
 import com.android.gallery3d.util.GalleryUtils;
 import com.android.gallery3d.util.ThreadPool.Job;
 import com.android.gallery3d.util.ThreadPool.JobContext;
 import com.android.gallery3d.util.UpdateHelper;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel.MapMode;
 
 // LocalImage represents an image in the local storage.
 public class LocalImage extends LocalMediaItem {
@@ -178,32 +175,36 @@ public class LocalImage extends LocalMediaItem {
         return new LocalImageRequest(mApplication, mPath, type, filePath);
     }
 
-    public static class LocalImageRequest extends ImageCacheRequest {
+    public class LocalImageRequest extends ImageCacheRequest {
         private String mLocalFilePath;
 
         LocalImageRequest(GalleryApp application, Path path, int type,
                 String localFilePath) {
-            super(application, path, type, MediaItem.getTargetSize(type));
+            super(application, path, type, MediaItem.getTargetSize(type),localFilePath);
             mLocalFilePath = localFilePath;
         }
 
         @Override
         public Bitmap onDecodeOriginal(JobContext jc, final int type) {
+            if(type == MediaItem.TYPE_DECODE){
+            	return new com.android.gallery3d.util.BitmapUtils(mApplication.getAndroidContext())
+                              .getBitmap(getContentUri(), 1920, 1080);
+            }
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
             int targetSize = MediaItem.getTargetSize(type);
 
             // try to decode from JPEG EXIF
             if (type == MediaItem.TYPE_MICROTHUMBNAIL) {
-                ExifInterface exif = new ExifInterface();
-                byte[] thumbData = null;
+                ExifInterface exif = null;
+                byte [] thumbData = null;
                 try {
-                    exif.readExif(mLocalFilePath);
-                    thumbData = exif.getThumbnail();
-                } catch (FileNotFoundException e) {
-                    Log.w(TAG, "failed to find file to read thumbnail: " + mLocalFilePath);
-                } catch (IOException e) {
-                    Log.w(TAG, "failed to get thumbnail from: " + mLocalFilePath);
+                    exif = new ExifInterface(mLocalFilePath);
+                    if (exif != null) {
+                        thumbData = exif.getThumbnail();
+                    }
+                } catch (Throwable t) {
+                    Log.w(TAG, "fail to get exif thumb", t);
                 }
                 if (thumbData != null) {
                     Bitmap bitmap = DecodeUtils.decodeIfBigEnough(
@@ -247,9 +248,9 @@ public class LocalImage extends LocalMediaItem {
             operation |= SUPPORT_FULL_IMAGE;
         }
 
-        if (BitmapUtils.isRotationSupported(mimeType)) {
+//        if (BitmapUtils.isRotationSupported(mimeType)) {
             operation |= SUPPORT_ROTATE;
-        }
+//        }
 
         if (GalleryUtils.isValidLocation(latitude, longitude)) {
             operation |= SUPPORT_SHOW_ON_MAP;
@@ -273,6 +274,29 @@ public class LocalImage extends LocalMediaItem {
         Uri baseUri = Images.Media.EXTERNAL_CONTENT_URI;
         mApplication.getContentResolver().delete(baseUri, "_id=?",
                 new String[]{String.valueOf(id)});
+        File file = new File(filePath);
+        try{
+           if(file.exists()){
+              file.delete();
+           }
+        }catch(Exception e){
+         e.printStackTrace();
+        }
+    }
+
+    private static String getExifOrientation(int orientation) {
+        switch (orientation) {
+            case 0:
+                return String.valueOf(ExifInterface.ORIENTATION_NORMAL);
+            case 90:
+                return String.valueOf(ExifInterface.ORIENTATION_ROTATE_90);
+            case 180:
+                return String.valueOf(ExifInterface.ORIENTATION_ROTATE_180);
+            case 270:
+                return String.valueOf(ExifInterface.ORIENTATION_ROTATE_270);
+            default:
+                throw new AssertionError("invalid: " + orientation);
+        }
     }
 
     @Override
@@ -284,23 +308,18 @@ public class LocalImage extends LocalMediaItem {
         if (rotation < 0) rotation += 360;
 
         if (mimeType.equalsIgnoreCase("image/jpeg")) {
-            ExifInterface exifInterface = new ExifInterface();
-            ExifTag tag = exifInterface.buildTag(ExifInterface.TAG_ORIENTATION,
-                    ExifInterface.getOrientationValueForRotation(rotation));
-            if(tag != null) {
-                exifInterface.setTag(tag);
-                try {
-                    exifInterface.forceRewriteExif(filePath);
-                    fileSize = new File(filePath).length();
-                    values.put(Images.Media.SIZE, fileSize);
-                } catch (FileNotFoundException e) {
-                    Log.w(TAG, "cannot find file to set exif: " + filePath);
-                } catch (IOException e) {
-                    Log.w(TAG, "cannot set exif data: " + filePath);
-                }
-            } else {
-                Log.w(TAG, "Could not build tag: " + ExifInterface.TAG_ORIENTATION);
+            try {
+                ExifInterface exif = new ExifInterface(filePath);
+                exif.setAttribute(ExifInterface.TAG_ORIENTATION,
+                        getExifOrientation(rotation));
+                exif.saveAttributes();
+            } catch (IOException e) {
+                Log.w(TAG, "cannot set exif data: " + filePath);
             }
+
+            // We need to update the filesize as well
+            fileSize = new File(filePath).length();
+            values.put(Images.Media.SIZE, fileSize);
         }
 
         values.put(Images.Media.ORIENTATION, rotation);
@@ -349,5 +368,25 @@ public class LocalImage extends LocalMediaItem {
     @Override
     public String getFilePath() {
         return filePath;
+    }
+	
+	@Override
+	public Job<BitmapInfo> requestDecodeImage(int type, Uri mUri) {
+		return new BitmapJob(type,mUri);
+	}
+	private class BitmapJob implements Job<BitmapInfo> {
+        private int mType;
+        private Uri mUri;
+
+        protected BitmapJob(int type,Uri uri) {
+            mType = type;
+            mUri = uri;
+        }
+
+        @Override
+        public BitmapInfo run(JobContext jc) {
+            return new BitmapInfo(mUri,
+            		new com.android.gallery3d.util.BitmapUtils(mApplication.getAndroidContext()).getNotRotateBitmap(mUri, 1920, 1080));
+        }
     }
 }

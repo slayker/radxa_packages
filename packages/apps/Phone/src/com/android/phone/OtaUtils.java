@@ -37,7 +37,6 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.UserHandle;
-import android.telephony.MSimTelephonyManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -326,8 +325,8 @@ public class OtaUtils {
         if (DBG) log("otaShowActivationScreen: " + otaShowActivationScreen);
 
         // Run the OTASP call in "interactive" mode only if
-        // this is a "voice capable" CDMA device in NV mode.
-        if (PhoneGlobals.sVoiceCapable) {
+        // this is a non-LTE "voice capable" device.
+        if (PhoneGlobals.sVoiceCapable && getLteOnCdmaMode(context) == PhoneConstants.LTE_ON_CDMA_FALSE) {
             if (phoneNeedsActivation
                     && (otaShowActivationScreen == OTA_SHOW_ACTIVATION_SCREEN_ON)) {
                 app.cdmaOtaProvisionData.isOtaCallIntentProcessed = false;
@@ -369,6 +368,7 @@ public class OtaUtils {
      */
     public static void startInteractiveOtasp(Context context) {
         if (DBG) log("startInteractiveOtasp()...");
+        PhoneGlobals app = PhoneGlobals.getInstance();
 
         // There are two ways to start OTASP on voice-capable devices:
         //
@@ -400,14 +400,8 @@ public class OtaUtils {
         // We won't actually make the call until the user presses the "Activate"
         // button.
 
-        Intent activationScreenIntent = null;
-        if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
-            activationScreenIntent = new Intent().setClass(context, MSimInCallScreen.class)
-                    .setAction(ACTION_DISPLAY_ACTIVATION_SCREEN);
-        } else {
-            activationScreenIntent = new Intent().setClass(context, InCallScreen.class)
-                    .setAction(ACTION_DISPLAY_ACTIVATION_SCREEN);
-        }
+        Intent activationScreenIntent = new Intent().setClass(context, InCallScreen.class)
+                .setAction(ACTION_DISPLAY_ACTIVATION_SCREEN);
 
         // Watch out: in the scenario where OTASP gets triggered from the
         // BOOT_COMPLETED broadcast (see OtaStartupReceiver.java), we might be

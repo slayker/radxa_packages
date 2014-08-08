@@ -20,9 +20,7 @@ import android.content.Context;
 import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.Message;
-import android.os.SystemProperties;
 import android.preference.CheckBoxPreference;
-import android.provider.Settings.SettingNotFoundException;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -31,8 +29,8 @@ import com.android.internal.telephony.Phone;
 public class Use2GOnlyCheckBoxPreference extends CheckBoxPreference {
     private static final String LOG_TAG = "Use2GOnlyCheckBoxPreference";
 
-    private static Phone mPhone;
-    private static MyHandler mHandler;
+    private Phone mPhone;
+    private MyHandler mHandler;
 
     public Use2GOnlyCheckBoxPreference(Context context) {
         this(context, null);
@@ -50,51 +48,22 @@ public class Use2GOnlyCheckBoxPreference extends CheckBoxPreference {
                 mHandler.obtainMessage(MyHandler.MESSAGE_GET_PREFERRED_NETWORK_TYPE));
     }
 
-    private int getDefaultNetworkMode() {
-        int mode = SystemProperties.getInt("ro.telephony.default_network",
-                Phone.PREFERRED_NT_MODE);
-        Log.i(LOG_TAG, "getDefaultNetworkMode: mode=" + mode);
-        return mode;
-    }
-
     @Override
     protected void  onClick() {
         super.onClick();
 
-        int bestAvailableType = (mPhone.getLteOnGsmMode() == 0) ?
-                                getDefaultNetworkMode() : Phone.NT_MODE_LTE_GSM_WCDMA;
-        int networkType = isChecked() ? Phone.NT_MODE_GSM_ONLY : bestAvailableType;
-
+        int networkType = isChecked() ? Phone.NT_MODE_GSM_ONLY : Phone.NT_MODE_WCDMA_PREF;
         Log.i(LOG_TAG, "set preferred network type="+networkType);
-        android.telephony.MSimTelephonyManager.putIntAtIndex(
-                mPhone.getContext().getContentResolver(),
-                android.provider.Settings.Global.PREFERRED_NETWORK_MODE,
-                mPhone.getSubscription(), networkType);
+        android.provider.Settings.Global.putInt(mPhone.getContext().getContentResolver(),
+                android.provider.Settings.Global.PREFERRED_NETWORK_MODE, networkType);
         mPhone.setPreferredNetworkType(networkType, mHandler
                 .obtainMessage(MyHandler.MESSAGE_SET_PREFERRED_NETWORK_TYPE));
    }
-
-    public static void updatePhone(Phone phone) {
-        Log.i(LOG_TAG, "updatePhone subscription :" + phone.getSubscription());
-        mPhone = phone;
-        mPhone.getPreferredNetworkType(
-                 mHandler.obtainMessage(MyHandler.MESSAGE_GET_PREFERRED_NETWORK_TYPE));
-    }
-
-    public static void updateCheckBox(Phone phone) {
-        Log.i(LOG_TAG, "updateCheckBox subscription :" + phone.getSubscription());
-        mPhone = phone;
-        if (mHandler != null) {
-            mHandler.sendEmptyMessage(MyHandler.MESSAGE_UPDATE_CHECK_BOX_STATE);
-        }
-    }
-
 
     private class MyHandler extends Handler {
 
         static final int MESSAGE_GET_PREFERRED_NETWORK_TYPE = 0;
         static final int MESSAGE_SET_PREFERRED_NETWORK_TYPE = 1;
-        static final int MESSAGE_UPDATE_CHECK_BOX_STATE = 2;
 
         @Override
         public void handleMessage(Message msg) {
@@ -106,10 +75,6 @@ public class Use2GOnlyCheckBoxPreference extends CheckBoxPreference {
                 case MESSAGE_SET_PREFERRED_NETWORK_TYPE:
                     handleSetPreferredNetworkTypeResponse(msg);
                     break;
-
-                case MESSAGE_UPDATE_CHECK_BOX_STATE:
-                    handleUpdateCheckBoxState();
-                    break;
             }
         }
 
@@ -118,12 +83,14 @@ public class Use2GOnlyCheckBoxPreference extends CheckBoxPreference {
 
             if (ar.exception == null) {
                 int type = ((int[])ar.result)[0];
+                if (type != Phone.NT_MODE_GSM_ONLY) {
+                    // Allow only NT_MODE_GSM_ONLY or NT_MODE_WCDMA_PREF
+                    type = Phone.NT_MODE_WCDMA_PREF;
+                }
                 Log.i(LOG_TAG, "get preferred network type="+type);
                 setChecked(type == Phone.NT_MODE_GSM_ONLY);
-                android.telephony.MSimTelephonyManager.putIntAtIndex(
-                        mPhone.getContext().getContentResolver(),
-                        android.provider.Settings.Global.PREFERRED_NETWORK_MODE,
-                        mPhone.getSubscription(), type);
+                android.provider.Settings.Global.putInt(mPhone.getContext().getContentResolver(),
+                        android.provider.Settings.Global.PREFERRED_NETWORK_MODE, type);
             } else {
                 // Weird state, disable the setting
                 Log.i(LOG_TAG, "get preferred network type, exception="+ar.exception);
@@ -143,19 +110,6 @@ public class Use2GOnlyCheckBoxPreference extends CheckBoxPreference {
             } else {
                 Log.i(LOG_TAG, "set preferred network type done");
             }
-        }
-
-        private void handleUpdateCheckBoxState() {
-            try{
-                int nwMode = android.telephony.MSimTelephonyManager.getIntAtIndex(
-                             mPhone.getContext().getContentResolver(),
-                             android.provider.Settings.Global.PREFERRED_NETWORK_MODE,
-                             mPhone.getSubscription());
-                Log.i(LOG_TAG, "handleUpdateCheckBoxState network type="+nwMode);
-                setChecked(nwMode == Phone.NT_MODE_GSM_ONLY);
-              }catch(SettingNotFoundException ex){
-                 Log.e(LOG_TAG, "SettingNotFoundException = "+ex);
-             }
         }
     }
 }

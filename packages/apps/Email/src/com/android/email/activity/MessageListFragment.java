@@ -34,7 +34,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.os.SystemProperties;
 import android.text.TextPaint;
 import android.util.Log;
 import android.view.ActionMode;
@@ -82,8 +81,7 @@ import java.util.Set;
  */
 public class MessageListFragment extends ListFragment
         implements OnItemLongClickListener, MessagesAdapter.Callback,
-        MoveMessageToDialog.Callback, OnDragListener, OnTouchListener,
-        DeleteMessageConfirmationDialog.Callback {
+        MoveMessageToDialog.Callback, OnDragListener, OnTouchListener {
     private static final String BUNDLE_LIST_STATE = "MessageListFragment.state.listState";
     private static final String BUNDLE_KEY_SELECTED_MESSAGE_ID
             = "messageListFragment.state.listState.selected_message_id";
@@ -1491,7 +1489,7 @@ public class MessageListFragment extends ListFragment
 
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            final Set<Long> selectedConversations = mListAdapter.getSelectedSet();
+            Set<Long> selectedConversations = mListAdapter.getSelectedSet();
             if (selectedConversations.isEmpty()) return true;
             switch (item.getItemId()) {
                 case R.id.mark_read:
@@ -1509,16 +1507,8 @@ public class MessageListFragment extends ListFragment
                     toggleFavorite(selectedConversations);
                     break;
                 case R.id.delete:
-                    if (true) {
-                        DeleteMessageConfirmationDialog dialog = DeleteMessageConfirmationDialog
-                                .newInstance(selectedConversations.size(), null);
-                        dialog.setTargetFragment(MessageListFragment.this, 0);
-                        dialog.setCancelable(true);
-                        dialog.show(getFragmentManager(), "dialog");
-                    } else {
-                        mCallback.onAdvancingOpAccepted(selectedConversations);
-                        deleteMessages(selectedConversations);
-                    }
+                    mCallback.onAdvancingOpAccepted(selectedConversations);
+                    deleteMessages(selectedConversations);
                     break;
                 case R.id.move:
                     showMoveMessagesDialog(selectedConversations);
@@ -1579,12 +1569,5 @@ public class MessageListFragment extends ListFragment
             }
             break;
         }
-    }
-
-    @Override
-    public void onDeleteMessageConfirmationDialogOkPressed() {
-        final Set<Long> selectedConversations = mListAdapter.getSelectedSet();
-        mCallback.onAdvancingOpAccepted(selectedConversations);
-        deleteMessages(selectedConversations);
     }
 }

@@ -80,41 +80,6 @@ public class EditorAnimator {
         });
     }
 
-    /**
-     * Slides the view into its new height, while simultaneously fading it into view.
-     *
-     * @param target The target view to perform the animation on.
-     * @param previousHeight The previous height of the view before its height was changed.
-     * Needed because the view does not store any state information about its previous height.
-     */
-    public void slideAndFadeIn(final ViewGroup target, final int previousHeight) {
-        mRunner.endOldAnimation();
-        target.setVisibility(View.VISIBLE);
-        target.setAlpha(0.0f);
-        target.requestFocus();
-        SchedulingUtils.doAfterLayout(target, new Runnable() {
-            @Override
-            public void run() {
-                final int offset = target.getHeight() - previousHeight;
-                final List<Animator> animators = Lists.newArrayList();
-
-                // Translations
-                final List<View> viewsToMove = getViewsBelowOf(target);
-
-                translateViews(animators, viewsToMove, -offset, 0.0f, 0, 200);
-
-                // Fade in
-                final ObjectAnimator fadeInAnimator = ObjectAnimator.ofFloat(
-                        target, View.ALPHA, 0.0f, 1.0f);
-                fadeInAnimator.setDuration(200);
-                fadeInAnimator.setStartDelay(200);
-                animators.add(fadeInAnimator);
-
-                mRunner.run(animators);
-            }
-        });
-    }
-
     public void expandOrganization(final View addOrganizationButton,
             final ViewGroup organizationSectionViewContainer) {
         mRunner.endOldAnimation();
@@ -128,6 +93,7 @@ public class EditorAnimator {
                 // How many pixels extra do we need?
                 final int offset = organizationSectionViewContainer.getHeight() -
                         addOrganizationButton.getHeight();
+
                 final List<Animator> animators = Lists.newArrayList();
 
                 // Fade out
@@ -139,6 +105,7 @@ public class EditorAnimator {
                 // Translations
                 final List<View> viewsToMove = getViewsBelowOf(organizationSectionViewContainer);
                 translateViews(animators, viewsToMove, -offset, 0.0f, 0, 200);
+
                 // Fade in
                 final ObjectAnimator fadeInAnimator = ObjectAnimator.ofFloat(
                         organizationSectionViewContainer, View.ALPHA, 0.0f, 1.0f);
@@ -231,7 +198,8 @@ public class EditorAnimator {
     }
 
     /**
-     * Traverses up the view hierarchy and returns all views physically below this item.
+     * Traverses up the view hierarchy and returns all views below this item. Stops
+     * once a parent is not a vertical LinearLayout
      *
      * @return List of views that are below the given view. Empty list if parent of view is null.
      */
@@ -240,28 +208,24 @@ public class EditorAnimator {
         final List<View> result = Lists.newArrayList();
         if (victimParent != null) {
             final int index = victimParent.indexOfChild(view);
-            getViewsBelowOfRecursive(result, victimParent, index + 1, view);
+            getViewsBelowOfRecursive(result, victimParent, index + 1);
         }
         return result;
     }
 
     private static void getViewsBelowOfRecursive(List<View> result, ViewGroup container,
-            int index, View target) {
+            int index) {
         for (int i = index; i < container.getChildCount(); i++) {
-            View view = container.getChildAt(i);
-            // consider the child view below the target view only if it is physically
-            // below the view on-screen, using half the height of the target view as the
-            // baseline
-            if (view.getY() > (target.getY() + target.getHeight() / 2)) {
-                result.add(view);
-            }
+            result.add(container.getChildAt(i));
         }
 
         final ViewParent parent = container.getParent();
         if (parent instanceof LinearLayout) {
             final LinearLayout parentLayout = (LinearLayout) parent;
-            int containerIndex = parentLayout.indexOfChild(container);
-            getViewsBelowOfRecursive(result, parentLayout, containerIndex + 1, target);
+            if (parentLayout.getOrientation() == LinearLayout.VERTICAL) {
+                int containerIndex = parentLayout.indexOfChild(container);
+                getViewsBelowOfRecursive(result, parentLayout, containerIndex+1);
+            }
         }
     }
 

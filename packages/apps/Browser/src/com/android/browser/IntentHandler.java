@@ -172,7 +172,7 @@ public class IntentHandler {
                     }
                 }
             } else {
-                if (BrowserWebView.isClassic() && !urlData.isEmpty()
+                if (!urlData.isEmpty()
                         && urlData.mUrl.startsWith("about:debug")) {
                     if ("about:debug.dom".equals(urlData.mUrl)) {
                         current.getWebViewClassic().dumpDomTree(false);

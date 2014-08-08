@@ -18,8 +18,6 @@ package com.android.gallery3d.filtershow.filters;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
 
 import com.adobe.xmp.XMPException;
@@ -30,12 +28,11 @@ import com.android.gallery3d.filtershow.presets.ImagePreset;
 /**
  * An image filter which creates a tiny planet projection.
  */
-public class ImageFilterTinyPlanet extends SimpleImageFilter {
+public class ImageFilterTinyPlanet extends ImageFilter {
+    private float mAngle = 0;
 
-
-    private static final String LOGTAG = ImageFilterTinyPlanet.class.getSimpleName();
+    private static final String TAG = ImageFilterTinyPlanet.class.getSimpleName();
     public static final String GOOGLE_PANO_NAMESPACE = "http://ns.google.com/photos/1.0/panorama/";
-    FilterTinyPlanetRepresentation mParameters = new FilterTinyPlanetRepresentation();
 
     public static final String CROPPED_AREA_IMAGE_WIDTH_PIXELS =
             "CroppedAreaImageWidthPixels";
@@ -51,57 +48,62 @@ public class ImageFilterTinyPlanet extends SimpleImageFilter {
             "CroppedAreaTopPixels";
 
     public ImageFilterTinyPlanet() {
+        setFilterType(TYPE_TINYPLANET);
         mName = "TinyPlanet";
+
+        mMinParameter = 10;
+        mMaxParameter = 60;
+        mDefaultParameter = 20;
+        mPreviewParameter = 20;
+        mParameter = 20;
+        mAngle = 0;
     }
 
-    @Override
-    public void useRepresentation(FilterRepresentation representation) {
-        FilterTinyPlanetRepresentation parameters = (FilterTinyPlanetRepresentation) representation;
-        mParameters = parameters;
+    public void setAngle(float angle) {
+        mAngle = angle;
     }
 
-    @Override
-    public FilterRepresentation getDefaultRepresentation() {
-        return new FilterTinyPlanetRepresentation();
+    public float getAngle() {
+        return mAngle;
     }
 
+    public boolean isNil() {
+        // TinyPlanet always has an effect
+        return false;
+    }
 
     native protected void nativeApplyFilter(
             Bitmap bitmapIn, int width, int height, Bitmap bitmapOut, int outSize, float scale,
             float angle);
 
-
     @Override
-    public Bitmap apply(Bitmap bitmapIn, float scaleFactor, int quality) {
+    public Bitmap apply(Bitmap bitmapIn, float scaleFactor, boolean highQuality) {
         int w = bitmapIn.getWidth();
         int h = bitmapIn.getHeight();
         int outputSize = (int) (w / 2f);
         ImagePreset preset = getImagePreset();
-        Bitmap mBitmapOut = null;
+
         if (preset != null) {
             XMPMeta xmp = preset.getImageLoader().getXmpObject();
             // Do nothing, just use bitmapIn as is if we don't have XMP.
             if(xmp != null) {
-                bitmapIn = applyXmp(bitmapIn, xmp, w);
+              bitmapIn = applyXmp(bitmapIn, xmp, w);
             }
         }
-        if (mBitmapOut != null) {
-            if (outputSize != mBitmapOut.getHeight()) {
-                mBitmapOut = null;
-            }
-        }
+
+        Bitmap mBitmapOut = null;
         while (mBitmapOut == null) {
             try {
-                mBitmapOut = getEnvironment().getBitmap(outputSize, outputSize);
+                mBitmapOut = Bitmap.createBitmap(
+                        outputSize, outputSize, Bitmap.Config.ARGB_8888);
             } catch (java.lang.OutOfMemoryError e) {
                 System.gc();
                 outputSize /= 2;
-                Log.v(LOGTAG, "No memory to create Full Tiny Planet create half");
+                Log.v(TAG, "No memory to create Full Tiny Planet create half");
             }
         }
         nativeApplyFilter(bitmapIn, bitmapIn.getWidth(), bitmapIn.getHeight(), mBitmapOut,
-                outputSize, mParameters.getZoom() / 100f, mParameters.getAngle());
-
+                outputSize, mParameter / 100f, mAngle);
         return mBitmapOut;
     }
 
@@ -118,9 +120,6 @@ public class ImageFilterTinyPlanet extends SimpleImageFilter {
             int left = getInt(xmp, CROPPED_AREA_LEFT);
             int top = getInt(xmp, CROPPED_AREA_TOP);
 
-            if (fullPanoWidth == 0 || fullPanoHeight == 0) {
-                return bitmapIn;
-            }
             // Make sure the intermediate image has the similar size to the
             // input.
             Bitmap paddedBitmap = null;
@@ -128,11 +127,12 @@ public class ImageFilterTinyPlanet extends SimpleImageFilter {
             while (paddedBitmap == null) {
                 try {
                     paddedBitmap = Bitmap.createBitmap(
-                            (int) (fullPanoWidth * scale), (int) (fullPanoHeight * scale),
-                            Bitmap.Config.ARGB_8888);
+                    (int) (fullPanoWidth * scale), (int) (fullPanoHeight * scale),
+                    Bitmap.Config.ARGB_8888);
                 } catch (java.lang.OutOfMemoryError e) {
                     System.gc();
                     scale /= 2;
+                    Log.v(TAG, "No memory to create Full Tiny Planet create half");
                 }
             }
             Canvas paddedCanvas = new Canvas(paddedBitmap);

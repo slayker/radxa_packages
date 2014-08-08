@@ -28,7 +28,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pGroup;
@@ -46,7 +45,6 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
-import android.text.InputFilter;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -118,15 +116,13 @@ public class WifiP2pSettings extends SettingsPreferenceFragment
                     WifiP2pManager.WIFI_P2P_STATE_DISABLED) == WifiP2pManager.WIFI_P2P_STATE_ENABLED;
                 handleP2pStateChanged();
             } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
-                mPeers = (WifiP2pDeviceList) intent.getParcelableExtra(
-                        WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
-                handlePeersChanged();
+                if (mWifiP2pManager != null) {
+                    mWifiP2pManager.requestPeers(mChannel, WifiP2pSettings.this);
+                }
             } else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
                 if (mWifiP2pManager == null) return;
                 NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(
                         WifiP2pManager.EXTRA_NETWORK_INFO);
-                WifiP2pInfo wifip2pinfo = (WifiP2pInfo) intent.getParcelableExtra(
-                        WifiP2pManager.EXTRA_WIFI_P2P_INFO);
                 if (mWifiP2pManager != null) {
                     mWifiP2pManager.requestGroupInfo(mChannel, WifiP2pSettings.this);
                 }
@@ -429,7 +425,6 @@ public class WifiP2pSettings extends SettingsPreferenceFragment
             return dialog;
         } else if (id == DIALOG_RENAME) {
             mDeviceNameText = new EditText(getActivity());
-            mDeviceNameText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(30)});
             if (mSavedDeviceName != null) {
                 mDeviceNameText.setText(mSavedDeviceName);
                 mDeviceNameText.setSelection(mSavedDeviceName.length());
@@ -481,19 +476,6 @@ public class WifiP2pSettings extends SettingsPreferenceFragment
         if (DBG) Log.d(TAG, " mConnectedDevices " + mConnectedDevices);
     }
 
-    private void handlePeersChanged() {
-        mPeersGroup.removeAll();
-
-        mConnectedDevices = 0;
-        if (DBG) Log.d(TAG, "List of available peers");
-        for (WifiP2pDevice peer: mPeers.getDeviceList()) {
-            if (DBG) Log.d(TAG, "-> " + peer);
-            mPeersGroup.addPreference(new WifiP2pPeer(getActivity(), peer));
-            if (peer.status == WifiP2pDevice.CONNECTED) mConnectedDevices++;
-        }
-        if (DBG) Log.d(TAG, " mConnectedDevices " + mConnectedDevices);
-    }
-
     public void onPersistentGroupInfoAvailable(WifiP2pGroupList groups) {
         mPersistentGroup.removeAll();
 
@@ -523,6 +505,7 @@ public class WifiP2pSettings extends SettingsPreferenceFragment
 
             mPersistentGroup.setEnabled(true);
             preferenceScreen.addPreference(mPersistentGroup);
+
             /* Request latest set of peers */
             mWifiP2pManager.requestPeers(mChannel, WifiP2pSettings.this);
         }
@@ -535,7 +518,7 @@ public class WifiP2pSettings extends SettingsPreferenceFragment
     }
 
     private void startSearch() {
-        if (mWifiP2pManager != null) {
+        if (mWifiP2pManager != null && !mWifiP2pSearching) {
             mWifiP2pManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
                 public void onSuccess() {
                 }

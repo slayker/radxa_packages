@@ -1,4 +1,5 @@
 /*
+ * $_FOR_ROCKCHIP_RBOX_$
  * Copyright (C) 2010 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +22,6 @@ import android.os.Message;
 import android.os.Process;
 
 import com.android.gallery3d.common.Utils;
-import com.android.gallery3d.data.ClusterAlbumSet;
 import com.android.gallery3d.data.ContentListener;
 import com.android.gallery3d.data.MediaItem;
 import com.android.gallery3d.data.MediaObject;
@@ -103,7 +103,14 @@ public class AlbumSetDataLoader {
         };
     }
 
-    public void pause() {
+   //$_rbox_$_modify_$_chengmingchuan_$20121212
+   //$_rbox_$_modify_$_begin
+    public void makeDirty(){
+	   mReloadTask.notifyDirty();
+    }
+   //$_rbox_$_modify_$_end    
+
+   public void pause() {
         mReloadTask.terminate();
         mReloadTask = null;
         mSource.removeContentListener(mSourceListener);
@@ -297,7 +304,7 @@ public class AlbumSetDataLoader {
                 int pos = info.index % mCoverItem.length;
                 mSetVersion[pos] = info.version;
                 long itemVersion = info.item.getDataVersion();
-                if (!(mSource instanceof ClusterAlbumSet) && mItemVersion[pos] == itemVersion) return null;
+                if (mItemVersion[pos] == itemVersion) return null;
                 mItemVersion[pos] = itemVersion;
                 mData[pos] = info.item;
                 mCoverItem[pos] = info.cover;

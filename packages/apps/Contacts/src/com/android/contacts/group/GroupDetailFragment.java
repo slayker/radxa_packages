@@ -45,16 +45,16 @@ import android.widget.AbsListView.OnScrollListener;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.android.contacts.ContactPhotoManager;
 import com.android.contacts.GroupMemberLoader;
 import com.android.contacts.GroupMetaDataLoader;
 import com.android.contacts.R;
-import com.android.contacts.common.ContactPhotoManager;
 import com.android.contacts.interactions.GroupDeletionDialogFragment;
-import com.android.contacts.common.list.ContactTileAdapter;
-import com.android.contacts.common.list.ContactTileView;
-import com.android.contacts.list.GroupMemberTileAdapter;
-import com.android.contacts.common.model.AccountTypeManager;
-import com.android.contacts.common.model.account.AccountType;
+import com.android.contacts.list.ContactTileAdapter;
+import com.android.contacts.list.ContactTileAdapter.DisplayType;
+import com.android.contacts.list.ContactTileView;
+import com.android.contacts.model.AccountTypeManager;
+import com.android.contacts.model.account.AccountType;
 
 /**
  * Displays the details of a group and shows a list of actions possible for the group.
@@ -115,11 +115,10 @@ public class GroupDetailFragment extends Fragment implements OnScrollListener {
     private String mAccountTypeString;
     private String mDataSet;
     private boolean mIsReadOnly;
-    private boolean mIsMembershipEditable;
 
     private boolean mShowGroupActionInActionBar;
     private boolean mOptionsMenuGroupDeletable;
-    private boolean mOptionsMenuGroupEditable;
+    private boolean mOptionsMenuGroupPresent;
     private boolean mCloseActivityAfterDelete;
 
     public GroupDetailFragment() {
@@ -134,7 +133,8 @@ public class GroupDetailFragment extends Fragment implements OnScrollListener {
         Resources res = getResources();
         int columnCount = res.getInteger(R.integer.contact_tile_column_count);
 
-        mAdapter = new GroupMemberTileAdapter(activity, mContactTileListener, columnCount);
+        mAdapter = new ContactTileAdapter(activity, mContactTileListener, columnCount,
+                DisplayType.GROUP_MEMBERS);
 
         configurePhotoLoader();
     }
@@ -339,15 +339,8 @@ public class GroupDetailFragment extends Fragment implements OnScrollListener {
      * (based on the result from the {@link Loader}), then we can display this to the user in 1 of
      * 2 ways depending on screen size and orientation: either as a button in the action bar or as
      * a button in a static header on the page.
-     * We also use isGroupMembershipEditable() of accountType to determine whether or not we should
-     * display the Edit option in the Actionbar.
      */
     private void updateAccountType(final String accountTypeString, final String dataSet) {
-        final AccountTypeManager manager = AccountTypeManager.getInstance(getActivity());
-        final AccountType accountType =
-                manager.getAccountType(accountTypeString, dataSet);
-
-        mIsMembershipEditable = accountType.isGroupMembershipEditable();
 
         // If the group action should be shown in the action bar, then pass the data to the
         // listener who will take care of setting up the view and click listener. There is nothing
@@ -356,6 +349,10 @@ public class GroupDetailFragment extends Fragment implements OnScrollListener {
             mListener.onAccountTypeUpdated(accountTypeString, dataSet);
             return;
         }
+
+        final AccountTypeManager manager = AccountTypeManager.getInstance(getActivity());
+        final AccountType accountType =
+                manager.getAccountType(accountTypeString, dataSet);
 
         // Otherwise, if the {@link Fragment} needs to create and setup the button, then first
         // verify that there is a valid action.
@@ -410,24 +407,24 @@ public class GroupDetailFragment extends Fragment implements OnScrollListener {
 
     public boolean isOptionsMenuChanged() {
         return mOptionsMenuGroupDeletable != isGroupDeletable() &&
-                mOptionsMenuGroupEditable != isGroupEditableAndPresent();
+                mOptionsMenuGroupPresent != isGroupPresent();
     }
 
     public boolean isGroupDeletable() {
         return mGroupUri != null && !mIsReadOnly;
     }
 
-    public boolean isGroupEditableAndPresent() {
-        return mGroupUri != null && mIsMembershipEditable;
+    public boolean isGroupPresent() {
+        return mGroupUri != null;
     }
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         mOptionsMenuGroupDeletable = isGroupDeletable() && isVisible();
-        mOptionsMenuGroupEditable = isGroupEditableAndPresent() && isVisible();
+        mOptionsMenuGroupPresent = isGroupPresent() && isVisible();
 
         final MenuItem editMenu = menu.findItem(R.id.menu_edit_group);
-        editMenu.setVisible(mOptionsMenuGroupEditable);
+        editMenu.setVisible(mOptionsMenuGroupPresent);
 
         final MenuItem deleteMenu = menu.findItem(R.id.menu_delete_group);
         deleteMenu.setVisible(mOptionsMenuGroupDeletable);

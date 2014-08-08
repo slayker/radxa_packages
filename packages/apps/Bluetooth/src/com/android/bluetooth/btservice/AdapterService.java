@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2012 The Android Open Source Project
- * Copyright (C) 2013 The Linux Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,12 +66,10 @@ import java.util.Map.Entry;
 import java.util.List;
 import android.content.pm.PackageManager;
 import android.os.ServiceManager;
-import android.os.PowerManager;
-import android.content.Context;
 
 public class AdapterService extends Service {
     private static final String TAG = "BluetoothAdapterService";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private static final boolean TRACE_REF = true;
     //For Debugging only
     private static int sRefCount=0;
@@ -92,7 +89,7 @@ public class AdapterService extends Service {
     static {
         classInitNative();
     }
-    private PowerManager mPowerManager;
+
     private static AdapterService sAdapterService;
     public static synchronized AdapterService getAdapterService(){
         if (sAdapterService != null && !sAdapterService.mCleaningUp) {
@@ -256,7 +253,6 @@ public class AdapterService extends Service {
         mAdapterProperties = new AdapterProperties(this);
         mAdapterStateMachine =  AdapterState.make(this, mAdapterProperties);
         mJniCallbacks =  new JniCallbacks(mAdapterStateMachine, mAdapterProperties);
-        mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         initNative();
         mNativeAvailable=true;
         mCallbacks = new RemoteCallbackList<IBluetoothCallback>();
@@ -288,7 +284,7 @@ public class AdapterService extends Service {
         for (int i=0; i < supportedProfileServices.length;i++) {
             mProfileServicesState.put(supportedProfileServices[i].getName(),BluetoothAdapter.STATE_OFF);
         }
-        mRemoteDevices = new RemoteDevices(mPowerManager, this);
+        mRemoteDevices = new RemoteDevices(this);
         mAdapterProperties.init(mRemoteDevices);
 
         if (DBG) {debugLog("processStart(): Make Bond State Machine");}
@@ -315,7 +311,6 @@ public class AdapterService extends Service {
 
     boolean stopProfileServices() {
         Class[] supportedProfileServices = Config.getSupportedProfiles();
-        Log.d(TAG,"mProfilesStarted : " + mProfilesStarted + " supportedProfileServices.length : "+ supportedProfileServices.length);
         if (mProfilesStarted && supportedProfileServices.length>0) {
             setProfileServiceState(supportedProfileServices,BluetoothAdapter.STATE_OFF);
             return true;
@@ -506,6 +501,12 @@ public class AdapterService extends Service {
             return service.isEnabled();
         }
 
+        public boolean isRadioEnabled() {
+            AdapterService service = getService();
+            if (service == null) return false;
+            return false;//service.isRadioEnabled();
+        }
+
         public int getState() {
             // don't check caller, may be called from system UI
             AdapterService service = getService();
@@ -547,6 +548,18 @@ public class AdapterService extends Service {
             AdapterService service = getService();
             if (service == null) return false;
             return service.disable();
+        }
+
+        public boolean enableRadio() {
+            AdapterService service = getService();
+            if (service == null) return false;
+            return false;//service.enableRadio();
+        }
+
+        public boolean disableRadio() {
+            AdapterService service = getService();
+            if (service == null) return false;
+            return false;//service.disableRadio();
         }
 
         public String getAddress() {
@@ -747,17 +760,6 @@ public class AdapterService extends Service {
             return service.getRemoteName(device);
         }
 
-        public int getRemoteType(BluetoothDevice device) {
-            if (!Utils.checkCaller()) {
-                Log.w(TAG,"getRemoteType(): not allowed for non-active user");
-                return BluetoothDevice.DEVICE_TYPE_UNKNOWN;
-            }
-
-            AdapterService service = getService();
-            if (service == null) return BluetoothDevice.DEVICE_TYPE_UNKNOWN;
-            return service.getRemoteType(device);
-        }
-
         public String getRemoteAlias(BluetoothDevice device) {
             if (!Utils.checkCaller()) {
                 Log.w(TAG,"getRemoteAlias(): not allowed for non-active user");
@@ -778,31 +780,6 @@ public class AdapterService extends Service {
             AdapterService service = getService();
             if (service == null) return false;
             return service.setRemoteAlias(device, name);
-        }
-
-        public boolean getRemoteTrust(BluetoothDevice device) {
-            Log.d(TAG,"getRemoteTrust");
-            if (!Utils.checkCaller()) {
-                Log.w(TAG,"getRemoteTrust(): not allowed for non-active user");
-                return false;
-            }
-
-            AdapterService service = getService();
-            if (service == null) return false;
-            return service.getRemoteTrust(device);
-        }
-
-
-        public boolean setRemoteTrust(BluetoothDevice device, boolean trustValue) {
-            Log.d(TAG,"setRemoteTrust to "+ trustValue);
-            if (!Utils.checkCaller()) {
-                Log.w(TAG,"setRemoteTrust(): not allowed for non-active user");
-                return false;
-            }
-
-            AdapterService service = getService();
-            if (service == null) return false;
-            return service.setRemoteTrust(device, trustValue);
         }
 
         public int getRemoteClass(BluetoothDevice device) {
@@ -838,17 +815,6 @@ public class AdapterService extends Service {
             return service.fetchRemoteUuids(device);
         }
 
-        public boolean fetchRemoteMasInstances(BluetoothDevice device) {
-            if (!Utils.checkCaller()) {
-                Log.w(TAG,"fetchMasInstances(): not allowed for non-active user");
-                return false;
-            }
-
-            AdapterService service = getService();
-            if (service == null) return false;
-            return service.fetchRemoteMasInstances(device);
-        }
-
         public boolean setPin(BluetoothDevice device, boolean accept, int len, byte[] pinCode) {
             if (!Utils.checkCaller()) {
                 Log.w(TAG,"setPin(): not allowed for non-active user");
@@ -882,6 +848,13 @@ public class AdapterService extends Service {
             return service.setPairingConfirmation(device, accept);
         }
 
+        public boolean authorizeService(BluetoothDevice device, ParcelUuid ServiceUuid,
+                                           boolean authorize, boolean autoReply) {
+            AdapterService service = getService();
+            if (service == null) return false;
+            return false;//service.authorizeService(device, ServiceUuid,authorize,autoReply);
+       }
+
         public void sendConnectionStateChange(BluetoothDevice
                 device, int profile, int state, int prevState) {
             AdapterService service = getService();
@@ -913,29 +886,6 @@ public class AdapterService extends Service {
             return service.createSocketChannel(type, serviceName, uuid, port, flag);
         }
 
-        public int setSocketOpt(int type, int channel, int optionName, byte [] optionVal,
-                                                    int optionLen) {
-            if (!Utils.checkCaller()) {
-                Log.w(TAG,"setSocketOpt(): not allowed for non-active user");
-                return -1;
-            }
-
-            AdapterService service = getService();
-            if (service == null) return -1;
-            return service.setSocketOpt(type, channel, optionName, optionVal, optionLen);
-        }
-
-        public int getSocketOpt(int type, int channel, int optionName, byte [] optionVal) {
-            if (!Utils.checkCaller()) {
-                Log.w(TAG,"getSocketOpt(): not allowed for non-active user");
-                return -1;
-            }
-
-            AdapterService service = getService();
-            if (service == null) return -1;
-            return service.getSocketOpt(type, channel, optionName, optionVal);
-        }
-
         public void registerCallback(IBluetoothCallback cb) {
             AdapterService service = getService();
             if (service == null) return ;
@@ -964,7 +914,7 @@ public class AdapterService extends Service {
             return  BluetoothAdapter.STATE_OFF;
         }
         else {
-            if (DBG) debugLog("getState(): mAdapterProperties: " + mAdapterProperties);
+            debugLog("getState(): mAdapterProperties: " + mAdapterProperties);
             return mAdapterProperties.getState();
         }
     }
@@ -1180,8 +1130,6 @@ public class AdapterService extends Service {
         if ((hsService == null) ||(a2dpService == null )){
             return;
         }
-        boolean hsConnected = false;
-        boolean a2dpConnected =  false;
         List<BluetoothDevice> a2dpConnDevList= a2dpService.getConnectedDevices();
         List<BluetoothDevice> hfConnDevList= hsService.getConnectedDevices();
         // Check if the device is in disconnected state and if so return
@@ -1193,36 +1141,12 @@ public class AdapterService extends Service {
             (PROFILE_CONN_CONNECTED  == firstProfileStatus)){
             return;
         }
-        if(!a2dpConnDevList.isEmpty()) {
-            for (BluetoothDevice a2dpDevice : a2dpConnDevList)
-            {
-                if(a2dpDevice.equals(device))
-                {
-                    a2dpConnected = true;
-                }
-            }
-        }
-        if(!hfConnDevList.isEmpty()) {
-            for (BluetoothDevice hsDevice : hfConnDevList)
-            {
-                if(hsDevice.equals(device))
-                {
-                    hsConnected = true;
-                }
-            }
-        }
-       // This change makes sure that we try to re-connect
-       // the profile if its connection failed and priority
-       // for desired profile is ON.
-
         if((hfConnDevList.isEmpty()) &&
-            (hsService.getPriority(device) >= BluetoothProfile.PRIORITY_ON) &&
-            (a2dpConnected || (a2dpService.getPriority(device) == BluetoothProfile.PRIORITY_OFF))) {
+            (hsService.getPriority(device) >= BluetoothProfile.PRIORITY_ON)){
             hsService.connect(device);
         }
         else if((a2dpConnDevList.isEmpty()) &&
-            (a2dpService.getPriority(device) >= BluetoothProfile.PRIORITY_ON) &&
-            (hsConnected || (hsService.getPriority(device) == BluetoothProfile.PRIORITY_OFF))) {
+            (a2dpService.getPriority(device) >= BluetoothProfile.PRIORITY_ON)){
             a2dpService.connect(device);
         }
     }
@@ -1300,13 +1224,6 @@ public class AdapterService extends Service {
         return deviceProp.getName();
     }
 
-     int getRemoteType(BluetoothDevice device) {
-        enforceCallingOrSelfPermission(BLUETOOTH_PERM, "Need BLUETOOTH permission");
-        DeviceProperties deviceProp = mRemoteDevices.getDeviceProperties(device);
-        if (deviceProp == null) return BluetoothDevice.DEVICE_TYPE_UNKNOWN;
-        return deviceProp.getDeviceType();
-    }
-
      String getRemoteAlias(BluetoothDevice device) {
         enforceCallingOrSelfPermission(BLUETOOTH_PERM, "Need BLUETOOTH permission");
         DeviceProperties deviceProp = mRemoteDevices.getDeviceProperties(device);
@@ -1319,21 +1236,6 @@ public class AdapterService extends Service {
         DeviceProperties deviceProp = mRemoteDevices.getDeviceProperties(device);
         if (deviceProp == null) return false;
         deviceProp.setAlias(name);
-        return true;
-    }
-
-    boolean getRemoteTrust(BluetoothDevice device) {
-        enforceCallingOrSelfPermission(BLUETOOTH_PERM, "Need BLUETOOTH permission");
-        DeviceProperties deviceProp = mRemoteDevices.getDeviceProperties(device);
-        if (deviceProp == null) return false;
-        return deviceProp.getTrust();
-    }
-
-    boolean setRemoteTrust(BluetoothDevice device, boolean trustValue) {
-        enforceCallingOrSelfPermission(BLUETOOTH_PERM, "Need BLUETOOTH permission");
-        DeviceProperties deviceProp = mRemoteDevices.getDeviceProperties(device);
-        if (deviceProp == null) return false;
-        deviceProp.setTrust(trustValue);
         return true;
     }
 
@@ -1357,12 +1259,6 @@ public class AdapterService extends Service {
         mRemoteDevices.fetchUuids(device);
         return true;
     }
-
-      boolean fetchRemoteMasInstances(BluetoothDevice device) {
-         enforceCallingOrSelfPermission(BLUETOOTH_PERM, "Need BLUETOOTH permission");
-         mRemoteDevices.fetchMasInstances(device);
-         return true;
-     }
 
      boolean setPin(BluetoothDevice device, boolean accept, int len, byte[] pinCode) {
         enforceCallingOrSelfPermission(BLUETOOTH_PERM, "Need BLUETOOTH permission");
@@ -1433,19 +1329,6 @@ public class AdapterService extends Service {
         return ParcelFileDescriptor.adoptFd(fd);
     }
 
-     int setSocketOpt(int type, int channel, int optionName, byte [] optionVal,
-             int optionLen) {
-        enforceCallingOrSelfPermission(BLUETOOTH_PERM, "Need BLUETOOTH permission");
-
-        return setSocketOptNative(type, channel, optionName, optionVal, optionLen);
-     }
-
-     int getSocketOpt(int type, int channel, int optionName, byte [] optionVal) {
-        enforceCallingOrSelfPermission(BLUETOOTH_PERM, "Need BLUETOOTH permission");
-
-        return getSocketOptNative(type, channel, optionName, optionVal);
-     }
-
      void registerCallback(IBluetoothCallback cb) {
          mCallbacks.register(cb);
       }
@@ -1513,18 +1396,12 @@ public class AdapterService extends Service {
             accept, int passkey);
 
     /*package*/ native boolean getRemoteServicesNative(byte[] address);
-    /*package*/ native boolean getRemoteMasInstancesNative(byte[] address);
 
     // TODO(BT) move this to ../btsock dir
     private native int connectSocketNative(byte[] address, int type,
                                            byte[] uuid, int port, int flag);
     private native int createSocketChannelNative(int type, String serviceName,
                                                  byte[] uuid, int port, int flag);
-    private native int setSocketOptNative(int fd, int type, int optionName,
-                                byte [] optionVal, int optionLen);
-
-    private native int  getSocketOptNative(int fd, int type, int optionName,
-                                byte [] optionVal);
 
     protected void finalize() {
         cleanup();

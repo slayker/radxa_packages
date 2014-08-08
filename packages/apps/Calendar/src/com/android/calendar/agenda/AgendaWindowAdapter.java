@@ -16,7 +16,6 @@
 
 package com.android.calendar.agenda;
 
-import android.app.Activity;
 import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -48,7 +47,6 @@ import com.android.calendar.R;
 import com.android.calendar.StickyHeaderListView;
 import com.android.calendar.Utils;
 
-import java.util.Date;
 import java.util.Formatter;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -291,14 +289,7 @@ public class AgendaWindowAdapter extends BaseAdapter
         }
     }
 
-    /**
-     * Class representing a list item within the Agenda view.  Could be either an instance of an
-     * event, or a header marking the specific day.
-     *
-     * The begin and end times of an AgendaItem should always be in local time, even if the event
-     * is all day.  buildAgendaItemFromCursor() converts each event to local time.
-     */
-    static class AgendaItem {
+    static class EventInfo {
         long begin;
         long end;
         long id;
@@ -574,8 +565,8 @@ public class AgendaWindowAdapter extends BaseAdapter
         return null;
     }
 
-    public AgendaItem getAgendaItemByPosition(final int positionInListView) {
-        return getAgendaItemByPosition(positionInListView, true);
+    public EventInfo getEventByPosition(final int positionInListView) {
+        return getEventByPosition(positionInListView, true);
     }
 
     /**
@@ -586,7 +577,7 @@ public class AgendaWindowAdapter extends BaseAdapter
      *        The two will differ for multi-day events after the first day.
      * @return
      */
-    public AgendaItem getAgendaItemByPosition(final int positionInListView,
+    public EventInfo getEventByPosition(final int positionInListView,
             boolean returnEventStartDay) {
         if (DEBUGLOG) Log.e(TAG, "getEventByPosition " + positionInListView);
         if (positionInListView < 0) {
@@ -611,75 +602,54 @@ public class AgendaWindowAdapter extends BaseAdapter
         }
 
         if (cursorPosition < info.cursor.getCount()) {
-            AgendaItem item = buildAgendaItemFromCursor(info.cursor, cursorPosition, isDayHeader);
+            EventInfo ei = buildEventInfoFromCursor(info.cursor, cursorPosition, isDayHeader);
             if (!returnEventStartDay && !isDayHeader) {
-                item.startDay = info.dayAdapter.findJulianDayFromPosition(positionInAdapter -
+                ei.startDay = info.dayAdapter.findJulianDayFromPosition(positionInAdapter -
                         info.offset);
             }
-            return item;
+            return ei;
         }
         return null;
     }
 
-    private AgendaItem buildAgendaItemFromCursor(final Cursor cursor, int cursorPosition,
+    private EventInfo buildEventInfoFromCursor(final Cursor cursor, int cursorPosition,
             boolean isDayHeader) {
         if (cursorPosition == -1) {
             cursor.moveToFirst();
         } else {
             cursor.moveToPosition(cursorPosition);
         }
-        AgendaItem agendaItem = new AgendaItem();
-        agendaItem.begin = cursor.getLong(AgendaWindowAdapter.INDEX_BEGIN);
-        agendaItem.end = cursor.getLong(AgendaWindowAdapter.INDEX_END);
-        agendaItem.startDay = cursor.getInt(AgendaWindowAdapter.INDEX_START_DAY);
-        agendaItem.allDay = cursor.getInt(AgendaWindowAdapter.INDEX_ALL_DAY) != 0;
-        if (agendaItem.allDay) { // UTC to Local time conversion
+        EventInfo event = new EventInfo();
+        event.begin = cursor.getLong(AgendaWindowAdapter.INDEX_BEGIN);
+        event.end = cursor.getLong(AgendaWindowAdapter.INDEX_END);
+        event.startDay = cursor.getInt(AgendaWindowAdapter.INDEX_START_DAY);
+
+        event.allDay = cursor.getInt(AgendaWindowAdapter.INDEX_ALL_DAY) != 0;
+        if (event.allDay) { // UTC
             Time time = new Time(mTimeZone);
-            time.setJulianDay(Time.getJulianDay(agendaItem.begin, 0));
-            agendaItem.begin = time.toMillis(false /* use isDst */);
+            time.setJulianDay(Time.getJulianDay(event.begin, 0));
+            event.begin = time.toMillis(false /* use isDst */);
         } else if (isDayHeader) { // Trim to midnight.
             Time time = new Time(mTimeZone);
-            time.set(agendaItem.begin);
+            time.set(event.begin);
             time.hour = 0;
             time.minute = 0;
             time.second = 0;
-            agendaItem.begin = time.toMillis(false /* use isDst */);
+            event.begin = time.toMillis(false /* use isDst */);
         }
 
-        // If this is not a day header, then it's an event.
         if (!isDayHeader) {
-            agendaItem.id = cursor.getLong(AgendaWindowAdapter.INDEX_EVENT_ID);
-            if (agendaItem.allDay) {
+            if (event.allDay) {
                 Time time = new Time(mTimeZone);
-                time.setJulianDay(Time.getJulianDay(agendaItem.end, 0));
-                agendaItem.end = time.toMillis(false /* use isDst */);
+                time.setJulianDay(Time.getJulianDay(event.end, 0));
+                event.end = time.toMillis(false /* use isDst */);
+            } else {
+                event.end = cursor.getLong(AgendaWindowAdapter.INDEX_END);
             }
-        }
-        return agendaItem;
-    }
 
-    /**
-     * Ensures that any all day events are converted to UTC before a VIEW_EVENT command is sent.
-     */
-    private void sendViewEvent(AgendaItem item, long selectedTime) {
-        long startTime;
-        long endTime;
-        if (item.allDay) {
-            startTime = Utils.convertAlldayLocalToUTC(null, item.begin, mTimeZone);
-            endTime = Utils.convertAlldayLocalToUTC(null, item.end, mTimeZone);
-        } else {
-            startTime = item.begin;
-            endTime = item.end;
+            event.id = cursor.getLong(AgendaWindowAdapter.INDEX_EVENT_ID);
         }
-        if (DEBUGLOG) {
-            Log.d(TAG, "Sent (AgendaWindowAdapter): VIEW EVENT: " + new Date(startTime));
-        }
-        CalendarController.getInstance(mContext)
-        .sendEventRelatedEventWithExtra(this, EventType.VIEW_EVENT,
-                item.id, startTime, endTime, 0,
-                0, CalendarController.EventInfo.buildViewExtraLong(
-                        Attendees.ATTENDEE_STATUS_NONE,
-                        item.allDay), selectedTime);
+        return event;
     }
 
     public void refresh(Time goToTime, long id, String searchQuery, boolean forced,
@@ -699,7 +669,7 @@ public class AgendaWindowAdapter extends BaseAdapter
 
         if (!forced && isInRange(startDay, startDay)) {
             // No need to re-query
-            if (!mAgendaListView.isAgendaItemVisible(goToTime, id)) {
+            if (!mAgendaListView.isEventVisible(goToTime, id)) {
                 int gotoPosition = findEventPositionNearestTime(goToTime, id);
                 if (gotoPosition > 0) {
                     mAgendaListView.setSelectionFromTop(gotoPosition +
@@ -715,12 +685,15 @@ public class AgendaWindowAdapter extends BaseAdapter
                             Cursor tempCursor = getCursorByPosition(gotoPosition);
                             if (tempCursor != null) {
                                 int tempCursorPosition = getCursorPositionByPosition(gotoPosition);
-                                AgendaItem item =
-                                        buildAgendaItemFromCursor(tempCursor, tempCursorPosition,
+                                EventInfo event =
+                                        buildEventInfoFromCursor(tempCursor, tempCursorPosition,
                                                 false);
-                                mSelectedVH = new AgendaAdapter.ViewHolder();
-                                mSelectedVH.allDay = item.allDay;
-                                sendViewEvent(item, goToTime.toMillis(false));
+                                CalendarController.getInstance(mContext)
+                                        .sendEventRelatedEventWithExtra(this, EventType.VIEW_EVENT,
+                                                event.id, event.begin, event.end, 0,
+                                                0, CalendarController.EventInfo.buildViewExtraLong(
+                                                        Attendees.ATTENDEE_STATUS_NONE,
+                                                        event.allDay), goToTime.toMillis(false));
                             }
                         }
                     }
@@ -857,7 +830,7 @@ public class AgendaWindowAdapter extends BaseAdapter
     private boolean queueQuery(int start, int end, Time goToTime,
             String searchQuery, int queryType, long id) {
         QuerySpec queryData = new QuerySpec(queryType);
-        queryData.goToTime = new Time(goToTime);    // Creates a new time reference per QuerySpec.
+        queryData.goToTime = goToTime;
         queryData.start = start;
         queryData.end = end;
         queryData.searchQuery = searchQuery;
@@ -962,18 +935,7 @@ public class AgendaWindowAdapter extends BaseAdapter
 
         @Override
         protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
-            if (DEBUGLOG) {
-                Log.d(TAG, "(+)onQueryComplete");
-            }
             QuerySpec data = (QuerySpec)cookie;
-
-            if (cursor == null) {
-              if (mAgendaListView != null && mAgendaListView.getContext() instanceof Activity) {
-                ((Activity) mAgendaListView.getContext()).finish();
-              }
-              return;
-            }
-
             if (BASICLOG) {
                 long queryEndMillis = System.nanoTime();
                 Log.e(TAG, "Query time(ms): "
@@ -1012,9 +974,6 @@ public class AgendaWindowAdapter extends BaseAdapter
                                 mStickyHeaderSize);
                         Time actualTime = new Time(mTimeZone);
                         actualTime.set(goToTime);
-                        if (DEBUGLOG) {
-                            Log.d(TAG, "onQueryComplete: Updating title...");
-                        }
                         CalendarController.getInstance(mContext).sendEvent(this,
                                 EventType.UPDATE_TITLE, actualTime, actualTime, -1,
                                 ViewType.CURRENT);
@@ -1076,13 +1035,14 @@ public class AgendaWindowAdapter extends BaseAdapter
                          tempCursorPosition = getCursorPositionByPosition(newPosition);
                     }
                     if (tempCursor != null) {
-                        AgendaItem item = buildAgendaItemFromCursor(tempCursor, tempCursorPosition,
+                        EventInfo event = buildEventInfoFromCursor(tempCursor, tempCursorPosition,
                                 false);
                         long selectedTime = findStartTimeFromPosition(newPosition);
-                        if (DEBUGLOG) {
-                            Log.d(TAG, "onQueryComplete: Sending View Event...");
-                        }
-                        sendViewEvent(item, selectedTime);
+                        CalendarController.getInstance(mContext).sendEventRelatedEventWithExtra(
+                                this, EventType.VIEW_EVENT, event.id, event.begin,
+                                event.end, 0, 0, CalendarController.EventInfo.buildViewExtraLong(
+                                        Attendees.ATTENDEE_STATUS_NONE, event.allDay),
+                                        selectedTime);
                     }
                 }
             } else {

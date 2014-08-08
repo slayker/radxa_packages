@@ -338,12 +338,7 @@ public final class DeviceProfilesSettings extends SettingsPreferenceFragment
          * Gray out checkbox while connecting and disconnecting
          */
         profilePref.setEnabled(!mCachedDevice.isBusy());
-        if (profile instanceof PanProfile) {
-            profilePref.setChecked(profile.getConnectionStatus(device) == BluetoothProfile.STATE_CONNECTED);
-        }
-        else {
-            profilePref.setChecked(profile.isPreferred(device));
-        }
+        profilePref.setChecked(profile.isPreferred(device));
         profilePref.setSummary(profile.getSummaryResourceForDevice(device));
     }
 

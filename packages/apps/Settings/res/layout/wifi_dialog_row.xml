@@ -18,12 +18,10 @@
         style="@style/wifi_item" >
     <TextView
             style="@style/wifi_item_label"
-            android:id="@+id/name"
-            android:textAlignment="viewStart" />
+            android:id="@+id/name" />
 
     <TextView
             android:id="@+id/value"
             style="@style/wifi_item_content"
-            android:textStyle="bold"
-            android:textAlignment="viewStart" />
+            android:textStyle="bold" />
 </LinearLayout>

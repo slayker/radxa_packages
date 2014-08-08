@@ -332,7 +332,6 @@ public class ManageAccountsSettings extends AccountPreferenceBase
                 getPreferenceScreen().addPreference(preference);
                 if (mFirstAccount == null) {
                     mFirstAccount = account;
-                    getActivity().invalidateOptionsMenu();
                 }
             }
         }

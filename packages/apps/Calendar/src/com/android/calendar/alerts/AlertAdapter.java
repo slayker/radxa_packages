@@ -43,7 +43,7 @@ public class AlertAdapter extends ResourceCursorAdapter {
 
     public AlertAdapter(AlertActivity activity, int resource) {
         super(activity, resource, null);
-        alertActivity = activity;
+        this.alertActivity = activity;
     }
 
     @Override

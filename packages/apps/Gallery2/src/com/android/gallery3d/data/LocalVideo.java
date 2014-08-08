@@ -30,7 +30,7 @@ import com.android.gallery3d.util.GalleryUtils;
 import com.android.gallery3d.util.ThreadPool.Job;
 import com.android.gallery3d.util.ThreadPool.JobContext;
 import com.android.gallery3d.util.UpdateHelper;
-
+import java.io.File;
 // LocalVideo represents a video in the local storage.
 public class LocalVideo extends LocalMediaItem {
     private static final String TAG = "LocalVideo";
@@ -160,7 +160,7 @@ public class LocalVideo extends LocalMediaItem {
 
         LocalVideoRequest(GalleryApp application, Path path, int type,
                 String localFilePath) {
-            super(application, path, type, MediaItem.getTargetSize(type));
+            super(application, path, type, MediaItem.getTargetSize(type),localFilePath);
             mLocalFilePath = localFilePath;
         }
 
@@ -180,7 +180,7 @@ public class LocalVideo extends LocalMediaItem {
 
     @Override
     public int getSupportedOperations() {
-        return SUPPORT_DELETE | SUPPORT_SHARE | SUPPORT_PLAY | SUPPORT_INFO | SUPPORT_TRIM | SUPPORT_MUTE;
+        return SUPPORT_DELETE | SUPPORT_SHARE | SUPPORT_PLAY | SUPPORT_INFO | SUPPORT_TRIM;
     }
 
     @Override
@@ -189,6 +189,14 @@ public class LocalVideo extends LocalMediaItem {
         Uri baseUri = Video.Media.EXTERNAL_CONTENT_URI;
         mApplication.getContentResolver().delete(baseUri, "_id=?",
                 new String[]{String.valueOf(id)});
+        File file = new File(filePath);
+        try{
+           if(file.exists()){
+               file.delete();
+           }
+        }catch(Exception e){
+           e.printStackTrace();
+        }
     }
 
     @Override
@@ -237,4 +245,10 @@ public class LocalVideo extends LocalMediaItem {
     public String getFilePath() {
         return filePath;
     }
+	
+	@Override
+	public Job<BitmapInfo> requestDecodeImage(int type, Uri mUri) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

@@ -20,28 +20,20 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.Fragment;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceGroup;
-import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Button;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Base class for Settings fragments, with some helper functions and dialog management.
@@ -55,9 +47,6 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Di
     private SettingsDialogFragment mDialogFragment;
 
     private String mHelpUrl;
-
-    // Cache the content resolver for async callbacks
-    private ContentResolver mContentResolver;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -115,11 +104,7 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Di
      * Returns the ContentResolver from the owning Activity.
      */
     protected ContentResolver getContentResolver() {
-        Context context = getActivity();
-        if (context != null) {
-            mContentResolver = context.getContentResolver();
-        }
-        return mContentResolver;
+        return getActivity().getContentResolver();
     }
 
     /**
@@ -248,11 +233,8 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Di
                     mParentFragment = getFragmentManager().findFragmentById(mParentFragmentId);
                     if (!(mParentFragment instanceof DialogCreatable)) {
                         throw new IllegalArgumentException(
-                                (mParentFragment != null 
-                                        ? mParentFragment.getClass().getName()
-                                        : mParentFragmentId)
-                                + " must implement "
-                                + DialogCreatable.class.getName());
+                                KEY_PARENT_FRAGMENT_ID + " must implement "
+                                        + DialogCreatable.class.getName());
                     }
                 }
                 // This dialog fragment could be created from non-SettingsPreferenceFragment
@@ -325,51 +307,4 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Di
         }
     }
 
-    public boolean removePreferenceIfPackageNotInstalled(Preference preference) {
-        return removePreferenceIfPackageNotInstalled(preference, getPreferenceScreen());
-    }
-
-    public boolean removePreferenceIfPackageNotInstalled(Preference preference, PreferenceGroup parent) {
-        String intentUri = ((PreferenceScreen) preference).getIntent().toUri(1);
-        Pattern pattern = Pattern.compile("component=([^/]+)/");
-        Matcher matcher = pattern.matcher(intentUri);
-
-        String packageName = matcher.find() ? matcher.group(1) : null;
-        boolean available = true;
-
-        if (packageName != null) {
-            try {
-                PackageInfo pi = getPackageManager().getPackageInfo(packageName, 0);
-                if (!pi.applicationInfo.enabled) {
-                    Log.e(TAG, "package " + packageName + " disabled, hiding preference.");
-                    available = false;
-                }
-            } catch (NameNotFoundException e) {
-                Log.e(TAG, "package " + packageName + " not installed, hiding preference.");
-                available = false;
-            }
-        }
-
-        if (!available) {
-            parent.removePreference(preference);
-            return true;
-        }
-
-        return false;
-    }
-
-    public boolean isPackageInstalled(String packageName) {
-        if (packageName != null) {
-            try {
-                PackageInfo pi = getPackageManager().getPackageInfo(packageName, 0);
-                if (!pi.applicationInfo.enabled) {
-                    return false;
-                }
-            } catch (NameNotFoundException e) {
-                return false;
-            }
-        }
-
-        return true;
-    }
 }

@@ -50,9 +50,6 @@ public class TimeConsumingPreferenceActivity extends PreferenceActivity
     static final int RESPONSE_ERROR = 400;
     static final int RADIO_OFF_ERROR = 500;
     static final int FDN_CHECK_FAILURE = 600;
-    static final int STK_CC_SS_TO_DIAL_ERROR = 700;
-    static final int STK_CC_SS_TO_USSD_ERROR = 800;
-    static final int STK_CC_SS_TO_SS_ERROR = 900;
 
     private final ArrayList<String> mBusyList = new ArrayList<String>();
 
@@ -80,8 +77,7 @@ public class TimeConsumingPreferenceActivity extends PreferenceActivity
         }
 
         if (id == RESPONSE_ERROR || id == RADIO_OFF_ERROR || id == EXCEPTION_ERROR
-                || id == FDN_CHECK_FAILURE || id == STK_CC_SS_TO_DIAL_ERROR
-                || id == STK_CC_SS_TO_USSD_ERROR || id == STK_CC_SS_TO_SS_ERROR) {
+                || id == FDN_CHECK_FAILURE) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
             int msgId;
@@ -101,25 +97,7 @@ public class TimeConsumingPreferenceActivity extends PreferenceActivity
                     msgId = R.string.fdn_check_failure;
                     builder.setPositiveButton(R.string.close_dialog, mDismiss);
                     break;
-                case STK_CC_SS_TO_DIAL_ERROR:
-                    msgId = R.string.stk_cc_ss_to_dial_error;
-                    // Set Button 2
-                    builder.setPositiveButton(R.string.close_dialog, mDismiss);
-                    break;
-                case STK_CC_SS_TO_USSD_ERROR:
-                    msgId = R.string.stk_cc_ss_to_ussd_error;
-                    // Set Button 2
-                    builder.setPositiveButton(R.string.close_dialog, mDismiss);
-                    break;
-                case STK_CC_SS_TO_SS_ERROR:
-                    msgId = R.string.stk_cc_ss_to_ss_error;
-                    // Set Button 2
-                    builder.setPositiveButton(R.string.close_dialog, mDismiss);
-                    break;
                 case EXCEPTION_ERROR:
-                    msgId = R.string.exception_error;
-                    builder.setPositiveButton(R.string.close_dialog, mDismiss);
-                    break;
                 default:
                     msgId = R.string.exception_error;
                     // The error is not recoverable on dialog exit.

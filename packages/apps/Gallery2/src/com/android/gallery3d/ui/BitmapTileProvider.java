@@ -21,11 +21,11 @@ import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 
 import com.android.gallery3d.common.BitmapUtils;
-import com.android.photos.data.GalleryBitmapPool;
+import com.android.gallery3d.data.BitmapPool;
 
 import java.util.ArrayList;
 
-public class BitmapTileProvider implements TileImageView.TileSource {
+public class BitmapTileProvider implements TileImageView.Model {
     private final ScreenNail mScreenNail;
     private final Bitmap[] mMipmaps;
     private final Config mConfig;
@@ -71,21 +71,23 @@ public class BitmapTileProvider implements TileImageView.TileSource {
     }
 
     @Override
-    public Bitmap getTile(int level, int x, int y, int tileSize) {
+    public Bitmap getTile(int level, int x, int y, int tileSize,
+            int borderSize, BitmapPool pool) {
         x >>= level;
         y >>= level;
+        int size = tileSize + 2 * borderSize;
 
-        Bitmap result = GalleryBitmapPool.getInstance().get(tileSize, tileSize);
+        Bitmap result = pool == null ? null : pool.getBitmap();
         if (result == null) {
-            result = Bitmap.createBitmap(tileSize, tileSize, mConfig);
+            result = Bitmap.createBitmap(size, size, mConfig);
         } else {
             result.eraseColor(0);
         }
 
         Bitmap mipmap = mMipmaps[level];
         Canvas canvas = new Canvas(result);
-        int offsetX = -x;
-        int offsetY = -y;
+        int offsetX = -x + borderSize;
+        int offsetY = -y + borderSize;
         canvas.drawBitmap(mipmap, offsetX, offsetY, null);
         return result;
     }

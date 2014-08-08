@@ -116,9 +116,7 @@ public class ContactDetailFragmentCarousel extends HorizontalScrollView implemen
             View child = getChildAt(0);
             // If we enable swipe, then the {@link LinearLayout} child width must be the sum of the
             // width of all its children fragments.
-            // Or the current page may already be set to something other than the first.  If so,
-            // it also means there are multiple child fragments.
-            if (mEnableSwipe || mCurrentPage != 0) {
+            if (mEnableSwipe) {
                 child.measure(MeasureSpec.makeMeasureSpec(
                         mMinFragmentWidth * MAX_FRAGMENT_VIEW_COUNT, MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(screenHeight, MeasureSpec.EXACTLY));
@@ -165,7 +163,11 @@ public class ContactDetailFragmentCarousel extends HorizontalScrollView implemen
             mEnableSwipe = enable;
             if (mUpdatesFragment != null) {
                 mUpdatesFragment.setVisibility(enable ? View.VISIBLE : View.GONE);
-                snapToEdge();
+                if (mCurrentPage == ABOUT_PAGE) {
+                    mAboutFragment.requestFocus();
+                } else {
+                    mUpdatesFragment.requestFocus();
+                }
                 updateTouchInterceptors();
             }
         }
@@ -177,7 +179,7 @@ public class ContactDetailFragmentCarousel extends HorizontalScrollView implemen
     public void reset() {
         if (mCurrentPage != ABOUT_PAGE) {
             mCurrentPage = ABOUT_PAGE;
-            snapToEdgeSmooth();
+            snapToEdge();
         }
     }
 
@@ -189,7 +191,7 @@ public class ContactDetailFragmentCarousel extends HorizontalScrollView implemen
         @Override
         public void onClick(View v) {
             mCurrentPage = ABOUT_PAGE;
-            snapToEdgeSmooth();
+            snapToEdge();
         }
     };
 
@@ -197,7 +199,7 @@ public class ContactDetailFragmentCarousel extends HorizontalScrollView implemen
         @Override
         public void onClick(View v) {
             mCurrentPage = UPDATES_PAGE;
-            snapToEdgeSmooth();
+            snapToEdge();
         }
     };
 
@@ -220,24 +222,10 @@ public class ContactDetailFragmentCarousel extends HorizontalScrollView implemen
         mLastScrollPosition = l;
     }
 
-    /**
-     * Used to set initial scroll offset.  Not smooth.
-     */
     private void snapToEdge() {
-        setScrollX(calculateHorizontalOffset());
+        final int x = mCurrentPage == ABOUT_PAGE ? 0 : mAllowedHorizontalScrollLength;
+        smoothScrollTo(x,0);
         updateTouchInterceptors();
-    }
-
-    /**
-     * Smooth version of snapToEdge().
-     */
-    private void snapToEdgeSmooth() {
-        smoothScrollTo(calculateHorizontalOffset(), 0);
-        updateTouchInterceptors();
-    }
-
-    private int calculateHorizontalOffset() {
-        return mCurrentPage == ABOUT_PAGE ? 0 : mAllowedHorizontalScrollLength;
     }
 
     /**
@@ -265,7 +253,7 @@ public class ContactDetailFragmentCarousel extends HorizontalScrollView implemen
         }
         if (event.getAction() == MotionEvent.ACTION_UP) {
             mCurrentPage = getDesiredPage();
-            snapToEdgeSmooth();
+            snapToEdge();
             return true;
         }
         return false;
