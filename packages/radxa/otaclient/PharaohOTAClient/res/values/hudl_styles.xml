@@ -1,0 +1,32 @@
+<resources>
+
+    <!-- OLD -->
+    <style name="titleText">
+        <item name="android:textSize">45sp</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:textColor">@android:color/holo_blue_dark</item>
+    </style>
+
+    <!-- NOVODA -->
+    <style name="tam_header_title">
+        <item name="android:textSize">@dimen/tam__header_title_text_size</item>
+        <item name="android:textColor">@color/BLUE</item>
+        <item name="android:clickable">false</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+
+    <style name="tam__header_subheading">
+        <item name="android:textSize">@dimen/tam__header_subheading_text_size</item>
+        <item name="android:clickable">false</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+
+    <style name="tam__header_divider">
+        <item name="android:background">@color/tam__header_divider_color</item>
+        <item name="android:focusable">false</item>
+        <item name="android:clickable">false</item>
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">3.333dp</item>
+    </style>
+
+</resources>

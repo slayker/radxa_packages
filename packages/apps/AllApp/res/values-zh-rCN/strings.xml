@@ -20,6 +20,6 @@
     <string name="activity_not_found">该应用程序未安装</string>
     <string name="application_scan">扫描应用程序信息</string>
     <string name="application_num">应用总数: </string>
-    <string name="apprecent">最近应用: </string>
-    
+    <string name="apprecent">最近应用</string>
+    <string name="downloadlist">下载列表</string>
 </resources>

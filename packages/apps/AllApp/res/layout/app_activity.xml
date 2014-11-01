@@ -8,7 +8,7 @@
     					android:gravity="center_vertical"
     					android:layout_width="fill_parent"
     					android:layout_height="42dp"
-    					android:textSize = "20dp"
+    					android:textSize = "20sp"
     					android:focusable="false">
     					
     </TextView>
@@ -16,15 +16,26 @@
 					    android:layout_height="wrap_content" 
 					    android:id="@+id/linearLayout1" 
 					    android:layout_width="wrap_content"
-					    android:layout_alignParentRight="true">
+					    android:layout_alignParentRight="true"
+					    android:orientation="horizontal">
         <Button android:id="@+id/btnRecent"
     					android:layout_width = "wrap_content"
     					android:layout_height="45dp" 
     					android:textSize = "20sp"
     					android:background="@drawable/buttonbg"
     					android:textColor="#FFFFFF"
-    					android:text="@string/apprecent" 
-    					android:layout_alignParentRight="true">
+    					android:text="@string/apprecent" >
+    					
+        </Button>
+        <Button android:id="@+id/btnDownload"
+    					android:layout_width = "wrap_content"
+    					android:layout_height="45dp" 
+    					android:textSize = "20sp"
+    					android:background="@drawable/buttonbg"
+    					android:textColor="#FFFFFF"
+    					android:text="@string/downloadlist" 
+    					android:paddingLeft="10dp">
+    					
         </Button>
     </LinearLayout>
 </RelativeLayout>

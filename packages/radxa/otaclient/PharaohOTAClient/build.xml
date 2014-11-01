@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="PharaohOTAClient" default="help">
+
+    <!-- The local.properties file is created and updated by the 'android' tool.
+         It contains the path to the SDK. It should *NOT* be checked into
+         Version Control Systems. -->
+    <property file="local.properties" />
+	<property file="jenkins.properties" />
+	
+    <!-- The ant.properties file can be created by you. It is only edited by the
+         'android' tool to add properties to it.
+         This is the place to change some Ant specific build properties.
+         Here are some properties you may want to change/update:
+
+         source.dir
+             The name of the source directory. Default is 'src'.
+         out.dir
+             The name of the output directory. Default is 'bin'.
+
+         For other overridable properties, look at the beginning of the rules
+         files in the SDK, at tools/ant/build.xml
+
+         Properties related to the SDK location or the project target should
+         be updated using the 'android' tool with the 'update' action.
+
+         This file is an integral part of the build system for your
+         application and should be checked into Version Control Systems.
+
+         -->
+    <property file="ant.properties" />
+
+    <!-- if sdk.dir was not set from one of the property file, then
+         get it from the ANDROID_HOME env var.
+         This must be done before we load project.properties since
+         the proguard config can use sdk.dir -->
+    <property environment="env" />
+    <condition property="sdk.dir" value="${env.ANDROID_HOME}">
+        <isset property="env.ANDROID_HOME" />
+    </condition>
+    
+    <!-- The project.properties file is created and updated by the 'android'
+         tool, as well as ADT.
+
+         This contains project specific properties such as project target, and library
+         dependencies. Lower level build properties are stored in ant.properties
+         (or in .classpath for Eclipse projects).
+
+         This file is an integral part of the build system for your
+         application and should be checked into Version Control Systems. -->
+    <loadproperties srcFile="project.properties" />
+
+    <!-- quick check on sdk.dir -->
+    <fail
+            message="sdk.dir is missing. Make sure to generate local.properties using 'android update project' or to inject it through the ANDROID_HOME environment variable."
+            unless="sdk.dir"
+    />
+
+    <!--
+        Import per project custom build rules if present at the root of the project.
+        This is the place to put custom intermediary targets such as:
+            -pre-build
+            -pre-compile
+            -post-compile (This is typically used for code obfuscation.
+                           Compiled code location: ${out.classes.absolute.dir}
+                           If this is not done in place, override ${out.dex.input.absolute.dir})
+            -post-package
+            -post-build
+            -pre-clean
+    -->
+    <import file="custom_rules.xml" optional="true" />
+
+    <!-- Import the actual build file.
+
+         To customize existing targets, there are two options:
+         - Customize only one target:
+             - copy/paste the target into this file, *before* the
+               <import> task.
+             - customize it to your needs.
+         - Customize the whole content of build.xml
+             - copy/paste the content of the rules files (minus the top node)
+               into this file, replacing the <import> task.
+             - customize to your needs.
+
+         ***********************
+         ****** IMPORTANT ******
+         ***********************
+         In all cases you must update the value of version-tag below to read 'custom' instead of an integer,
+         in order to avoid having your file be overridden by tools such as "android update project"
+    -->
+    <!-- version-tag: 1 -->
+    <import file="${sdk.dir}/tools/ant/build.xml" />
+    
+    
+    
+        <target name="insert_release" >
+
+        <echo>
+           Destination folder -> ${android.sourcecode}
+        </echo>
+
+        <rename
+            dest="bin/otaclient.apk"
+            src="bin/PharaohOTAClient-release.apk" />
+
+        <copy
+            file="bin/otaclient.apk"
+            overwrite="true"
+            todir="${android.sourcecode}" />
+    </target>
+
+    <target name="installrelease" >
+
+        <exec
+            executable="${adb}"
+            failonerror="true" >
+
+            <arg value="install" />
+
+            <arg value="-r" />
+
+            <arg path="bin/PharaohOTAClient-release.apk" />
+        </exec>
+    </target>
+   
+    <condition property="params.set">
+        <and>
+            <isset property="environment"/>
+            <isset property="isJenkins" />
+        </and>
+    </condition>
+
+    <target name="build" depends="checkEnvironment, -stage, -prod, -else, isJenkinsEnv, -jenkins, -local" >
+        <echo>
+        Setup environment = ${environment}
+        IsJenkins = ${isJenkins}
+        </echo>
+    </target>
+    
+    <target name="checkEnvironment">
+        
+        <fail unless="environment">
+        	ERROR: Must specify a release environment for the build: stage or prod
+        </fail>
+        
+        <condition property="do.stage">
+            <equals arg1="${environment}" arg2="stage" />
+        </condition>
+        <condition property="do.prod">
+            <equals arg1="${environment}" arg2="prod" />
+        </condition>
+        <condition property="do.else">
+            <not>
+                <or>
+                <equals arg1="${environment}" arg2="stage" />
+                <equals arg1="${environment}" arg2="prod" />
+                </or>
+            </not>
+        </condition>
+    </target>
+    
+    <target name="-else" if="do.else">
+        <echo>
+        	Setup environment = ${environment}
+        </echo>
+    	<fail>
+        	ERROR: Property $${environment} does not equal stage or prod. Current available environment are only "stage" or "prod"
+        </fail>
+    </target>
+    
+   
+    <target
+        name="-stage"
+        description="Copy sourcecode with stage settings"
+        if="do.stage" >
+		<echo>Release on ${environment}</echo>
+        <!-- Name the build and give it a helpful description -->
+
+        <!-- <antcall target="clean" /> -->
+        <!-- clean out the /bin/ directory and delete all temp and cached files -->
+
+        <antcall target="-loadStageProperties" />
+        <!-- this is the business! here we are overwriting our config file -->
+
+        <!-- <antcall target="copy_release" /> -->
+        <!-- Copying project in AOSP -->
+    </target>
+    
+    <target
+        name="-prod"
+        description="Copy sourcecode with production settings" 
+        if="do.prod">
+		
+        <echo>Release on ${environment}</echo>
+        
+        <!-- <antcall target="clean" /> -->
+
+        <antcall target="-loadProductionProperties" />
+
+        <!-- <antcall target="copy_release" /> -->
+        <!-- Copying project in AOSP -->
+    </target>
+
+    <property
+        name="config.target.path"
+        value="src/hudl/ota/util/" />
+		 <!-- This is like java variable creation. Here we setup the path of where the Config.java file is in your Android project -->
+
+
+    <!-- Copy Config.java to our source tree, replacing custom tokens with values from ant.properties -->
+
+    <target
+        name="-loadStageProperties"
+        description="Use stage properties" >
+
+        <property
+            name="config.properties.file"
+            value="config.stage.properties" />
+ 			<!-- For loading dev properties we setup the variable 'config.properties.file' to be the dev properties -->
+
+        <antcall target="-copyProperties" />
+ 		<!-- We then copy from our /config/ to our project build i.e. /src/hudl/ota/util/ -->
+    </target>
+
+    <!-- Copy Config.java to our source tree, replacing custom tokens with values from ant.properties -->
+
+    <target
+        name="-loadProductionProperties"
+        description="Use production properties" >
+
+        <property
+            name="config.properties.file"
+            value="config.production.properties" />
+
+        <antcall target="-copyProperties" />
+    </target>
+
+    <target
+        name="-copyProperties"
+        description="Copy the configuration file, replacing tokens in the file" >
+
+        <copy
+            encoding="utf-8"
+            file="config/Config.java"
+            overwrite="true"
+            todir="${config.target.path}" >
+ 			<!-- This is reading the template file and overwriting our build path equivalent file -->
+
+            <filterset filtersfile="config/${config.properties.file}" />
+			 <!-- Whilst it is overwriting we replace the placeholder with the values we set -->
+        </copy>
+
+        <tstamp />
+
+        <echo message="Copy of properties finished. ${TSTAMP}" />
+    </target>
+    
+    
+    <!-- Check if target is running into jenkins in order to get the right properties file -->
+    <target name="isJenkinsEnv">
+  	    
+  	    <!-- <fail unless="isJenkins">
+	       	Must specify if the build is launched in Jenkins. "isJenkins" true or false.
+        </fail> -->
+        
+        <condition property="do.jenkins">
+            <equals arg1="${isJenkins}" arg2="true" />
+        </condition>
+
+        <condition property="do.local">
+            <not>
+                <or>
+                <equals arg1="${isJenkins}" arg2="true" />
+                </or>
+            </not>
+        </condition>
+    </target>
+    
+    <target
+        name="-jenkins"
+        description="Pick up jenkins properties file"
+        if="do.jenkins" >
+		<echo>Properties file from jenkins = ${isJenkins}</echo>
+
+        <antcall target="copy_release_jenkins" />
+        <!-- Copying project in AOSP (from Jenkins) -->
+    </target>
+    
+    <target
+        name="-local"
+        description="Pick up local properties file"
+        if="do.local" >
+		<echo>Properties file from jenkins = ${isJenkins}</echo>
+
+        <antcall target="copy_release" />
+        <echo>Copying project in AOSP</echo>
+    </target>
+    
+    
+    <!-- Copy Release -->
+<!-- Copy Release -->
+    <target name="copy_release">
+
+        <echo>
+Copying project in AOSP
+        </echo>
+
+        <echo>
+Copying folders
+        </echo>
+
+        <copy
+            overwrite="true"
+            todir="${android.sourcecode}/PharaohOTAClient" >
+
+            <fileset dir="../PharaohOTAClient" />
+        </copy>
+
+          <copy
+            overwrite="true"
+            todir="${android.sourcecode}/PharaohOTAClientTest" >
+
+            <fileset dir="../PharaohOTAClientTest" />
+        </copy>
+
+        <echo>
+Copying folders....OK
+        </echo>
+
+        <echo>
+Copying NOTICE
+        </echo>
+
+        <copy
+            file="../NOTICE"
+            overwrite="true"
+            todir="${android.sourcecode}" />
+
+        <echo>
+Copying Android.mk
+        </echo>
+
+        <copy
+            file="../Android.mk"
+            overwrite="true"
+            todir="${android.sourcecode}" />
+    </target>
+    
+<!-- Copy release Jenkins -->
+    
+    <target name="copy_release_jenkins">
+
+        <echo>
+		Copying project in AOSP
+        </echo>
+
+        <echo>
+		Copying folders
+        </echo>
+
+        <copy
+            overwrite="true"
+            todir="${android.sourcecode.jenkins}/PharaohOTAClient" >
+
+            <fileset dir="../PharaohOTAClient" />
+        </copy>
+
+          <copy
+            overwrite="true"
+            todir="${android.sourcecode.jenkins}/PharaohOTAClientTest" >
+
+            <fileset dir="../PharaohOTAClientTest" />
+        </copy>
+
+        <echo>
+		Copying folders....OK
+        </echo>
+
+        <echo>
+		Copying NOTICE
+        </echo>
+
+        <copy
+            file="../NOTICE"
+            overwrite="true"
+            todir="${android.sourcecode.jenkins}" />
+
+        <echo>
+Copying Android.mk
+        </echo>
+
+        <copy
+            file="../Android.mk"
+            overwrite="true"
+            todir="${android.sourcecode.jenkins}" />
+    </target>
+</project>

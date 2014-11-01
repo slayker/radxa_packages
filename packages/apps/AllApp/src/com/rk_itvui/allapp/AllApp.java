@@ -85,6 +85,7 @@ public class AllApp extends Activity{
         rootView = (ViewGroup)findViewById(R.id.app_layout);
         if(null != mClickListener){
             ((Button)findViewById(R.id.btnRecent)).setOnClickListener(mClickListener);
+            ((Button)findViewById(R.id.btnDownload)).setOnClickListener(mClickListener);
         }
         mApkInformation = new ArrayList<PackageInformation>();
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -181,6 +182,26 @@ public class AllApp extends Activity{
             e.printStackTrace();
         }
     }
+    
+    void startRecentApp(int position){
+        try{
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_LAUNCHER);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+
+            ComponentName componentName = new ComponentName(mApkRecent.get(position).getPackageName(),mApkRecent.get(position).getActivityName());
+            intent.setComponent(componentName);
+            
+            addToRecent(mApkRecent.get(position));
+            startActivity(intent);
+        }catch (ActivityNotFoundException e){
+            Toast.makeText(this, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }catch (SecurityException e) {
+            Toast.makeText(this, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+    }
 	
     private void addToRecent(PackageInformation pack){
         /*if this pack is existed, remove!*/
@@ -253,7 +274,27 @@ public class AllApp extends Activity{
 	
     private View.OnClickListener mClickListener = new View.OnClickListener() {
         public void onClick(View v) {
-        	openDialog(v.getId());
+        	switch (v.getId()) {
+			case R.id.btnRecent:
+	        	openDialog(v.getId());
+				break;
+				
+			case R.id.btnDownload:
+				Intent intent = new Intent();
+				intent.addCategory(Intent.CATEGORY_DEFAULT);
+				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				intent.setAction("android.intent.action.VIEW_DOWNLOADS");
+				try {
+					startActivity(intent);
+				}catch (Exception e) {
+					// TODO: handle exception
+					Toast.makeText(AllApp.this, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
+				}
+				break;
+
+			default:
+				break;
+			}
         }
     };
     
@@ -277,7 +318,7 @@ public class AllApp extends Activity{
 		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
 		    // TODO Auto-generated method stub
 		    if((mApkRecent != null)&&(arg2 < mApkRecent.size()))
-				startApplication(arg2);
+				startRecentApp(arg2);
 			      dialog.dismiss();
 		    }
 	});

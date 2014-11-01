@@ -1,0 +1,93 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_margin_bottom"
+    android:paddingLeft="@dimen/activity_margin_left"
+    android:paddingRight="@dimen/activity_margin_right"
+    android:paddingTop="@dimen/activity_margin_top" >
+
+    <include layout="@layout/header" />
+
+    <TextView
+        android:id="@+id/description"
+        style="@style/tam__header_subheading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="3dp"
+        android:layout_marginRight="3dp"
+        android:layout_marginTop="26.66dp"
+        android:gravity="left"
+        android:text="@string/label_almost_ready"
+        android:textColor="@android:color/white"
+        android:textIsSelectable="false" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:id="@+id/container_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:gravity="right"
+        android:orientation="vertical"
+        android:visibility="gone" >
+
+        <!--
+             <Button
+            android:id="@+id/button_cancel_update"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:text="Cancel update" />
+        -->
+
+        <Button
+            android:id="@+id/button_skip_update"
+            android:layout_width="@dimen/button_width"
+            android:layout_height="@dimen/button_height"
+            android:tag="button_1"
+            android:text="@string/label_skip_download" />
+
+        <Button
+            android:id="@+id/button_download_update"
+            android:layout_width="@dimen/button_width"
+            android:layout_height="@dimen/button_height"
+            android:tag="button_2"
+            android:text="@string/label_download" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/container_retry_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:gravity="right"
+        android:orientation="vertical"
+        android:visibility="gone" >
+
+        <Button
+            android:id="@+id/button_retry_wifi_connection"
+            android:layout_width="@dimen/button_width"
+            android:layout_height="@dimen/button_height"
+            android:tag="button_4"
+            android:text="@string/hudl_button_wifi" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_spacing"
+            android:layout_weight="0" />
+
+        <Button
+            android:id="@+id/button_retry_download_json"
+            android:layout_width="@dimen/button_width"
+            android:layout_height="@dimen/button_height"
+            android:tag="button_3"
+            android:text="@string/label_retry" />
+    </LinearLayout>
+
+</LinearLayout>

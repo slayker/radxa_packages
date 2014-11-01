@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:id="@+id/root"
+    android:orientation="vertical" >
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dip"
+        android:text="@string/new_update_coming"
+        android:fontFamily="sans-serif"
+        android:textColor="@android:color/holo_blue_dark"
+        android:textSize="40sp"  />
+  
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dip"
+        android:fontFamily="sans-serif"
+        android:text="@string/label_description"
+        android:textColor="@android:color/white"
+        android:textSize="20dip"  />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <Button
+            android:tag="button_1"
+            android:id="@+id/accept_update_from_notification"
+            android:layout_width="@dimen/yes_no_button_dimension"
+            android:layout_height="wrap_content"
+            android:text="@string/yes" />
+
+        <Button
+            android:tag="button_2"
+            android:id="@+id/deny_update_from_notification"
+            android:layout_width="@dimen/yes_no_button_dimension"
+            android:layout_height="wrap_content"
+            android:text="@string/no" />
+    </LinearLayout>
+
+</LinearLayout>

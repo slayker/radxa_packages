@@ -23,5 +23,6 @@
     <string name="application_num">Total Applications: </string>
     <string name="apprecent">Recent Apps</string>
     <string name="deleteWidget">Delete Widget,Please Select </string>
+    <string name="downloadlist">Download List</string>
     
 </resources>

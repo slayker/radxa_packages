@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_margin_bottom"
+    android:paddingLeft="@dimen/activity_margin_left"
+    android:paddingRight="@dimen/activity_margin_right"
+    android:paddingTop="@dimen/activity_margin_top" >
+
+    <include layout="@layout/header" />
+
+    <TextView
+        android:id="@+id/description"
+        style="@style/tam__header_subheading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="3dp"
+        android:layout_marginRight="3dp"
+        android:layout_marginTop="26.66dp"
+        android:gravity="left"
+        android:text="@string/hudl_description_wifi_loss"
+        android:textColor="@android:color/white"
+        android:textIsSelectable="false" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:id="@+id/container_check_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:gravity="right"
+        android:orientation="horizontal"
+        android:visibility="visible" >
+
+        <Button
+            android:id="@+id/button_go_to_wifi"
+            android:layout_width="@dimen/button_width"
+            android:layout_height="@dimen/button_height"
+            android:onClick="retry"
+            android:tag="button_1"
+            android:text="@string/hudl_button_wifi"
+            android:textColor="@color/WHITE"
+            android:textSize="@dimen/button_text_size" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,37 @@
+<resources>
+
+    <dimen name="activity_margin_top">48px</dimen>
+    <dimen name="activity_margin_bottom">54px</dimen>
+    <dimen name="activity_margin_left">150px</dimen>
+    <dimen name="activity_margin_right">150px</dimen>
+    <dimen name="activity_title_extra_margin_left">0px</dimen>
+    <dimen name="activity_title_margin_bottom">3px</dimen>
+    <dimen name="button_extra_margin_right">0px</dimen>
+    <dimen name="button_height">70px</dimen>
+    <dimen name="button_width">271px</dimen>
+    <dimen name="button_spacing">50px</dimen>
+
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="yes_no_button_dimension">60dip</dimen>
+    <dimen name="button_text_size">15sp</dimen>
+    <dimen name="title_text_size">46sp</dimen>
+    <dimen name="subtitle_text_size">20sp</dimen>
+    <dimen name="margin_general">20dp</dimen>
+    <dimen name="text_title_section_size">26sp</dimen>
+    <dimen name="text_body_size">16sp</dimen>
+    <dimen name="button_skip_download">150dip</dimen>
+    <dimen name="dialog_lateral_margin">32dp</dimen>
+    <dimen name="dialog_top_margin">32dp</dimen>
+    <dimen name="dialog_down_margin">31dp</dimen>
+    <dimen name="dialog_between_text_tick_margin">19dp</dimen>
+    <dimen name="dialog_lateral_tick_extra_margin">8dp</dimen>
+    <dimen name="dialog_body_text_font_size">18sp</dimen>
+	<dimen name="text_download_status">18sp</dimen>
+    
+    <!-- NOVODA measure -->
+<!--     <dimen name="tam__header_title_margin">98.66dp</dimen> -->
+    <dimen name="tam__header_title_text_size">60.0sp</dimen>
+    <dimen name="tam__header_subheading_text_size">22sp</dimen>
+    
+
+</resources>

@@ -92,9 +92,6 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
             HONEYCOMB_USERAGENT,
     };
 
-    public static String PREF_USER_AGENT_DEFAULT = "0";
-    public static String PREF_PLUGIN_STATE_DEFAULT = "ON";
-
     // The minimum min font size
     // Aka, the lower bounds for the min font size range
     // which is 1:5..24
@@ -693,7 +690,7 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
 
     // TODO: Cache
     public PluginState getPluginState() {
-        String state = mPrefs.getString(PREF_PLUGIN_STATE, PREF_PLUGIN_STATE_DEFAULT);
+        String state = mPrefs.getString(PREF_PLUGIN_STATE, "ON");
         return PluginState.valueOf(state);
     }
 
@@ -769,9 +766,9 @@ public class BrowserSettings implements OnSharedPreferenceChangeListener,
 
     public int getUserAgent() {
         if (!isDebugEnabled()) {
-            return Integer.parseInt(mPrefs.getString(PREF_USER_AGENT_REL, PREF_USER_AGENT_DEFAULT));
+            return 0;
         }
-        return Integer.parseInt(mPrefs.getString(PREF_USER_AGENT, PREF_USER_AGENT_DEFAULT));
+        return Integer.parseInt(mPrefs.getString(PREF_USER_AGENT, "0"));
     }
 
     // -----------------------------

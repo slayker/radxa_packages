@@ -17,7 +17,6 @@
 package com.android.browser.preferences;
 
 import com.android.browser.BrowserActivity;
-import com.android.browser.BrowserSettings;
 import com.android.browser.PreferenceKeys;
 import com.android.browser.R;
 
@@ -35,7 +34,6 @@ import android.preference.PreferenceScreen;
 import android.util.Log;
 import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
-import android.webkit.WebSettings.PluginState;
 import android.webkit.WebStorage;
 
 import java.util.Map;
